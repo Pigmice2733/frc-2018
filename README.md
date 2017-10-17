@@ -1,16 +1,14 @@
 # robot-boilerplate
 Boilerplate for FRC and BunnyBots programming
 
-Delete the line and everything above it when you create a project
+This contains a template we can use for RobotPy every time we create a new project. Fork into a new repo and delete this leading message when you want to create a new project.
 
----
+------------------------
 
 # {FRC|BunnyBots} {Year}
-
 The code for {Robot Name} for the Pigmice for {Game Name}.
 
 ## Installation
-
 1. Clone this repo. `git clone {Repo URL}`
 2. Install python3 and pip3. Get these from your OS's package manager.
 3. Install pipenv: `pip3 install pipenv`
