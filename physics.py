@@ -15,6 +15,6 @@ class PhysicsEngine:
         fr = -hal_data['CAN'][2]['value']
         br = -hal_data['CAN'][3]['value']
 
-        rotation, speed = four_motor_drivetrain(bl, br, fl, fr, 3, 0.1)
+        rotation, speed = four_motor_drivetrain(bl, br, fl, fr, 3, 0.025)
 
-        self.controller.drive(speed, rotation, tm_diff)
+        self.controller.drive(speed, rotation * 0.75, tm_diff)

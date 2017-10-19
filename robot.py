@@ -19,7 +19,8 @@ class Robot(MagicRobot):
         self.operator_joystick = wpilib.Joystick(1)
 
     def teleopPeriodic(self):
-        self.drivetrain.turn_at(self.drive_joystick.getRawAxis(0))
+        self.drivetrain.turn_at(
+            self.drive_joystick.getRawAxis(0), squaredInputs=True)
         self.drivetrain.forward_at(self.drive_joystick.getRawAxis(1))
 
 
