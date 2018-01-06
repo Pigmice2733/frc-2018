@@ -1,15 +1,10 @@
-# robot-boilerplate
-Boilerplate for FRC and BunnyBots programming
+# FRC 2018
+The Pigmice's code for FIRST Power Up
 
-This contains a template we can use for RobotPy every time we create a new project. Fork into a new repo and delete this leading message when you want to create a new project.
-
-------------------------
-
-# {FRC|BunnyBots} {Year}
-The code for {Robot Name} for the Pigmice for {Game Name}.
+<img align="right" src="media/frc-power-up-logo.jpg" width="400" height="300"/>
 
 ## Installation
-1. Clone this repo. `git clone {Repo URL}`
+1. Clone this repo. `git clone https://github.com/Pigmice2733/frc-2018.git`
 2. Install python3 and pip3. Get these from your OS's package manager.
 3. Install pipenv: `pip3 install pipenv`
 4. Run `pipenv install` in this directory to download and install the dependencies
