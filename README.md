@@ -1,7 +1,7 @@
+<img align="right" src="media/frc-power-up-logo.jpg" width="200" height="150"/>
+
 # FRC 2018
 The Pigmice's code for FIRST Power Up
-
-<img align="right" src="media/frc-power-up-logo.jpg" width="400" height="300"/>
 
 ## Installation
 1. Clone this repo. `git clone https://github.com/Pigmice2733/frc-2018.git`
