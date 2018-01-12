@@ -6,7 +6,7 @@ from magicbot import MagicRobot
 import ctre
 
 from components.drivetrain import Drivetrain
-from components.intake import Intake, Action as IntakeAction
+from components.intake import Intake
 
 
 class Robot(MagicRobot):
