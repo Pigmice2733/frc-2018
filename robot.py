@@ -3,7 +3,6 @@
 import wpilib
 from ctre.cantalon import CANTalon
 from magicbot import MagicRobot
-import ctre
 
 from components.drivetrain import Drivetrain
 from components.intake import Intake
