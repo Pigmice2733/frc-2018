@@ -1,6 +1,5 @@
 import wpilib
 import enum
-import ctre
 from ctre import CANTalon
 
 
@@ -20,6 +19,15 @@ class Intake:
     r_intake_motor = CANTalon
 
     cur_action = Action.Stop
+
+    def intake(self):
+        self.cur_action = Action.Intake
+
+    def outtake(self):
+        self.cur_action = Action.Outtake
+
+    def stop(self):
+        self.cur_action = Action.Stop
 
     def execute(self):
         if self.cur_action == Action.Intake:

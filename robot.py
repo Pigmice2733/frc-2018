@@ -29,15 +29,13 @@ class Robot(MagicRobot):
             self.drive_joystick.getRawAxis(0), squaredInputs=True)
         self.drivetrain.forward_at(self.drive_joystick.getRawAxis(1))
 
-        action = IntakeAction.Stop
+        self.intake.stop()
 
         if self.drive_joystick.getRawButton(1):
-            action = IntakeAction.Outtake
+            self.intake.intake()
 
         if self.drive_joystick.getRawButton(2):
-            action = IntakeAction.Intake
-
-        self.intake.cur_action = action
+            self.intake.outtake()
 
 
 if __name__ == '__main__':
