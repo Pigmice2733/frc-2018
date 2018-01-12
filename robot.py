@@ -5,15 +5,20 @@ from ctre.cantalon import CANTalon
 from magicbot import MagicRobot
 
 from components.drivetrain import Drivetrain
+from components.intake import Intake
 
 
 class Robot(MagicRobot):
 
+    intake = Intake
     drivetrain = Drivetrain
 
     def createObjects(self):
         self.robot_drive = wpilib.RobotDrive(
             0, 1, 2, 3, motorController=CANTalon)
+
+        self.l_intake_motor = CANTalon(4)
+        self.r_intake_motor = CANTalon(5)
 
         self.drive_joystick = wpilib.Joystick(0)
         self.operator_joystick = wpilib.Joystick(1)
@@ -22,6 +27,12 @@ class Robot(MagicRobot):
         self.drivetrain.turn_at(
             self.drive_joystick.getRawAxis(0), squaredInputs=True)
         self.drivetrain.forward_at(self.drive_joystick.getRawAxis(1))
+
+        if self.drive_joystick.getRawButton(1):
+            self.intake.intake()
+
+        if self.drive_joystick.getRawButton(2):
+            self.intake.outtake()
 
 
 if __name__ == '__main__':
