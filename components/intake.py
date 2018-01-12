@@ -17,23 +17,23 @@ class Intake:
     l_intake_motor = CANTalon
     r_intake_motor = CANTalon
 
-    cur_action = Action.Stop
+    state = Action.Stop
 
     def intake(self):
-        self.cur_action = Action.Intake
+        self.state = Action.Intake
 
     def outtake(self):
-        self.cur_action = Action.Outtake
+        self.state = Action.Outtake
 
     def stop(self):
-        self.cur_action = Action.Stop
+        self.state = Action.Stop
 
     def execute(self):
-        if self.cur_action == Action.Intake:
+        if self.state == Action.Intake:
             mirror(self.l_intake_motor, self.r_intake_motor, 1.0)
-        elif self.cur_action == Action.Outtake:
+        elif self.state == Action.Outtake:
             mirror(self.l_intake_motor, self.r_intake_motor, -1.0)
-        elif self.cur_action == Action.Stop:
+        elif self.state == Action.Stop:
             mirror(self.l_intake_motor, self.r_intake_motor, 0.0)
 
-        self.cur_action = Action.Stop
+        self.state = Action.Stop
