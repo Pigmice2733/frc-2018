@@ -3,7 +3,6 @@
 import wpilib
 from ctre.cantalon import CANTalon
 from magicbot import MagicRobot
-import ctre
 
 from components.drivetrain import Drivetrain
 from components.intake import Intake
@@ -28,8 +27,6 @@ class Robot(MagicRobot):
         self.drivetrain.turn_at(
             self.drive_joystick.getRawAxis(0), squaredInputs=True)
         self.drivetrain.forward_at(self.drive_joystick.getRawAxis(1))
-
-        self.intake.stop()
 
         if self.drive_joystick.getRawButton(1):
             self.intake.intake()
