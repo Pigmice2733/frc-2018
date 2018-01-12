@@ -33,7 +33,7 @@ class Intake:
             mirror(self.l_intake_motor, self.r_intake_motor, 1.0)
         elif self.state == Action.Outtake:
             mirror(self.l_intake_motor, self.r_intake_motor, -1.0)
-        elif self.state == Action.Stop:
+        else:
             mirror(self.l_intake_motor, self.r_intake_motor, 0.0)
 
         self.state = Action.Stop
