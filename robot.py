@@ -6,12 +6,14 @@ from magicbot import MagicRobot
 
 from components.drivetrain import Drivetrain
 from components.intake import Intake
+from components.scale_arm import ScaleArm
 
 
 class Robot(MagicRobot):
 
-    intake = Intake
     drivetrain = Drivetrain
+    intake = Intake
+    scalearm = ScaleArm
 
     def createObjects(self):
         self.robot_drive = wpilib.RobotDrive(
@@ -19,6 +21,7 @@ class Robot(MagicRobot):
 
         self.l_intake_motor = CANTalon(4)
         self.r_intake_motor = CANTalon(5)
+        self.scale_arm_motor = CANTalon(6)
 
         self.drive_joystick = wpilib.Joystick(0)
         self.operator_joystick = wpilib.Joystick(1)
@@ -33,6 +36,12 @@ class Robot(MagicRobot):
 
         if self.drive_joystick.getRawButton(2):
             self.intake.outtake()
+
+        if self.drive_joystick.getRawButton(3):
+            self.scalearm.up()
+
+        if self.drive_joystick.getRawButton(4):
+            self.scalearm.down()
 
 
 if __name__ == '__main__':
