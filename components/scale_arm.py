@@ -1,6 +1,8 @@
+from enum import Enum
+
 import wpilib
 from ctre.cantalon import CANTalon
-from enum import Enum
+
 
 class State(Enum):
     REST = 1
@@ -10,11 +12,13 @@ class State(Enum):
 class ScaleArm:
     scale_arm_motor = CANTalon
     state = State.REST
-    
+
     def up(self):
         self.state = State.UP
+
     def down(self):
         self.state = State.DOWN
+
     def execute(self):
         if self.state == State.UP:
             self.scale_arm_motor.set(0.2)
