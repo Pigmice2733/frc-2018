@@ -7,7 +7,8 @@ from typing import Callable
 from .pid import PIDParameters, PIDController
 from .motionprofiling import PositionProfile, DistanceProfile
 from .path import Path
-from .utilities import RobotState, RobotCharacteristics, Completed, distance_between
+from .utilities import RobotState, RobotCharacteristics, Completed
+from .utilities import distance_between
 
 
 class PathTracker:
@@ -155,8 +156,8 @@ class DistanceProfileExecutor:
 
         optimal_velocity = velocity + (acceleration * self.time_look_ahead)
 
-        error = abs(self.motion_profile.target_distance - current_position) /
-            abs(self.motion_profile.target_distance)
+        error = (abs(self.motion_profile.target_distance - current_position) /
+                 abs(self.motion_profile.target_distance))
 
         if error < self.acceptable_error_margin:
             self.output(0.0)

@@ -15,9 +15,9 @@ class Line(typing.NamedTuple):
 
 
 class RobotState(typing.NamedTuple):
+    velocity: float
     position: Point = Point(0, 0)
     angle: float = math.pi / 2
-    velocity: float
 
 
 class Completed(typing.NamedTuple):
