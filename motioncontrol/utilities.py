@@ -31,6 +31,7 @@ class RobotCharacteristics(typing.NamedTuple):
     acceleration_time: float
     deceleration_time: float
     max_speed: float
+    wheel_base: float
 
 
 def clamp(value, minimum, maximum):

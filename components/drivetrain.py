@@ -10,7 +10,8 @@ class Drivetrain:
     rotation = 0
     forward = 0
     robot_characteristics = RobotCharacteristics(
-        acceleration_time=2, deceleration_time=3, max_speed=1)
+        acceleration_time=2, deceleration_time=3,
+        max_speed=1, wheel_base=0.7)
 
     def forward_at(self, speed):
         self.forward = speed
@@ -19,6 +20,9 @@ class Drivetrain:
         self.rotation = speed
         if squaredInputs:
             self.rotation = speed**2 if speed >= 0 else -(speed**2)
+
+    def curve_at(self, curvature):
+        self.curvature = curvature
 
     def set_path(self, path: Path):
         self.path_tracker = PathTracker(
@@ -32,7 +36,17 @@ class Drivetrain:
         return RobotState(velocity=1)
 
     def execute(self):
-        self.robot_drive.arcadeDrive(self.forward, self.rotation)
+        if self.curvature is not None:
+            vl = (self.forward *
+                  (1 - (self.robot_characteristics.wheel_base / 2) *
+                   self.curvature))
+            vr = (self.forward *
+                  (1 + (self.robot_characteristics.wheel_base / 2) *
+                   self.curvature))
+            self.robot_drive.tankDrive(vl, vr)
+        else:
+            self.robot_drive.arcadeDrive(self.forward, self.rotation)
 
         self.rotation = 0
         self.forward = 0
+        self.curvature = None
