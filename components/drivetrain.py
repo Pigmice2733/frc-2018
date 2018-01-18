@@ -1,8 +1,8 @@
-import wpilib
+from wpilib import drive
 
 
 class Drivetrain:
-    robot_drive = wpilib.RobotDrive
+    robot_drive = drive.DifferentialDrive
     rotation = 0
     forward = 0
 

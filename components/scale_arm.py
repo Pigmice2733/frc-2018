@@ -1,7 +1,6 @@
 from enum import Enum
 
 import wpilib
-from ctre.cantalon import CANTalon
 
 
 class State(Enum):
@@ -9,8 +8,9 @@ class State(Enum):
     UP = 2
     DOWN = 3
 
+
 class ScaleArm:
-    scale_arm_motor = CANTalon
+    scale_arm_motor = wpilib.Spark
     state = State.REST
 
     def up(self):

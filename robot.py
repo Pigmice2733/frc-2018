@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
 import wpilib
-from ctre.cantalon import CANTalon
+from wpilib import drive
+
 from magicbot import MagicRobot
 
 from components.drivetrain import Drivetrain
@@ -18,13 +19,17 @@ class Robot(MagicRobot):
     scale_arm = ScaleArm
 
     def createObjects(self):
-        self.robot_drive = wpilib.RobotDrive(
-            0, 1, 2, 3, motorController=CANTalon)
+        self.robot_drive = drive.DifferentialDrive(
+            wpilib.SpeedControllerGroup(
+                wpilib.Spark(0),
+                wpilib.Spark(1)),
+            wpilib.SpeedControllerGroup(
+                wpilib.Spark(2), wpilib.Spark(3)))
 
-        self.l_intake_motor = CANTalon(4)
-        self.r_intake_motor = CANTalon(5)
-        self.scale_arm_motor = CANTalon(6)
-        self.climber_motor = CANTalon(7)
+        self.l_intake_motor = wpilib.Spark(4)
+        self.r_intake_motor = wpilib.Spark(5)
+        self.scale_arm_motor = wpilib.Spark(6)
+        self.climber_motor = wpilib.Spark(7)
 
         self.drive_joystick = wpilib.Joystick(0)
         self.operator_joystick = wpilib.Joystick(1)

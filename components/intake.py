@@ -1,7 +1,5 @@
 import enum
-
-from ctre import CANTalon
-
+import wpilib
 
 class Action(enum.Enum):
     Intake = 1
@@ -15,8 +13,8 @@ def mirror(l, r, val):
 
 
 class Intake:
-    l_intake_motor = CANTalon
-    r_intake_motor = CANTalon
+    l_intake_motor = wpilib.Spark
+    r_intake_motor = wpilib.Spark
 
     state = Action.Stop
 
