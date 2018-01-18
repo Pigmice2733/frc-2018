@@ -7,7 +7,7 @@ from typing import Callable
 from .pid import PIDParameters, PIDController
 from .motionprofiling import PositionProfile, DistanceProfile
 from .path import Path
-from .utilities import RobotState, RobotCharacteristics, distance_between
+from .utilities import RobotState, RobotCharacteristics, Completed, distance_between
 
 
 class PathTracker:
@@ -46,7 +46,7 @@ class PathTracker:
         )
 
     def update(self) -> bool:
-        """Uses `current_pose` and writes output. Returns `True`
+        """Gets current RobotState and writes output. Returns `True`
          if profile is completed (robot is within error margin of
          target), otherwise `False`.
         """
@@ -54,8 +54,8 @@ class PathTracker:
             curvature = self.path.get_heading(
                 self.input_source(), self.lookahead)
             self.curvature_output(curvature)
-            return False
-        return True
+            return Completed(done=False)
+        return Completed(done=True)
 
 
 class PositionProfileExecutor:

@@ -20,6 +20,10 @@ class RobotState(typing.NamedTuple):
     velocity: float
 
 
+class Completed(typing.NamedTuple):
+    done: float = False
+
+
 class RobotCharacteristics(typing.NamedTuple):
     """** Note: The units don't matter, as long as they are all the same.
     This means using seconds, meters and meters per second is ok, but
