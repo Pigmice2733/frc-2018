@@ -1,7 +1,7 @@
 import math
 import typing
 
-import motioncontrol
+from motioncontrol import utils
 from .utils import Point, Line, RobotState
 
 
@@ -42,8 +42,8 @@ class Path:
         closest, closest_path_index = self.find_closest_point(
             robot_state.position)
         goal = self.find_goal_point(closest, closest_path_index, lookahead)
-        D = utilities.distance_between(robot_state.position, goal)
-        orientation_error = utilities.line_angle(
+        D = utils.distance_between(robot_state.position, goal)
+        orientation_error = utils.line_angle(
             robot_state.position, goal) - robot_state.angle
         dX = ((goal.x - robot_state.position.x) * math.cos(orientation_error) +
               (goal.y - robot_state.position.y) * math.sin(orientation_error))
@@ -54,14 +54,14 @@ class Path:
     def find_closest_point(self, point: Point) -> (Point, int):
         """Find the closest point on the path to the given point"""
         closest = self.points[0]
-        closest_distance = utilities.distance_between(closest, point)
+        closest_distance = utils.distance_between(closest, point)
         # Index with self.points where the closest point lays
         path_index = 0
 
         for i in range(0, len(self.points) - 1):
             line = Line(self.points[path_index], self.points[path_index + 1])
-            candidate = utilities.closest_point_on_line(line, point)
-            candidate_distance = utilities.distance_between(
+            candidate = utils.closest_point_on_line(line, point)
+            candidate_distance = utils.distance_between(
                 candidate, point)
             if candidate_distance < closest_distance:
                 closest = candidate
@@ -78,9 +78,9 @@ class Path:
                and path_index < (len(self.points) - 1)):
             path_segment = Line(
                 self.points[path_index], self.points[path_index + 1])
-            next_point = utilities.move_point_along_line(
+            next_point = utils.move_point_along_line(
                 path_segment, goal_point, remaining_distance)
-            remaining_distance -= utilities.distance_between(
+            remaining_distance -= utils.distance_between(
                 goal_point, next_point)
             goal_point = next_point
             path_index += 1

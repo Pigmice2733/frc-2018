@@ -111,3 +111,58 @@ def test_move_point_along_line():
     assert (utils.move_point_along_line(
         line_segment, utils.Point(0.0, -1 / 3), -20) ==
         pytest.approx(utils.Point(-1.0, 1.0)))
+
+    assert (utils.move_point_along_line(
+        utils.Line(utils.Point(), utils.Point()),
+        utils.Point(1.0, 1.0),
+        78.3
+    ) == pytest.approx(utils.Point()))
+
+
+def test_closest_point_on_line():
+    line_segment = utils.Line(utils.Point(0.0, 2.0), utils.Point(2.0, 0.0))
+
+    point_less = utils.Point(0.0, 0.0)
+    assert utils.closest_point_on_line(
+        line_segment, point_less) == pytest.approx(utils.Point(1.0, 1.0))
+
+    point_more = utils.Point(1.0, 2.0)
+    assert utils.closest_point_on_line(
+        line_segment, point_more
+    ) == pytest.approx(utils.Point(0.5, 1.5))
+
+    point_off = utils.Point(-1.0, 4.0)
+    assert utils.closest_point_on_line(
+        line_segment, point_off) == pytest.approx(utils.Point(0.0, 2.0))
+
+    horizontal_line = utils.Line(utils.Point(0.0, 0.0), utils.Point(5.0, 0.0))
+    assert utils.closest_point_on_line(horizontal_line, utils.Point(
+        1.0, 4.0)) == pytest.approx(utils.Point(1.0, 0.0))
+
+    vertical_line = utils.Line(utils.Point(0.0, 0.0), utils.Point(0.0, -10.0))
+    assert utils.closest_point_on_line(vertical_line, utils.Point(
+        1.0, -12.0)) == pytest.approx(utils.Point(0.0, -10.0))
+
+
+def test_line_intersection():
+    horizontal_origin = utils.Line(
+        utils.Point(-5.0, 0.0), utils.Point(5.0, 0.0))
+    vertical_origin = utils.Line(utils.Point(
+        0.0, 10.0), utils.Point(0.0, -10.0))
+
+    assert (utils.line_intersection(
+        horizontal_origin, vertical_origin) ==
+        pytest.approx(utils.Point(0.0, 0.0)))
+    assert (utils.line_intersection(
+        vertical_origin, horizontal_origin) ==
+        pytest.approx(utils.Point(0.0, 0.0)))
+
+    assert (utils.line_intersection(
+        utils.Line(utils.Point(0.5, 0.5), utils.Point(1.5, 0.5)),
+        utils.Line(utils.Point(1.0, 0.0), utils.Point(1.0, 2.0))
+    ) == pytest.approx(utils.Point(1.0, 0.5)))
+
+    assert (utils.line_intersection(
+        utils.Line(utils.Point(-2.0, -1.0), utils.Point(0.0, -2.0)),
+        utils.Line(utils.Point(-1.5, -2.0), utils.Point(0.0, 2.5)),
+    ) == pytest.approx(utils.Point(-1.2857142857142858, -1.3571428571428572)))

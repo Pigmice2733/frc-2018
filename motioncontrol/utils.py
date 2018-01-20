@@ -1,4 +1,4 @@
-"""Utilities holds common functionality for motion control"""
+"""Utils holds common functionality for motion control"""
 
 import math
 import typing
@@ -81,6 +81,9 @@ def line_from_point_slope(slope: float, point: Point) -> Line:
 
 def line_segment_clamp(segment: Line, point: Point) -> Point:
     """Clamp point onto a line segment"""
+    if segment.start.x == segment.end.x:
+        y = clamp(point.y, segment.start.y, segment.end.y)
+        return Point(segment.start.x, y)
     x = clamp(point.x, segment.start.x, segment.end.x)
     segment_slope = slope(segment)
     # y = mx + b => b = y - mx
@@ -109,9 +112,12 @@ def closest_point_on_line(line_segment: Line, point: Point) -> Point:
     """
     closest = None
     if line_segment.start.x == line_segment.end.x:
-        closest = Point(line_segment.start.x, point.y)
-    elif line_segment.start.y == line_segment.end.x:
-        closest = Point(point.x, line_segment.start.y)
+        closest = Point(line_segment.start.x,
+                        clamp(point.y,
+                              line_segment.start.y, line_segment.end.y))
+    elif line_segment.start.y == line_segment.end.y:
+        closest = Point(clamp(point.x, line_segment.start.x,
+                              line_segment.end.x), line_segment.start.y)
     else:
         perpendicular_slope = -1 / slope(line_segment)
         closest = line_intersection(
