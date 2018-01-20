@@ -1,6 +1,6 @@
 from enum import Enum
 
-from ctre.talonsrx import TalonSRX
+from ctre.wpi_talonsrx import WPI_TalonSRX
 
 
 class State(Enum):
@@ -10,7 +10,7 @@ class State(Enum):
 
 
 class ScaleArm:
-    scale_arm_motor = TalonSRX
+    scale_arm_motor = WPI_TalonSRX
     state = State.REST
 
     def up(self):

@@ -1,6 +1,6 @@
 import enum
 
-from ctre.talonsrx import TalonSRX
+from ctre.wpi_talonsrx import WPI_TalonSRX
 
 
 class Action(enum.Enum):
@@ -15,8 +15,8 @@ def mirror(l, r, val):
 
 
 class Intake:
-    l_intake_motor = TalonSRX
-    r_intake_motor = TalonSRX
+    l_intake_motor = WPI_TalonSRX
+    r_intake_motor = WPI_TalonSRX
 
     state = Action.Stop
 

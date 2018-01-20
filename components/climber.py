@@ -1,8 +1,8 @@
-from ctre.talonsrx import TalonSRX
+from ctre.wpi_talonsrx import WPI_TalonSRX
 
 
 class Climber:
-    climber_motor = TalonSRX
+    climber_motor = WPI_TalonSRX
     climbing = False
 
     def climb(self):
