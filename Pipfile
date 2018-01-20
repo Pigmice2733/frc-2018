@@ -7,7 +7,9 @@ name = "pypi"
 
 [packages]
 
-pygame = "*"
+pyfrc = "*"
+robotpy-ctre = "*"
+
 
 [dev-packages]
 

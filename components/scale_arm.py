@@ -1,6 +1,6 @@
 from enum import Enum
 
-import wpilib
+from ctre.talonsrx import TalonSRX
 
 
 class State(Enum):
@@ -10,7 +10,7 @@ class State(Enum):
 
 
 class ScaleArm:
-    scale_arm_motor = wpilib.Spark
+    scale_arm_motor = TalonSRX
     state = State.REST
 
     def up(self):

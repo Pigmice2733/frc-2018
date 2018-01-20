@@ -1,0 +1,120 @@
+{
+    "_meta": {
+        "hash": {
+            "sha256": "d22e9156c9659a95d5dc54d95dbab939b19f8b0f3665393aec0b4fdae2f5da05"
+        },
+        "host-environment-markers": {
+            "implementation_name": "cpython",
+            "implementation_version": "3.6.4",
+            "os_name": "posix",
+            "platform_machine": "x86_64",
+            "platform_python_implementation": "CPython",
+            "platform_release": "4.14.13-1-ARCH",
+            "platform_system": "Linux",
+            "platform_version": "#1 SMP PREEMPT Wed Jan 10 11:14:50 UTC 2018",
+            "python_full_version": "3.6.4",
+            "python_version": "3.6",
+            "sys_platform": "linux"
+        },
+        "pipfile-spec": 6,
+        "requires": {},
+        "sources": [
+            {
+                "name": "pypi",
+                "url": "https://pypi.python.org/simple",
+                "verify_ssl": true
+            }
+        ]
+    },
+    "default": {
+        "attrs": {
+            "hashes": [
+                "sha256:a17a9573a6f475c99b551c0e0a812707ddda1ec9653bed04c13841404ed6f450",
+                "sha256:1c7960ccfd6a005cd9f7ba884e6316b5e430a3f1a6c37c5f87d8b43f83b54ec9"
+            ],
+            "version": "==17.4.0"
+        },
+        "pluggy": {
+            "hashes": [
+                "sha256:7f8ae7f5bdf75671a718d2daf0a64b7885f74510bcd98b1a0bb420eb9a9d0cff"
+            ],
+            "version": "==0.6.0"
+        },
+        "py": {
+            "hashes": [
+                "sha256:8cca5c229d225f8c1e3085be4fcf306090b00850fefad892f9d96c7b6e2f310f",
+                "sha256:ca18943e28235417756316bfada6cd96b23ce60dd532642690dcfdaba988a76d"
+            ],
+            "version": "==1.5.2"
+        },
+        "pyfrc": {
+            "hashes": [
+                "sha256:4845518cc5f6ea1a03907e080410099a4cc45dc16b91e75bfa7a7a14a2f1f493"
+            ],
+            "version": "==2018.0.3"
+        },
+        "pynetconsole": {
+            "hashes": [
+                "sha256:b619b9d90857094e7221b39dafc4f14ade58b339a288437143a41c25386ccf6d"
+            ],
+            "version": "==2.0.0"
+        },
+        "pynetworktables": {
+            "hashes": [
+                "sha256:54f455b971ea509cebb4e5a05a55e7210f4ff1ad33e51d057c1889619d90e5f7"
+            ],
+            "version": "==2018.0.1"
+        },
+        "pytest": {
+            "hashes": [
+                "sha256:b84878865558194630c6147f44bdaef27222a9f153bbd4a08908b16bf285e0b1",
+                "sha256:53548280ede7818f4dc2ad96608b9f08ae2cc2ca3874f2ceb6f97e3583f25bc4"
+            ],
+            "version": "==3.3.2"
+        },
+        "robotpy-ctre": {
+            "hashes": [
+                "sha256:e50fe7d949e6b203106385d6920a875de3db57c4685536306e03537a61fc0345"
+            ],
+            "version": "==2018.1.0"
+        },
+        "robotpy-hal-base": {
+            "hashes": [
+                "sha256:6fd9a102dfa5457b122b43298cb4328255fcf5b1716cca2472ed1d08fda53c52"
+            ],
+            "version": "==2018.0.10"
+        },
+        "robotpy-hal-sim": {
+            "hashes": [
+                "sha256:1d1d67b6615bd2e326aa9731ede5f2d715ee66c89a725be86c53be9bb2abf011"
+            ],
+            "version": "==2018.0.10"
+        },
+        "robotpy-installer": {
+            "hashes": [
+                "sha256:8833aeb506495f142f884efee9db95b9ceb615ee5096264102855acf2ca3d45c"
+            ],
+            "version": "==2018.0.0"
+        },
+        "robotpy-wpilib-utilities": {
+            "hashes": [
+                "sha256:0e6facee7fa5f444c1cba4d032cde35f1011356f06f68c89042f9533b70cc36f"
+            ],
+            "version": "==2018.0.1"
+        },
+        "six": {
+            "hashes": [
+                "sha256:832dc0e10feb1aa2c68dcc57dbb658f1c7e65b9b61af69048abc87a2db00a0eb",
+                "sha256:70e8a77beed4562e7f14fe23a786b54f6296e34344c23bc42f07b15018ff98e9"
+            ],
+            "version": "==1.11.0"
+        },
+        "wpilib": {
+            "hashes": [
+                "sha256:81430c4bc6cbd07ea7d89b0de24deebd2d2b78525fbd84c68f7554c89cdf6fee"
+            ],
+            "version": "==2018.0.10"
+        }
+    },
+    "develop": {}
+}

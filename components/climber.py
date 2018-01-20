@@ -1,7 +1,8 @@
-import wpilib
+from ctre.talonsrx import TalonSRX
+
 
 class Climber:
-    climber_motor = wpilib.Spark
+    climber_motor = TalonSRX
     climbing = False
 
     def climb(self):
