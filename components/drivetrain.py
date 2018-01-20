@@ -1,8 +1,13 @@
+import math
+
 import wpilib
+import robotpy_ext
+import ctre
 
 from motioncontrol.path import Path
 from motioncontrol.execution import PathTracker
-from motioncontrol.utils import RobotCharacteristics, RobotState, Completed
+from motioncontrol.utils import (
+    RobotCharacteristics, RobotState, Completed, Point)
 
 
 class Drivetrain:
@@ -12,6 +17,12 @@ class Drivetrain:
     robot_characteristics = RobotCharacteristics(
         acceleration_time=2, deceleration_time=3,
         max_speed=1, wheel_base=0.7)
+    robot_state = RobotState()
+    wheel_distances = (0.0, 0.0)
+
+    left_motor = ctre.talonsrx.TalonSRX
+    right_motor = ctre.talonsrx.TalonSRX
+    gyro = robotpy_ext.common_drivers.navx.ahrs.AHRS
 
     def forward_at(self, speed):
         self.forward = speed
@@ -33,9 +44,32 @@ class Drivetrain:
         return self.path_tracker.update()
 
     def get_odometry(self):
-        return RobotState(velocity=1)
+        return self.robot_state
+
+    def _update_odometry(self):
+        new_wheel_distances = (
+            self.left_motor.getQuadraturePosition(),
+            self.right_motor.getQuadraturePosition())
+        delta_left = new_wheel_distances[0] - self.wheel_distances[0]
+        delta_right = new_wheel_distances[1] - self.wheel_distances[1]
+        distance = (delta_left + delta_right) / 2
+
+        theta = self.gyro.getAngle()
+
+        old_position = self.robot_state.position
+
+        delta_x = distance * math.cos(theta)
+        delta_y = distance * math.sin(theta)
+
+        new_position = Point(
+            old_position.x + delta_x, old_position.y + delta_y)
+
+        self.wheel_distances = new_wheel_distances
+        self.robot_state = RobotState(position=new_position, angle=theta)
 
     def execute(self):
+        self._update_odometry()
+
         if self.curvature is not None:
             vl = (self.forward *
                   (1 - (self.robot_characteristics.wheel_base / 2) *
