@@ -5,7 +5,7 @@ from wpilib import drive
 
 from magicbot import MagicRobot
 
-from ctre.talonsrx import TalonSRX
+from ctre.talonsrx import TalonSRX, WPI_TalonSRX
 
 from components.drivetrain import Drivetrain
 from components.climber import Climber
@@ -23,7 +23,7 @@ class Robot(MagicRobot):
     def createObjects(self):
         self.robot_drive = drive.DifferentialDrive(
             wpilib.SpeedControllerGroup(TalonSRX(0), TalonSRX(1)),
-            wpilib.SpeedControllerGroup(TalonSRX(2), wpilib.Spark(3)))
+            wpilib.SpeedControllerGroup(TalonSRX(2), TalonSRX(3)))
 
         self.l_intake_motor = TalonSRX(4)
         self.r_intake_motor = TalonSRX(5)
