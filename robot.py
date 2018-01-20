@@ -5,7 +5,7 @@ from wpilib import drive
 
 from magicbot import MagicRobot
 
-from ctre.talonsrx import TalonSRX, WPI_TalonSRX
+from ctre.talonsrx import TalonSRX
 
 from components.drivetrain import Drivetrain
 from components.climber import Climber
