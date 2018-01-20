@@ -53,7 +53,7 @@ def phase_time(time, start, end):
 def distance_between(first, second) -> float:
     """Find the distance between two points or the length of a vector"""
     x_diff = second[0] - first[0]
-    y_diff = second[0] - first[0]
+    y_diff = second[1] - first[1]
     return math.sqrt(math.pow(x_diff, 2) + math.pow(y_diff, 2))
 
 
@@ -82,7 +82,10 @@ def line_from_point_slope(slope: float, point: Point) -> Line:
 def line_segment_clamp(segment: Line, point: Point) -> Point:
     """Clamp point onto a line segment"""
     x = clamp(point.x, segment.start.x, segment.end.x)
-    y = slope(segment) * x
+    segment_slope = slope(segment)
+    # y = mx + b => b = y - mx
+    y = (segment_slope * x) + (segment.start.y -
+                               (segment_slope * segment.start.x))
     return Point(x, y)
 
 
@@ -92,14 +95,12 @@ def move_point_along_line(segment: Line, point: Point,
     v = (segment.end.x - segment.start.x, segment.end.y - segment.start.y)
     length = distance_between(segment.start, segment.end)
     if length == 0:
-        # If the segment is composed of coincident points, just return
-        # the original point
-        return point
+        return line_segment_clamp(segment, point)
     # Normalize direction vector
     u = (v[0] / length, v[1] / length)
     return line_segment_clamp(segment,
-                              Point(segment.start.x + (distance * u[0]),
-                                    segment.start.y + (distance * u[1])))
+                              Point(point.x + (distance * u[0]),
+                                    point.y + (distance * u[1])))
 
 
 def closest_point_on_line(line_segment: Line, point: Point) -> Point:

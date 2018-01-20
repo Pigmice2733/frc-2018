@@ -2,7 +2,7 @@
 
 from typing import NamedTuple, Callable
 
-from .utilities import clamp
+from .utils import clamp
 
 
 class PIDCoefficients(NamedTuple):

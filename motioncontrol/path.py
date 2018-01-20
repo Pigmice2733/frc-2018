@@ -2,7 +2,7 @@ import math
 import typing
 
 import motioncontrol
-from .utilities import Point, Line, RobotState
+from .utils import Point, Line, RobotState
 
 
 class Action(typing.NamedTuple):

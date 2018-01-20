@@ -2,7 +2,7 @@ import wpilib
 
 from motioncontrol.path import Path
 from motioncontrol.execution import PathTracker
-from motioncontrol.utilities import RobotCharacteristics, RobotState, Completed
+from motioncontrol.utils import RobotCharacteristics, RobotState, Completed
 
 
 class Drivetrain:

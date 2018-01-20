@@ -2,7 +2,7 @@
 
 import math
 
-from .utilities import clamp, phase_time, RobotCharacteristics
+from .utils import clamp, phase_time, RobotCharacteristics
 
 
 class PositionProfile:
