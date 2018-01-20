@@ -2,7 +2,7 @@ import math
 
 import wpilib
 import robotpy_ext
-import ctre
+from ctre import TalonSRX
 
 from motioncontrol.path import Path
 from motioncontrol.execution import PathTracker
@@ -20,8 +20,8 @@ class Drivetrain:
     robot_state = RobotState()
     wheel_distances = (0.0, 0.0)
 
-    left_motor = ctre.talonsrx.TalonSRX
-    right_motor = ctre.talonsrx.TalonSRX
+    lf_motor = TalonSRX
+    rf_motor = TalonSRX
     gyro = robotpy_ext.common_drivers.navx.ahrs.AHRS
 
     def forward_at(self, speed):
@@ -67,6 +67,17 @@ class Drivetrain:
         self.wheel_distances = new_wheel_distances
         self.robot_state = RobotState(position=new_position, angle=theta)
 
+    def _scale_speeds(self, vl: float, vr: float) -> (float, float):
+        """Scales left and right motor speeds to a max of 1.0 if either is
+        greater
+        """
+
+        if math.abs(vl) >= math.abs(vr) and math.abs(vl) > 1.0:
+            return math.copysign(1.0, vl), math.copysign(vr / vl, vr)
+        if math.abs(vr) >= math.abs(vl) and math.abs(vr) > 1.0:
+            return math.copysign(vl / vr, vl), math.copysign(1.0, vr)
+        return vl, vr
+
     def execute(self):
         self._update_odometry()
 
@@ -77,6 +88,8 @@ class Drivetrain:
             vr = (self.forward *
                   (1 + (self.robot_characteristics.wheel_base / 2) *
                    self.curvature))
+            # Ensure speeds are within +1.0/-1.0
+            vl, vr = self._scale_speeds(vl, vr)
             self.robot_drive.tankDrive(vl, vr)
         else:
             self.robot_drive.arcadeDrive(self.forward, self.rotation)
