@@ -19,7 +19,7 @@ class PathTracker:
     def __init__(self, path: Path,
                  robot_characteristics: RobotCharacteristics,
                  time_resolution: float,
-                 acceptable_error_margin: float,
+                 absolute_error: float,
                  lookahead: float,
                  input_source: Callable[[], RobotState],
                  velocity_output: Callable[[float], None],
@@ -38,16 +38,13 @@ class PathTracker:
         self.velocity_output = velocity_output
         self.curvature_output = curvature_output
 
-        target_distance = 2
-
-        distance_profile = DistanceProfile(robot_characteristics,
-                                           target_distance)
+        distance_profile = DistanceProfile(robot_characteristics)
         self.profile_executor = DistanceProfileExecutor(
             distance_profile, time_resolution,
             (lambda: distance_between(self.input_source().position,
                                       self.path.points[-1])),
             (lambda: self.input_source().velocity),
-            velocity_output, acceptable_error_margin
+            velocity_output, absolute_error
         )
 
     def update(self) -> bool:
@@ -120,30 +117,30 @@ class DistanceProfileExecutor:
             self,
             motion_profile: DistanceProfile,
             time_resolution: float,
-            position_input: Callable[[], float],
+            distance_input: Callable[[], float],
             velocity_input: Callable[[], float],
             output: Callable[[float], None],
-            acceptable_error_margin: float,
+            absolute_error: float,
     ):
         """Uses a distance to velocity motion profile to effciently control
-        motion.current_goal_position = self.motion_profile.position(time_delta)
+        motion.
 
-        Uses `position_input` to retrieve the robot's position since the start
-         of the profile, and `velocity_input` to get the robot's current
+        Uses `distance_input` to retrieve the remaining distance the robot
+         should travel, and `velocity_input` to get the robot's current
          velocity.
 
-        Uses `output` to write optimal velocity. `acceptable_error_margin` is
-         the acceptable percent error as a decimal.
+        Uses `output` to write optimal velocity. `absolute_error` is
+         the acceptable error in terms of the relevant units.
 
         `time_resolution` is the expected amount of time between updates to
          the executor. A smaller resolution will result in improved perforance.
          If the actual time between updates differs too much from
          `time_resolution` the performance of the motion profile will suffer.
         """
-        self.position_input = position_input
+        self.distance_input = distance_input
         self.velocity_input = velocity_input
         self.output = output
-        self.acceptable_error_margin = acceptable_error_margin
+        self.absolute_error = absolute_error
         self.motion_profile = motion_profile
         self.time_look_ahead = time_resolution
 
@@ -152,18 +149,15 @@ class DistanceProfileExecutor:
          if profile is completed (robot is within error margin of
          target), otherwise `False`.
         """
-        current_position = self.position_input()
+        remaining_distance = self.distance_input()
         current_velocity = self.velocity_input()
 
         velocity, acceleration = self.motion_profile.velocity(
-            current_velocity, current_position)
+            current_velocity, remaining_distance)
 
         optimal_velocity = velocity + (acceleration * self.time_look_ahead)
 
-        error = (abs(self.motion_profile.target_distance - current_position) /
-                 abs(self.motion_profile.target_distance))
-
-        if error < self.acceptable_error_margin:
+        if remaining_distance < self.absolute_error:
             self.output(0.0)
             return True
 
