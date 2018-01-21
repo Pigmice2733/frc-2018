@@ -20,8 +20,8 @@ class Drivetrain:
     robot_state = RobotState()
     wheel_distances = (0.0, 0.0)
 
-    left_front_drive = WPI_TalonSRX
-    right_front_drive = WPI_TalonSRX
+    left_drive_motor = WPI_TalonSRX
+    right_drive_motor = WPI_TalonSRX
     navx = AHRS
 
     def forward_at(self, speed):
@@ -48,8 +48,8 @@ class Drivetrain:
 
     def _update_odometry(self):
         new_wheel_distances = (
-            self.left_motor.getQuadraturePosition(),
-            self.right_motor.getQuadraturePosition())
+            self.left_drive_motor.getQuadraturePosition(),
+            self.right_drive_motor.getQuadraturePosition())
         delta_left = new_wheel_distances[0] - self.wheel_distances[0]
         delta_right = new_wheel_distances[1] - self.wheel_distances[1]
         distance = (delta_left + delta_right) / 2

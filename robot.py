@@ -23,19 +23,16 @@ class Robot(MagicRobot):
     scale_arm = ScaleArm
 
     def createObjects(self):
-        self.left_front_drive = WPI_TalonSRX(0)
-        self.left_back_drive = WPI_TalonSRX(1)
-        self.right_front_drive = WPI_TalonSRX(2)
-        self.right_back_drive = WPI_TalonSRX(3)
+        self.left_drive_motor = WPI_TalonSRX(0)
+        self.right_drive_motor = WPI_TalonSRX(2)
 
-        self.left_back_drive.set(WPI_TalonSRX.ControlMode.Follower,
-                                 self.left_front_drive.getDeviceID())
+        WPI_TalonSRX(1).set(WPI_TalonSRX.ControlMode.Follower,
+                            self.left_drive_motor.getDeviceID())
+        WPI_TalonSRX(3).set(WPI_TalonSRX.ControlMode.Follower,
+                            self.right_drive_motor.getDeviceID())
 
-        self.right_back_drive.set(WPI_TalonSRX.ControlMode.Follower,
-                                  self.right_front_drive.getDeviceID())
-
-        self.robot_drive = drive.DifferentialDrive(self.left_front_drive,
-                                                   self.right_front_drive)
+        self.robot_drive = drive.DifferentialDrive(self.left_drive_motor,
+                                                   self.right_drive_motor)
 
         self.l_intake_motor = WPI_TalonSRX(4)
         self.r_intake_motor = WPI_TalonSRX(5)
