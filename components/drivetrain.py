@@ -20,8 +20,8 @@ class Drivetrain:
     robot_state = RobotState()
     wheel_distances = (0.0, 0.0)
 
-    lf_motor = WPI_TalonSRX
-    rf_motor = WPI_TalonSRX
+    left_front_drive = WPI_TalonSRX
+    right_front_motor = WPI_TalonSRX
     navx = AHRS
 
     def forward_at(self, speed):
