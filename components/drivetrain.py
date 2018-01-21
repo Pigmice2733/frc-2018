@@ -1,8 +1,8 @@
 import math
 
-import wpilib
-import robotpy_ext
-from ctre import TalonSRX
+from wpilib import drive
+from robotpy_ext.common_drivers.navx.ahrs import AHRS
+from ctre.wpi_talonsrx import WPI_TalonSRX
 
 from motioncontrol.path import Path
 from motioncontrol.execution import PathTracker
@@ -11,7 +11,7 @@ from motioncontrol.utils import (
 
 
 class Drivetrain:
-    robot_drive = wpilib.RobotDrive
+    robot_drive = drive.DifferentialDrive
     rotation = 0
     forward = 0
     robot_characteristics = RobotCharacteristics(
@@ -20,9 +20,9 @@ class Drivetrain:
     robot_state = RobotState()
     wheel_distances = (0.0, 0.0)
 
-    lf_motor = TalonSRX
-    rf_motor = TalonSRX
-    gyro = robotpy_ext.common_drivers.navx.ahrs.AHRS
+    lf_motor = WPI_TalonSRX
+    rf_motor = WPI_TalonSRX
+    gyro = AHRS
 
     def forward_at(self, speed):
         self.forward = speed
