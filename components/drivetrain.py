@@ -54,7 +54,7 @@ class Drivetrain:
         delta_right = new_wheel_distances[1] - self.wheel_distances[1]
         distance = (delta_left + delta_right) / 2
 
-        theta = self.gyro.getAngle()
+        theta = self.navx.getAngle()
 
         old_position = self.robot_state.position
 
