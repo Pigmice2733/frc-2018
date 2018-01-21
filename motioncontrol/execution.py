@@ -33,11 +33,15 @@ class PathTracker:
         `curvature_output`: Callable to write the optimal curvature to
         """
         self.path = path
+        self.lookahead = lookahead
         self.input_source = input_source
         self.velocity_output = velocity_output
         self.curvature_output = curvature_output
 
-        distance_profile = DistanceProfile(robot_characteristics)
+        target_distance = 2
+
+        distance_profile = DistanceProfile(robot_characteristics,
+                                           target_distance)
         self.profile_executor = DistanceProfileExecutor(
             distance_profile, time_resolution,
             (lambda: distance_between(self.input_source().position,

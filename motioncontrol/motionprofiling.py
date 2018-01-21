@@ -132,7 +132,7 @@ class DistanceProfile:
     Resolves remaining distance to optimal velocity
     """
 
-    def __init__(self, robot: RobotCharacteristics):
+    def __init__(self, robot: RobotCharacteristics, target_distance):
         """Create a motion profile to efficiently travel whatever distance
         is returned each step by `remaining_distance`
 
@@ -142,6 +142,7 @@ class DistanceProfile:
         self.full_acceleration_time = robot.acceleration_time
         self.full_deceleration_time = robot.deceleration_time
         self.max_speed = robot.max_speed
+        self.target_distance = target_distance
 
         self.acceleration = robot.max_speed / robot.acceleration_time
         self.deceleration = -robot.max_speed / robot.deceleration_time
