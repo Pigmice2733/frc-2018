@@ -21,7 +21,7 @@ class Drivetrain:
     wheel_distances = (0.0, 0.0)
 
     left_front_drive = WPI_TalonSRX
-    right_front_motor = WPI_TalonSRX
+    right_front_drive = WPI_TalonSRX
     navx = AHRS
 
     def forward_at(self, speed):
