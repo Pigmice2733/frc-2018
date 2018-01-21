@@ -141,7 +141,7 @@ def line_intersection(first: Line, second: Line) -> Point:
         return (a[0] * b[1]) - (a[1] * b[0])
 
     divisor = determinant(x_diff, y_diff)
-    if math.fabs(divisor) < 0.000001:
+    if math.fabs(divisor) < 1e-6:
         # No useful intersection - either coincident or parallel lines
         return None
 

@@ -16,7 +16,7 @@ class Drivetrain:
     forward = 0
     curvature = 0
     robot_characteristics = RobotCharacteristics(
-        acceleration_time=2, deceleration_time=3,
+        acceleration_time=0.5, deceleration_time=3,
         max_speed=1, wheel_base=0.7)
     robot_state = RobotState()
     wheel_distances = (0.0, 0.0)
@@ -38,7 +38,7 @@ class Drivetrain:
 
     def set_path(self, path: Path):
         self.path_tracker = PathTracker(
-            path, self.robot_characteristics, 0.02, 0.05, 0.4,
+            path, self.robot_characteristics, 0.2, 0.05, 0.4,
             self.get_odometry, self.forward_at, self.curve_at)
 
     def follow_path(self) -> Completed:
@@ -66,7 +66,10 @@ class Drivetrain:
             old_position.x + delta_x, old_position.y + delta_y)
 
         self.wheel_distances = new_wheel_distances
-        self.robot_state = RobotState(position=new_position, angle=theta)
+        current_velocity = (self.left_drive_motor.getQuadratureVelocity(
+        ) + self.right_drive_motor.getQuadratureVelocity()) / 2
+        self.robot_state = RobotState(
+            velocity=current_velocity, position=new_position, angle=theta)
 
     def _scale_speeds(self, vl: float, vr: float) -> (float, float):
         """Scales left and right motor speeds to a max of 1.0 if either is
@@ -83,15 +86,22 @@ class Drivetrain:
         self._update_odometry()
 
         if self.curvature is not None:
-            vl = (self.forward *
-                  (1 - (self.robot_characteristics.wheel_base / 2) *
-                   self.curvature))
-            vr = (self.forward *
-                  (1 + (self.robot_characteristics.wheel_base / 2) *
-                   self.curvature))
-            # Ensure speeds are within +1.0/-1.0
-            vl, vr = self._scale_speeds(vl, vr)
-            self.robot_drive.tankDrive(vl, vr)
+            if math.fabs(self.curvature) > 1e-6:
+                radius = 1.0 / self.curvature
+                left_radius = (
+                    radius - self.robot_characteristics.wheel_base / 2)
+                right_radius = (
+                    radius + self.robot_characteristics.wheel_base / 2)
+
+                v_left = left_radius / radius
+                v_right = right_radius / radius
+
+                v_left, v_right = self._scale_speeds(
+                    v_left, v_right)
+                self.robot_drive.tankDrive(
+                    v_left, v_right, squaredInputs=False)
+            else:
+                self.robot_drive.tankDrive(self.forward, self.forward)
         else:
             self.robot_drive.arcadeDrive(self.forward, self.rotation)
 

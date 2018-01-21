@@ -21,7 +21,7 @@ class Path:
         when the robot is within `error_margin` of the end of the path.
         """
         # How far apart numbers can be and still be considered equal
-        self.approximation_error = 0.001
+        self.approximation_error = 1e-3
 
         position = Point(0.0, 0.0)
         rotation = math.pi / 2
