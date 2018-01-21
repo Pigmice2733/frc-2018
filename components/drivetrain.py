@@ -14,6 +14,7 @@ class Drivetrain:
     robot_drive = drive.DifferentialDrive
     rotation = 0
     forward = 0
+    curvature = 0
     robot_characteristics = RobotCharacteristics(
         acceleration_time=2, deceleration_time=3,
         max_speed=1, wheel_base=0.7)
@@ -72,9 +73,9 @@ class Drivetrain:
         greater
         """
 
-        if math.abs(vl) >= math.abs(vr) and math.abs(vl) > 1.0:
+        if abs(vl) >= abs(vr) and abs(vl) > 1.0:
             return math.copysign(1.0, vl), math.copysign(vr / vl, vr)
-        if math.abs(vr) >= math.abs(vl) and math.abs(vr) > 1.0:
+        if abs(vr) >= abs(vl) and abs(vr) > 1.0:
             return math.copysign(vl / vr, vl), math.copysign(1.0, vr)
         return vl, vr
 
