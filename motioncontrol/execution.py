@@ -40,9 +40,9 @@ class PathTracker:
         distance_profile = DistanceProfile(robot_characteristics)
         self.profile_executor = DistanceProfileExecutor(
             distance_profile, time_resolution,
-            (lambda _: distance_between(self.input_source().position,
-                                        self.path[-1])),
-            (lambda _: self.input_source().velocity),
+            (lambda: distance_between(self.input_source().position,
+                                      self.path.points[-1])),
+            (lambda: self.input_source().velocity),
             velocity_output, acceptable_error_margin
         )
 
