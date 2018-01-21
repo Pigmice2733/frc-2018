@@ -3,6 +3,8 @@
 import wpilib
 from wpilib import drive
 
+from robotpy_ext.common_drivers.navx.ahrs import AHRS
+
 from magicbot import MagicRobot
 
 from ctre.wpi_talonsrx import WPI_TalonSRX
@@ -39,6 +41,8 @@ class Robot(MagicRobot):
         self.r_intake_motor = WPI_TalonSRX(5)
         self.scale_arm_motor = WPI_TalonSRX(6)
         self.climber_motor = WPI_TalonSRX(7)
+
+        self.navx = AHRS.create_spi()
 
         self.drive_joystick = wpilib.Joystick(0)
         self.operator_joystick = wpilib.Joystick(1)

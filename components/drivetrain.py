@@ -22,7 +22,7 @@ class Drivetrain:
 
     lf_motor = WPI_TalonSRX
     rf_motor = WPI_TalonSRX
-    gyro = AHRS
+    navx = AHRS
 
     def forward_at(self, speed):
         self.forward = speed
