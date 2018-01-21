@@ -1,4 +1,4 @@
-from pyfrc.physics.drivetrains import four_motor_drivetrain
+from pyfrc.physics.drivetrains import two_motor_drivetrain
 
 
 class PhysicsEngine:
@@ -10,11 +10,9 @@ class PhysicsEngine:
     def update_sim(self, hal_data, now, tm_diff):
         """ Updates the simulation with new robot positions """
 
-        fl = hal_data['CAN'][0]['value']
-        bl = hal_data['CAN'][1]['value']
-        fr = -hal_data['CAN'][2]['value']
-        br = -hal_data['CAN'][3]['value']
+        left = hal_data['CAN'][0]['value']
+        right = hal_data['CAN'][2]['value']
 
-        rotation, speed = four_motor_drivetrain(bl, br, fl, fr, 3, 0.025)
+        rotation, speed = two_motor_drivetrain(left, right, 3, 0.025)
 
         self.controller.drive(speed, rotation * 0.75, tm_diff)
