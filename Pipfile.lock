@@ -98,9 +98,9 @@
         },
         "robotpy-ctre": {
             "hashes": [
-                "sha256:e50fe7d949e6b203106385d6920a875de3db57c4685536306e03537a61fc0345"
+                "sha256:bd5faeeac4c9a7180439d6fcf93eb3afbe25a5eb1417d8ee07f3b8e52f62a3bf"
             ],
-            "version": "==2018.1.0"
+            "version": "==2018.1.1"
         },
         "robotpy-hal-base": {
             "hashes": [

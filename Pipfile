@@ -8,8 +8,8 @@ name = "pypi"
 [packages]
 
 pyfrc = "*"
-robotpy-ctre = "*"
 pygame = "*"
+robotpy-ctre = "*"
 
 
 [dev-packages]
