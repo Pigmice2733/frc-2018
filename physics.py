@@ -9,19 +9,23 @@ class PhysicsEngine:
     def __init__(self, controller):
         self.controller = controller
         self.controller.add_device_gyro_channel('navxmxp_spi_4_angle')
+        self.srxMagTicks = 1024 * 4 * 3
 
     def update_sim(self, hal_data, now, tm_diff):
         """ Updates the simulation with new robot positions """
 
-        left = hal_data['CAN'][0]['value']
-        right = hal_data['CAN'][2]['value']
+        left_speed = hal_data['CAN'][0]['value']
+        right_speed = hal_data['CAN'][2]['value']
 
-        left_pos = hal_data['CAN'][0]['quad_position'] + left * scale
-        hal_data['CAN'][0]['quad_position'] = left_pos
+        left_distance = left_speed * tm_diff * self.srxMagTicks
+        right_distance = right_speed * tm_diff * self.srxMagTicks
 
-        right_pos = hal_data['CAN'][2]['quad_position'] + right * scale
-        hal_data['CAN'][2]['quad_position'] = right_pos
+        hal_data['CAN'][0]['quad_position'] += int(left_distance)
+        hal_data['CAN'][2]['quad_position'] -= int(right_distance)
 
-        rotation, speed = two_motor_drivetrain(left, right, 3, 0.025)
+        hal_data['CAN'][0]['quad_velocity'] = int(left_distance / tm_diff)
+        hal_data['CAN'][2]['quad_velocity'] = int(right_distance / tm_diff)
 
-        self.controller.drive(speed, rotation * 0.75, tm_diff)
+        speed, rotation = two_motor_drivetrain(left_speed, right_speed, 3, 4)
+
+        self.controller.drive(-speed, -rotation * 0.75, tm_diff)

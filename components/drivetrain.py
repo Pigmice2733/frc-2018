@@ -6,8 +6,8 @@ from ctre.wpi_talonsrx import WPI_TalonSRX
 
 from motioncontrol.path import Path
 from motioncontrol.execution import PathTracker
-from motioncontrol.utils import (
-    RobotCharacteristics, RobotState, Completed, Point)
+from motioncontrol.utils import (RobotCharacteristics, RobotState, Completed,
+                                 Point)
 
 
 class Drivetrain:
@@ -31,7 +31,7 @@ class Drivetrain:
     def turn_at(self, speed, squaredInputs=False):
         self.rotation = speed
         if squaredInputs:
-            self.rotation = speed**2 if speed >= 0 else -(speed**2)
+            self.rotation = math.copysign(speed**2, speed)
 
     def curve_at(self, curvature):
         self.curvature = curvature
@@ -49,21 +49,24 @@ class Drivetrain:
 
     def _update_odometry(self):
         new_wheel_distances = (
-            self.left_drive_motor.getQuadraturePosition(),
-            self.right_drive_motor.getQuadraturePosition())
+            self.left_drive_motor.getQuadraturePosition() / 1000,
+            self.right_drive_motor.getQuadraturePosition() / 1000)
         delta_left = new_wheel_distances[0] - self.wheel_distances[0]
         delta_right = new_wheel_distances[1] - self.wheel_distances[1]
         distance = (delta_left + delta_right) / 2
 
-        theta = self.navx.getAngle()
+        theta = math.radians(self.navx.getAngle()) + math.pi / 2
 
         old_position = self.robot_state.position
 
-        delta_x = distance * math.cos(theta)
-        delta_y = distance * math.sin(theta)
+        delta_x = round(distance * math.cos(theta), 3)
+        delta_y = round(distance * math.sin(theta), 3)
 
-        new_position = Point(
-            old_position.x + delta_x, old_position.y + delta_y)
+        current_velocity = (self.right_drive_motor.getQuadratureVelocity() -
+                            self.left_drive_motor.getQuadratureVelocity()) / 2
+
+        new_position = Point(old_position.x + delta_x,
+                             old_position.y + delta_y)
 
         self.wheel_distances = new_wheel_distances
         current_velocity = (self.left_drive_motor.getQuadratureVelocity(
@@ -103,7 +106,8 @@ class Drivetrain:
             else:
                 self.robot_drive.tankDrive(self.forward, self.forward)
         else:
-            self.robot_drive.arcadeDrive(self.forward, self.rotation)
+            self.robot_drive.arcadeDrive(
+                -self.forward, self.rotation, squaredInputs=False)
 
         self.rotation = 0
         self.forward = 0

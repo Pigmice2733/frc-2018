@@ -13,6 +13,6 @@ class SwitchAutonomous(AutonomousStateMachine):
     def start(self, initial_call):
         if initial_call:
             self.drivetrain.set_path(
-                Path(Path.forward(50), Path.rotate(90), Path.forward(1)))
+                Path(Path.forward(10), Path.rotate(90), Path.forward(1)))
         if self.drivetrain.follow_path().done:
             self.done()
