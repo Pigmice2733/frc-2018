@@ -6,7 +6,7 @@ class NetworkTablesTupleStreamer:
         """value must be a tuple"""
         assert isinstance(value, tuple)
         for key in value._fields:
-            key, getattr(value, key)
+            self._send_value(key, getattr(value, key))
 
     def _send_value(self, key, value):
         if isinstance(value, tuple):

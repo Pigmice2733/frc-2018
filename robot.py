@@ -48,7 +48,7 @@ class Robot(MagicRobot):
         self.drive_joystick = wpilib.Joystick(0)
         self.operator_joystick = wpilib.Joystick(1)
 
-        robot_state_table = NetworkTables.getTable("RobotState")
+        robot_state_table = NetworkTables.getTable("robotState")
         self.robot_state_streamer = NetworkTablesTupleStreamer(
             robot_state_table)
 
