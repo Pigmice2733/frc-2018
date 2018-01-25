@@ -8,6 +8,7 @@ from motioncontrol.path import Path
 from motioncontrol.execution import PathTracker
 from motioncontrol.utils import (RobotCharacteristics, RobotState, Completed,
                                  Point)
+from utils import NetworkTablesTupleStreamer
 
 
 class Drivetrain:
@@ -24,6 +25,8 @@ class Drivetrain:
     left_drive_motor = WPI_TalonSRX
     right_drive_motor = WPI_TalonSRX
     navx = AHRS
+
+    robot_state_streamer = NetworkTablesTupleStreamer
 
     def forward_at(self, speed):
         self.forward = speed
@@ -73,6 +76,8 @@ class Drivetrain:
         ) + self.right_drive_motor.getQuadratureVelocity()) / 2
         self.robot_state = RobotState(
             velocity=current_velocity, position=new_position, angle=theta)
+
+        self.robot_state_streamer.stream(self.robot_state)
 
     def _scale_speeds(self, vl: float, vr: float) -> (float, float):
         """Scales left and right motor speeds to a max of 1.0 if either is
