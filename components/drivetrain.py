@@ -119,7 +119,7 @@ class Drivetrain:
                 self.robot_drive.tankDrive(self.forward, self.forward)
         else:
             self.robot_drive.arcadeDrive(
-                -self.forward, self.rotation, squaredInputs=False)
+                self.forward, self.rotation, squaredInputs=False)
 
         self.rotation = 0
         self.forward = 0

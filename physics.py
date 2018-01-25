@@ -8,13 +8,12 @@ class PhysicsEngine:
         self.controller = controller
         self.controller.add_device_gyro_channel('navxmxp_spi_4_angle')
         self.srxMagTicks = 1024 * 4
-        self.CANDutyCycle = 1023
 
     def update_sim(self, hal_data, now, tm_diff):
         """ Updates the simulation with new robot positions """
 
-        left_speed = hal_data['CAN'][0]['value'] / self.CANDutyCycle
-        right_speed = hal_data['CAN'][2]['value'] / self.CANDutyCycle
+        left_speed = hal_data['CAN'][0]['value']
+        right_speed = hal_data['CAN'][2]['value']
 
         left_distance = left_speed * (3 * tm_diff) * self.srxMagTicks
         right_distance = right_speed * (3 * tm_diff) * self.srxMagTicks
