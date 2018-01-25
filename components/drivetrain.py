@@ -19,7 +19,6 @@ class Drivetrain:
     robot_characteristics = RobotCharacteristics(
         acceleration_time=0.5, deceleration_time=3,
         max_speed=1, wheel_base=0.7)
-    robot_state = RobotState()
     wheel_distances = (0.0, 0.0)
 
     left_drive_motor = WPI_TalonSRX
@@ -27,6 +26,13 @@ class Drivetrain:
     navx = AHRS
 
     robot_state_streamer = NetworkTablesTupleStreamer
+
+    def setup(self):
+        try:
+            self.robot_state_streamer.stream(self.robot_state)
+        except AttributeError:
+            self.robot_state = RobotState()
+            self.robot_state_streamer.stream(self.robot_state)
 
     def forward_at(self, speed):
         self.forward = speed
@@ -92,6 +98,7 @@ class Drivetrain:
 
     def execute(self):
         self._update_odometry()
+        print(self.robot_state)
 
         if self.curvature is not None:
             if math.fabs(self.curvature) > 1e-6:

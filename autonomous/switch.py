@@ -1,6 +1,7 @@
 from magicbot.state_machine import AutonomousStateMachine, state
 from components.drivetrain import Drivetrain
 from motioncontrol.path import Path
+from motioncontrol.utils import RobotState, Point
 
 
 class SwitchAutonomous(AutonomousStateMachine):
@@ -8,6 +9,10 @@ class SwitchAutonomous(AutonomousStateMachine):
     DEFAULT = True
 
     drivetrain = Drivetrain
+
+    def __init__(self, *args, **kwargs):
+        super().__init__()
+        self.drivetrain.robot_state = RobotState(position=Point(5, 0))
 
     @state(first=True)
     def start(self, initial_call):
