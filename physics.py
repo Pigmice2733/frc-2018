@@ -1,7 +1,5 @@
 from pyfrc.physics.drivetrains import two_motor_drivetrain
 
-scale = 0.5
-
 
 class PhysicsEngine:
     """ This is the engine which runs with the sim """
@@ -9,19 +7,20 @@ class PhysicsEngine:
     def __init__(self, controller):
         self.controller = controller
         self.controller.add_device_gyro_channel('navxmxp_spi_4_angle')
-        self.srxMagTicks = 1024 * 4 * 3
+        self.srxMagTicks = 1024 * 4
+        self.CANDutyCycle = 1023
 
     def update_sim(self, hal_data, now, tm_diff):
         """ Updates the simulation with new robot positions """
 
-        left_speed = hal_data['CAN'][0]['value']
-        right_speed = hal_data['CAN'][2]['value']
+        left_speed = hal_data['CAN'][0]['value'] / self.CANDutyCycle
+        right_speed = hal_data['CAN'][2]['value'] / self.CANDutyCycle
 
-        left_distance = left_speed * tm_diff * self.srxMagTicks
-        right_distance = right_speed * tm_diff * self.srxMagTicks
+        left_distance = left_speed * (3 * tm_diff) * self.srxMagTicks
+        right_distance = right_speed * (3 * tm_diff) * self.srxMagTicks
 
         hal_data['CAN'][0]['quad_position'] += int(left_distance)
-        hal_data['CAN'][2]['quad_position'] -= int(right_distance)
+        hal_data['CAN'][2]['quad_position'] += int(right_distance)
 
         hal_data['CAN'][0]['quad_velocity'] = int(left_distance / tm_diff)
         hal_data['CAN'][2]['quad_velocity'] = int(right_distance / tm_diff)

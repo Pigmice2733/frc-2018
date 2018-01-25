@@ -52,8 +52,8 @@ class Drivetrain:
 
     def _update_odometry(self):
         new_wheel_distances = (
-            self.left_drive_motor.getQuadraturePosition() / 1000,
-            self.right_drive_motor.getQuadraturePosition() / 1000)
+            self.left_drive_motor.getQuadraturePosition() / (1024 * 4),
+            -self.right_drive_motor.getQuadraturePosition() / (1024 * 4))
         delta_left = new_wheel_distances[0] - self.wheel_distances[0]
         delta_right = new_wheel_distances[1] - self.wheel_distances[1]
         distance = (delta_left + delta_right) / 2
@@ -65,15 +65,15 @@ class Drivetrain:
         delta_x = round(distance * math.cos(theta), 3)
         delta_y = round(distance * math.sin(theta), 3)
 
-        current_velocity = (self.right_drive_motor.getQuadratureVelocity() -
-                            self.left_drive_motor.getQuadratureVelocity()) / 2
-
         new_position = Point(old_position.x + delta_x,
                              old_position.y + delta_y)
 
         self.wheel_distances = new_wheel_distances
-        current_velocity = (self.left_drive_motor.getQuadratureVelocity(
-        ) + self.right_drive_motor.getQuadratureVelocity()) / 2
+
+        current_velocity = ((self.left_drive_motor.getQuadratureVelocity() +
+                             self.right_drive_motor.getQuadratureVelocity()) /
+                            (2 * (1024 * 4)))
+
         self.robot_state = RobotState(
             velocity=current_velocity, position=new_position, angle=theta)
 
