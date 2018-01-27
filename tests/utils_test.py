@@ -4,6 +4,14 @@ import math
 from motioncontrol import utils
 
 
+def test_approximately_equal():
+    assert utils.approximately_equal(1.000000000000, 1.00000000000001)
+    assert utils.approximately_equal(-2.000000000001, -1.999999999999)
+    assert not utils.approximately_equal(-2.001, -1.9998)
+    assert not utils.approximately_equal(-5, 5)
+    assert not utils.approximately_equal(-7.9999, 7.9999)
+
+
 def test_clamp():
     assert utils.clamp(0.5, 0.0, 1.0) == 0.5
     assert utils.clamp(0.5, 1.0, 2.0) == 1.0
@@ -142,6 +150,24 @@ def test_closest_point_on_line():
     vertical_line = utils.Line(utils.Point(0.0, 0.0), utils.Point(0.0, -10.0))
     assert utils.closest_point_on_line(vertical_line, utils.Point(
         1.0, -12.0)) == pytest.approx(utils.Point(0.0, -10.0))
+
+
+def test_vehicle_coords():
+    origin = utils.Point(12, 12)
+    point = utils.Point(12, 14)
+    coords = utils.vehicle_coords(origin, math.pi / 2 - math.pi / 2, point)
+    assert coords == pytest.approx(utils.Point(0, 2))
+    coords = utils.vehicle_coords(origin, math.pi / 2 + math.pi / 2, point)
+    assert coords == pytest.approx(utils.Point(0, -2))
+    coords = utils.vehicle_coords(origin, math.pi / 2 - math.pi / 4, point)
+    x = - math.sqrt(2)
+    y = math.sqrt(2)
+    assert coords == pytest.approx(utils.Point(x, y))
+    origin = utils.Point(-10, 10)
+    point = utils.Point(-8, 10)
+    coords = utils.vehicle_coords(
+        origin, math.pi / 2 - (3 * math.pi / 2), point)
+    assert coords == pytest.approx(utils.Point(-2, 0))
 
 
 def test_line_intersection():

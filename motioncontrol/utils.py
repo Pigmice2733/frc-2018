@@ -17,7 +17,7 @@ class Line(typing.NamedTuple):
 class RobotState(typing.NamedTuple):
     velocity: float = 0.0
     position: Point = Point(0, 0)
-    angle: float = math.pi / 2
+    rotation: float = math.pi / 2
 
 
 class Completed(typing.NamedTuple):
@@ -32,6 +32,10 @@ class RobotCharacteristics(typing.NamedTuple):
     deceleration_time: float
     max_speed: float
     wheel_base: float
+
+
+def approximately_equal(first, second, error=1e-6):
+    return math.fabs(first - second) < error
 
 
 def clamp(value, minimum, maximum):
@@ -81,7 +85,7 @@ def line_from_point_slope(slope: float, point: Point) -> Line:
 
 def line_segment_clamp(segment: Line, point: Point) -> Point:
     """Clamp point onto a line segment"""
-    if segment.start.x == segment.end.x:
+    if approximately_equal(segment.start.x, segment.end.x):
         y = clamp(point.y, segment.start.y, segment.end.y)
         return Point(segment.start.x, y)
     x = clamp(point.x, segment.start.x, segment.end.x)
@@ -97,7 +101,7 @@ def move_point_along_line(segment: Line, point: Point,
     """Get a new point `distance` farther along `segment` than `point`"""
     v = (segment.end.x - segment.start.x, segment.end.y - segment.start.y)
     length = distance_between(segment.start, segment.end)
-    if length == 0:
+    if approximately_equal(length, 0):
         return line_segment_clamp(segment, point)
     # Normalize direction vector
     u = (v[0] / length, v[1] / length)
@@ -111,11 +115,11 @@ def closest_point_on_line(line_segment: Line, point: Point) -> Point:
     to the given point
     """
     closest = None
-    if line_segment.start.x == line_segment.end.x:
+    if approximately_equal(line_segment.start.x, line_segment.end.x):
         closest = Point(line_segment.start.x,
                         clamp(point.y,
                               line_segment.start.y, line_segment.end.y))
-    elif line_segment.start.y == line_segment.end.y:
+    elif approximately_equal(line_segment.start.y, line_segment.end.y):
         closest = Point(clamp(point.x, line_segment.start.x,
                               line_segment.end.x), line_segment.start.y)
     else:
@@ -127,6 +131,19 @@ def closest_point_on_line(line_segment: Line, point: Point) -> Point:
         assert closest is not None
 
     return line_segment_clamp(line_segment, closest)
+
+
+def vehicle_coords(position: Point, rotation: float, point: Point) -> Point:
+    """Transform `point` into vehicle coords based on
+    `position` and `rotation`
+    """
+    dx = point.x - position.x
+    dy = point.y - position.y
+
+    x = (dx * math.cos(rotation)) - (dy * math.sin(rotation))
+    y = (dy * math.cos(rotation)) + (dx * math.sin(rotation))
+
+    return Point(x=x, y=y)
 
 
 def line_intersection(first: Line, second: Line) -> Point:
