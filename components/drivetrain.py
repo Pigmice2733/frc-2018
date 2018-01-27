@@ -25,6 +25,8 @@ class Drivetrain:
     right_drive_motor = WPI_TalonSRX
     navx = AHRS
 
+    robot_state = RobotState()
+
     path_tracking_streamer = NetworkTablesStreamer
 
     def forward_at(self, speed):
