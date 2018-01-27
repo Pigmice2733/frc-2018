@@ -16,15 +16,17 @@ class Path:
     Provides methods to calculate desired robot heading to follow path
     """
 
-    def __init__(self, *actions: typing.List[Action]):
-        """Constructs a `Path` between the `waypoints`. The path is over
-        when the robot is within `error_margin` of the end of the path.
+    def __init__(self, initial_robot_state: RobotState,
+                 actions: typing.List[Action]):
+        """Constructs a `Path` using the `actions`, starting from
+        `initial_robot_state`.
         """
         # How far apart numbers can be and still be considered equal
         self.approximation_error = 1e-3
+        self.initial_state = initial_robot_state
 
-        position = Point(0.0, 0.0)
-        rotation = math.pi / 2
+        position = self.initial_state.position
+        rotation = self.initial_state.rotation
         self.points = [position]
 
         for action in actions:
@@ -39,19 +41,20 @@ class Path:
         """Given the current pose of the robot, calculate the optimal heading
         to follow the path.
         """
-        closest, closest_path_index = self.find_closest_point(
+        closest, closest_path_index = self._find_closest_point(
             robot_state.position)
-        goal = self.find_goal_point(closest, closest_path_index, lookahead)
-        D = utils.distance_between(robot_state.position, goal)
-        orientation_error = utils.line_angle(
-            robot_state.position, goal) - robot_state.angle
-        dX = ((goal.x - robot_state.position.x) * math.cos(orientation_error) +
-              (goal.y - robot_state.position.y) * math.sin(orientation_error))
+        goal = self._find_goal_point(closest, closest_path_index, lookahead)
 
-        curvature = -(2 * dX) / (D * D)
+        goal = utils.vehicle_coords(
+            robot_state.position, math.pi / 2 - robot_state.rotation, goal)
+
+        D = utils.distance_between(Point(), goal)
+        x = goal.x
+
+        curvature = -(2 * x) / (D * D)
         return curvature
 
-    def find_closest_point(self, point: Point) -> (Point, int):
+    def _find_closest_point(self, point: Point) -> (Point, int):
         """Find the closest point on the path to the given point"""
         closest = self.points[0]
         closest_distance = utils.distance_between(closest, point)
@@ -59,7 +62,7 @@ class Path:
         path_index = 0
 
         for i in range(0, len(self.points) - 1):
-            line = Line(self.points[path_index], self.points[path_index + 1])
+            line = Line(self.points[i], self.points[i + 1])
             candidate = utils.closest_point_on_line(line, point)
             candidate_distance = utils.distance_between(
                 candidate, point)
@@ -70,8 +73,8 @@ class Path:
 
         return closest, path_index
 
-    def find_goal_point(self, closest_point: Point, path_index: int,
-                        lookahead: float) -> Point:
+    def _find_goal_point(self, closest_point: Point, path_index: int,
+                         lookahead: float) -> Point:
         remaining_distance = lookahead
         goal_point = closest_point
         while (remaining_distance > self.approximation_error

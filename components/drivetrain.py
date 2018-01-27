@@ -7,7 +7,7 @@ from ctre.wpi_talonsrx import WPI_TalonSRX
 from motioncontrol.path import Path
 from motioncontrol.execution import PathTracker
 from motioncontrol.utils import (RobotCharacteristics, RobotState, Completed,
-                                 Point)
+                                 Point, approximately_equal)
 from utils import NetworkTablesTupleStreamer
 
 
@@ -28,11 +28,8 @@ class Drivetrain:
     robot_state_streamer = NetworkTablesTupleStreamer
 
     def setup(self):
-        try:
-            self.robot_state_streamer.stream(self.robot_state)
-        except AttributeError:
-            self.robot_state = RobotState()
-            self.robot_state_streamer.stream(self.robot_state)
+        self.robot_state = RobotState()
+        self.robot_state_streamer.stream(self.robot_state)
 
     def forward_at(self, speed):
         self.forward = speed
@@ -46,14 +43,15 @@ class Drivetrain:
         self.curvature = curvature
 
     def set_path(self, path: Path):
+        self.robot_state = path.initial_state
         self.path_tracker = PathTracker(
-            path, self.robot_characteristics, 0.2, 0.05, 0.4,
+            path, self.robot_characteristics, 0.2, 0.1, 1.0,
             self.get_odometry, self.forward_at, self.curve_at)
 
     def follow_path(self) -> Completed:
         return self.path_tracker.update()
 
-    def get_odometry(self):
+    def get_odometry(self) -> RobotState:
         return self.robot_state
 
     def _update_odometry(self):
@@ -64,24 +62,24 @@ class Drivetrain:
         delta_right = new_wheel_distances[1] - self.wheel_distances[1]
         distance = (delta_left + delta_right) / 2
 
-        theta = math.radians(self.navx.getAngle()) + math.pi / 2
+        theta = math.radians(-self.navx.getAngle()) + math.pi / 2
 
         old_position = self.robot_state.position
 
-        delta_x = round(distance * math.cos(theta), 3)
-        delta_y = round(distance * math.sin(theta), 3)
+        delta_x = round(distance * math.cos(theta), 6)
+        delta_y = round(distance * math.sin(theta), 6)
 
         new_position = Point(old_position.x + delta_x,
                              old_position.y + delta_y)
 
         self.wheel_distances = new_wheel_distances
 
-        current_velocity = ((self.left_drive_motor.getQuadratureVelocity() +
+        current_velocity = ((self.left_drive_motor.getQuadratureVelocity() -
                              self.right_drive_motor.getQuadratureVelocity()) /
                             (2 * (1024 * 4)))
 
         self.robot_state = RobotState(
-            velocity=current_velocity, position=new_position, angle=theta)
+            velocity=current_velocity, position=new_position, rotation=theta)
 
         self.robot_state_streamer.stream(self.robot_state)
 
@@ -98,7 +96,6 @@ class Drivetrain:
 
     def execute(self):
         self._update_odometry()
-        print(self.robot_state)
 
         if self.curvature is not None:
             if math.fabs(self.curvature) > 1e-6:
