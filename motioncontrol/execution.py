@@ -27,7 +27,10 @@ class PathTracker:
         """Create a new PathTracker
 
         `path`: The Path for the robot to follow
-        `robot`: RobotCharacteristics object describing the robot
+        `robot_characteristics`: RobotCharacteristics of the robot
+        `time_resolution`: Expected time (in seconds) between updates
+        `absolute_error`: Distance from end to stop path at
+        `lookahead`: Lookahead distance
         `input_source`: Callable returning the current RobotState of the robot
         `velocity_ouput`: Callable to write the optimal velocity to
         `curvature_output`: Callable to write the optimal curvature to
@@ -47,10 +50,9 @@ class PathTracker:
             velocity_output, absolute_error
         )
 
-    def update(self) -> bool:
-        """Gets current RobotState and writes output. Returns `True`
-         if profile is completed (robot is within error margin of
-         target), otherwise `False`.
+    def update(self) -> Completed:
+        """Gets current RobotState and writes output. Returns
+        `Completed` indictating completion status
         """
         if not self.profile_executor.update():
             curvature = self.path.get_heading(
