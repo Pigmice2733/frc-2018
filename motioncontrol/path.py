@@ -41,18 +41,45 @@ class Path:
         """Given the current pose of the robot, calculate the optimal heading
         to follow the path.
         """
+        absolute_goal = self._find_goal_point(robot_state, lookahead)
+
+        relative_goal = utils.vehicle_coords(
+            robot_state.position,
+            math.pi / 2 - robot_state.rotation,
+            absolute_goal)
+
+        D = utils.distance_between(Point(), relative_goal)
+        x = relative_goal.x
+
+        curvature = -20 * (2 * x) / (D * D)
+        return curvature
+
+    def _find_goal_point(self, robot_state: RobotState,
+                         lookahead: float) -> Point:
+        goal_point = None
+        for i in range(0, len(self.points) - 1):
+            line = Line(self.points[i], self.points[i + 1])
+            points = utils.circle_line_intersection(
+                robot_state.position, lookahead, line)
+            if points is None:
+                continue
+            for candidate in points:
+                candidate = utils.line_segment_clamp(line, candidate)
+                if goal_point is None:
+                    goal_point = candidate
+                elif ((utils.distance_between(candidate,
+                                              self.points[-1])) <
+                      utils.distance_between(goal_point,
+                                             self.points[-1])):
+                    goal_point = candidate
+
+        if goal_point is not None:
+            return goal_point
         closest, closest_path_index = self._find_closest_point(
             robot_state.position)
-        goal = self._find_goal_point(closest, closest_path_index, lookahead)
-
-        goal = utils.vehicle_coords(
-            robot_state.position, math.pi / 2 - robot_state.rotation, goal)
-
-        D = utils.distance_between(Point(), goal)
-        x = goal.x
-
-        curvature = -(2 * x) / (D * D)
-        return curvature
+        goal_point = self._find_goal_point_from_closest(
+            closest, closest_path_index, lookahead)
+        return goal_point
 
     def _find_closest_point(self, point: Point) -> (Point, int):
         """Find the closest point on the path to the given point"""
@@ -73,8 +100,9 @@ class Path:
 
         return closest, path_index
 
-    def _find_goal_point(self, closest_point: Point, path_index: int,
-                         lookahead: float) -> Point:
+    def _find_goal_point_from_closest(self, closest_point: Point,
+                                      path_index: int,
+                                      lookahead: float) -> Point:
         remaining_distance = lookahead
         goal_point = closest_point
         while (remaining_distance > self.approximation_error

@@ -146,6 +146,45 @@ def vehicle_coords(position: Point, rotation: float, point: Point) -> Point:
     return Point(x=x, y=y)
 
 
+def circle_line_intersection(center: Point,
+                             radius: float,
+                             line: Line) -> typing.List[Point]:
+    """Calculate intersections between the circle defined by `center` and
+    `radius`, and `line`. If there are no intersections, `None` will be
+    returned. Otherwise the return value will be a list of intersections.
+    """
+    dx = line.end.x - line.start.x
+    dy = line.end.y - line.start.y
+    dr = math.sqrt(math.pow(dx, 2) + math.pow(dy, 2))
+    D = (line.start.x - center.x) * (line.end.y - center.y) - \
+        (line.end.x - center.x) * (line.start.y - center.y)
+
+    discriminant = (math.pow(radius, 2) * math.pow(dr, 2)) - math.pow(D, 2)
+
+    # Not signum, sgn(0) should be 1
+    def sgn(x): return -1 if x < 0.0 else 1
+
+    # No intersection
+    if discriminant < 0.0:
+        return None
+    else:
+        x = (D * dy) / math.pow(dr, 2)
+        y = (-D * dx) / math.pow(dr, 2)
+
+        # Tangent/degenerate intersection
+        if approximately_equal(discriminant, 0.0, 1e-6):
+            return [Point(x + center.x, y + center.y)]
+
+        x_diff = sgn(dy) * dx * math.sqrt(discriminant) / math.pow(dr, 2)
+        y_diff = math.fabs(dy) * math.sqrt(discriminant) / math.pow(dr, 2)
+
+        first_intersection = Point(
+            x + x_diff + center.x, y + y_diff + center.y)
+        second_intersection = Point(
+            x - x_diff + center.x, y - y_diff + center.y)
+        return [first_intersection, second_intersection]
+
+
 def line_intersection(first: Line, second: Line) -> Point:
     """Find intersection between lines using Cramer's rule
 

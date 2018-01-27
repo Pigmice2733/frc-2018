@@ -7,7 +7,7 @@ from ctre.wpi_talonsrx import WPI_TalonSRX
 from motioncontrol.path import Path
 from motioncontrol.execution import PathTracker
 from motioncontrol.utils import (RobotCharacteristics, RobotState, Completed,
-                                 Point, approximately_equal)
+                                 Point)
 from utils import NetworkTablesStreamer
 
 
@@ -43,7 +43,7 @@ class Drivetrain:
     def set_path(self, path: Path):
         self.robot_state = path.initial_state
         self.path_tracker = PathTracker(
-            path, self.robot_characteristics, 0.2, 0.1, 0.4,
+            path, self.robot_characteristics, 0.2, 0.1, 4.0,
             self.get_odometry, self.forward_at, self.curve_at)
         self.path_tracking_streamer.stream(self.robot_state, "robot_state")
         self.path_tracking_streamer.stream(path.points, "path")
