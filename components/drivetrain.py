@@ -45,7 +45,7 @@ class Drivetrain:
     def set_path(self, path: Path):
         self.robot_state = path.initial_state
         self.path_tracker = PathTracker(
-            path, self.robot_characteristics, 0.2, 0.1, 1.0,
+            path, self.robot_characteristics, 0.2, 0.1, 0.4,
             self.get_odometry, self.forward_at, self.curve_at)
 
     def follow_path(self) -> Completed:

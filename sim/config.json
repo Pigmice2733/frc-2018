@@ -3,8 +3,8 @@
     "robot": {
       "w": 3,
       "h": 2,
-      "starting_x": 25,
-      "starting_y": 15,
+      "starting_x": 0,
+      "starting_y": 27,
       "starting_angle": 0
     },
     "field": {
