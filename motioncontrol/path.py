@@ -16,14 +16,25 @@ class Path:
     Provides methods to calculate desired robot heading to follow path
     """
 
-    def __init__(self, initial_robot_state: RobotState,
+    def __init__(self,
+                 initial_robot_state: RobotState,
+                 default_lookahead: float,
+                 lookahead_reduction_factor,
                  actions: typing.List[Action]):
         """Constructs a `Path` using the `actions`, starting from
         `initial_robot_state`.
+
+        If a lookahead isn't supplied during a specific update,
+        `default_lookahead` will be used. During the last segment of the path,
+        if the default lookahead is used, it will be linearly scaled from `1`
+        to `1/lookahead_reduction_factor` across that last segment.
         """
         # How far apart numbers can be and still be considered equal
         self.approximation_error = 1e-3
         self.initial_state = initial_robot_state
+
+        self.lookahead = default_lookahead
+        self.lookahead_reduction_factor = lookahead_reduction_factor
 
         position = self.initial_state.position
         rotation = self.initial_state.rotation
@@ -37,11 +48,16 @@ class Path:
                     y=position.y + (math.sin(rotation) * action.distance))
                 self.points.append(position)
 
-    def get_heading(self, robot_state: RobotState, lookahead: float) -> float:
+    def get_heading(self, robot_state: RobotState,
+                    lookahead: float = None) -> float:
         """Given the current pose of the robot, calculate the optimal heading
         to follow the path.
         """
-        absolute_goal = self._find_goal_point(robot_state, lookahead)
+        lookahead_reduction_factor = (
+            1.0 if lookahead is not None else self.lookahead_reduction_factor)
+        lookahead = self.lookahead if lookahead is None else lookahead
+        absolute_goal = self._find_goal_point(
+            robot_state, lookahead, lookahead_reduction_factor)
 
         relative_goal = utils.vehicle_coords(
             robot_state.position,
@@ -52,11 +68,27 @@ class Path:
         x = relative_goal.x
 
         curvature = -20 * (2 * x) / (D * D)
+
         return curvature
 
     def _find_goal_point(self, robot_state: RobotState,
-                         lookahead: float) -> Point:
+                         lookahead: float,
+                         lookahead_reduction_factor: float = 1.0) -> Point:
         goal_point = None
+        closest, closest_path_index = self._find_closest_point(
+            robot_state.position)
+
+        if (closest_path_index == len(self.points) - 2 and
+                lookahead_reduction_factor != 1.0):
+            last_segment_length = utils.distance_between(
+                self.points[-2], self.points[-1])
+            remaining_distance = utils.distance_between(
+                robot_state.position, self.points[-1])
+            scale = ((last_segment_length +
+                      (lookahead_reduction_factor - 1) * remaining_distance) /
+                     (lookahead_reduction_factor * last_segment_length))
+            lookahead *= scale
+
         for i in range(0, len(self.points) - 1):
             line = Line(self.points[i], self.points[i + 1])
             points = utils.circle_line_intersection(
@@ -75,8 +107,12 @@ class Path:
 
         if goal_point is not None:
             return goal_point
-        closest, closest_path_index = self._find_closest_point(
-            robot_state.position)
+
+        cross_track_error = utils.distance_between(
+            robot_state.position, closest)
+        lookahead = math.sqrt(
+            math.pow(cross_track_error, 2) + math.pow(lookahead, 2))
+
         goal_point = self._find_goal_point_from_closest(
             closest, closest_path_index, lookahead)
         return goal_point

@@ -20,7 +20,6 @@ class PathTracker:
                  robot_characteristics: RobotCharacteristics,
                  time_resolution: float,
                  absolute_error: float,
-                 lookahead: float,
                  input_source: Callable[[], RobotState],
                  velocity_output: Callable[[float], None],
                  curvature_output: Callable[[float], None]):
@@ -30,13 +29,11 @@ class PathTracker:
         `robot_characteristics`: RobotCharacteristics of the robot
         `time_resolution`: Expected time (in seconds) between updates
         `absolute_error`: Distance from end to stop path at
-        `lookahead`: Lookahead distance
         `input_source`: Callable returning the current RobotState of the robot
         `velocity_ouput`: Callable to write the optimal velocity to
         `curvature_output`: Callable to write the optimal curvature to
         """
         self.path = path
-        self.lookahead = lookahead
         self.input_source = input_source
         self.velocity_output = velocity_output
         self.curvature_output = curvature_output
@@ -55,8 +52,7 @@ class PathTracker:
         `Completed` indictating completion status
         """
         if not self.profile_executor.update():
-            curvature = self.path.get_heading(
-                self.input_source(), self.lookahead)
+            curvature = self.path.get_heading(self.input_source())
             self.curvature_output(curvature)
             return Completed(done=False)
         return Completed(done=True)

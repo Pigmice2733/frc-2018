@@ -43,7 +43,7 @@ class Drivetrain:
     def set_path(self, path: Path):
         self.robot_state = path.initial_state
         self.path_tracker = PathTracker(
-            path, self.robot_characteristics, 0.2, 0.1, 4.0,
+            path, self.robot_characteristics, 0.2, 0.1,
             self.get_odometry, self.forward_at, self.curve_at)
         self.path_tracking_streamer.stream(self.robot_state, "robot_state")
         self.path_tracking_streamer.stream(path.points, "path")
