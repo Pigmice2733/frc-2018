@@ -11,7 +11,7 @@ from magicbot import MagicRobot
 
 from ctre.wpi_talonsrx import WPI_TalonSRX
 
-from utils import NetworkTablesTupleStreamer
+from utils import NetworkTablesStreamer
 
 from components.drivetrain import Drivetrain
 from components.climber import Climber
@@ -48,9 +48,9 @@ class Robot(MagicRobot):
         self.drive_joystick = wpilib.Joystick(0)
         self.operator_joystick = wpilib.Joystick(1)
 
-        robot_state_table = NetworkTables.getTable("robotState")
-        self.robot_state_streamer = NetworkTablesTupleStreamer(
-            robot_state_table)
+        path_tracking_table = NetworkTables.getTable("pathTracking")
+        self.path_tracking_streamer = NetworkTablesStreamer(
+            path_tracking_table)
 
     def teleopPeriodic(self):
         self.drivetrain.turn_at(
