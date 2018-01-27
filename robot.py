@@ -48,7 +48,7 @@ class Robot(MagicRobot):
         self.drive_joystick = wpilib.Joystick(0)
         self.operator_joystick = wpilib.Joystick(1)
 
-        path_tracking_table = NetworkTables.getTable("pathTracking")
+        path_tracking_table = NetworkTables.getTable("path_tracking")
         self.path_tracking_streamer = NetworkTablesStreamer(
             path_tracking_table)
 
