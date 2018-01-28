@@ -8,7 +8,7 @@ from motioncontrol.path import Path
 from motioncontrol.execution import PathTracker
 from motioncontrol.utils import (RobotCharacteristics, RobotState, Completed,
                                  Point)
-from utils import NetworkTablesStreamer
+from utils import NetworkTablesSender
 
 
 class Drivetrain:
@@ -27,7 +27,7 @@ class Drivetrain:
 
     robot_state = RobotState()
 
-    path_tracking_streamer = NetworkTablesStreamer
+    path_tracking_sender = NetworkTablesSender
 
     def forward_at(self, speed):
         self.forward = speed
@@ -45,10 +45,13 @@ class Drivetrain:
         self.path_tracker = PathTracker(
             path, self.robot_characteristics, 0.2, 0.1,
             self.get_odometry, self.forward_at, self.curve_at)
-        self.path_tracking_streamer.stream(self.robot_state, "robot_state")
-        self.path_tracking_streamer.stream(path.points, "path")
+        self.path_tracking_sender.send(self.robot_state, "robot_state")
+        self.path_tracking_sender.send(path.points, "path")
 
     def follow_path(self) -> Completed:
+        self.path_tracking_sender.send(
+            self.path_tracker.path.get_path_state(self.robot_state),
+            "path_state")
         return self.path_tracker.update()
 
     def get_odometry(self) -> RobotState:
@@ -81,7 +84,7 @@ class Drivetrain:
         self.robot_state = RobotState(
             velocity=current_velocity, position=new_position, rotation=theta)
 
-        self.path_tracking_streamer.stream(self.robot_state, "robot_state")
+        self.path_tracking_sender.send(self.robot_state, "robot_state")
 
     def _scale_speeds(self, vl: float, vr: float) -> (float, float):
         """Scales left and right motor speeds to a max of 1.0 if either is

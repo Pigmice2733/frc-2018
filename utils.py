@@ -1,11 +1,11 @@
 import json
 
 
-class NetworkTablesStreamer:
+class NetworkTablesSender:
     def __init__(self, table):
         self.table = table
 
-    def stream(self, value, name):
+    def send(self, value, name):
         """value must be a tuple"""
         if isinstance(value, tuple):
             for key in value._fields:
@@ -15,6 +15,7 @@ class NetworkTablesStreamer:
 
     def _send_value(self, key, value, path):
         if isinstance(value, tuple):
+            path = path + key + "/"
             for key in value._fields:
                 self._send_value(key, getattr(value, key), path)
         elif isinstance(value, int) or isinstance(value, float):

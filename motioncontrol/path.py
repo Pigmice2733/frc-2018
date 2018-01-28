@@ -10,6 +10,14 @@ class Action(typing.NamedTuple):
     rotation: float = 0.0
 
 
+class PathState(typing.NamedTuple):
+    center_of_rotation: Point
+    curvature: float
+    goal_point: Point
+    path_position: Point
+    path_segment: int
+
+
 class Path:
     """Represents a path between a set of points
 
@@ -50,12 +58,13 @@ class Path:
 
     def get_heading(self, robot_state: RobotState,
                     lookahead: float = None) -> float:
-        """Given the current pose of the robot, calculate the optimal heading
-        to follow the path.
+        """Given the current pose of the robot and an optional lookahead
+        distance, calculate the optimal heading to follow the path.
         """
         lookahead_reduction_factor = (
             1.0 if lookahead is not None else self.lookahead_reduction_factor)
         lookahead = self.lookahead if lookahead is None else lookahead
+
         absolute_goal = self._find_goal_point(
             robot_state, lookahead, lookahead_reduction_factor)
 
@@ -71,14 +80,55 @@ class Path:
 
         return curvature
 
-    def _find_goal_point(self, robot_state: RobotState,
-                         lookahead: float,
-                         lookahead_reduction_factor: float = 1.0) -> Point:
-        goal_point = None
-        closest, closest_path_index = self._find_closest_point(
+    def get_path_state(self, robot_state: RobotState,
+                       lookahead: float = None) -> PathState:
+        """Given the current pose of the robot and an optional lookahead
+        distance, get the current path state.
+        """
+        lookahead_reduction_factor = (
+            1.0 if lookahead is not None else self.lookahead_reduction_factor)
+        lookahead = self.lookahead if lookahead is None else lookahead
+
+        absolute_goal = self._find_goal_point(
+            robot_state, lookahead, lookahead_reduction_factor)
+
+        closest, closest_segment_index = self._find_closest_point(
             robot_state.position)
 
-        if (closest_path_index == len(self.points) - 2 and
+        relative_goal = utils.vehicle_coords(
+            robot_state.position,
+            math.pi / 2 - robot_state.rotation,
+            absolute_goal)
+
+        D = utils.distance_between(Point(), relative_goal)
+        x = relative_goal.x
+
+        curvature = (-20 * (2 * x)) / (D * D)
+
+        robot_to_field_rotation = robot_state.rotation - math.pi / 2
+        center_of_rotation = None
+        if curvature != 0.0:
+            radius = 1.0 / curvature
+            center_x = (robot_state.position.x +
+                        (radius * math.cos(robot_to_field_rotation)))
+            center_y = (robot_state.position.y +
+                        (radius * math.sin(robot_to_field_rotation)))
+            center_of_rotation = utils.Point(center_x, center_y)
+
+        return PathState(center_of_rotation,
+                         curvature,
+                         absolute_goal,
+                         closest,
+                         int(closest_segment_index))
+
+    def _find_goal_point(self, robot_state: RobotState,
+                         lookahead: float,
+                         lookahead_reduction_factor: float=1.0) -> Point:
+        goal_point = None
+        closest, closest_segment_index = self._find_closest_point(
+            robot_state.position)
+
+        if (closest_segment_index == len(self.points) - 2 and
                 lookahead_reduction_factor != 1.0):
             last_segment_length = utils.distance_between(
                 self.points[-2], self.points[-1])
@@ -114,7 +164,7 @@ class Path:
             math.pow(cross_track_error, 2) + math.pow(lookahead, 2))
 
         goal_point = self._find_goal_point_from_closest(
-            closest, closest_path_index, lookahead)
+            closest, closest_segment_index, lookahead)
         return goal_point
 
     def _find_closest_point(self, point: Point) -> (Point, int):
