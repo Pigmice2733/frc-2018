@@ -1,5 +1,8 @@
-import pytest
+"""Test module for motioncontrol.utils.py"""
+
 import math
+
+import pytest
 
 from motioncontrol import utils
 
@@ -181,8 +184,8 @@ def test_circle_line_intersection():
     line = utils.Line(utils.Point(-2, -2), utils.Point(2, 2))
     assert ((utils.circle_line_intersection(center, radius, line) == [
         pytest.approx(utils.Point(math.sqrt(2) / 2, math.sqrt(2) / 2)),
-        pytest.approx(utils.Point(-math.sqrt(2) / 2, -math.sqrt(2) / 2))])
-        or (utils.circle_line_intersection(center, radius, line) == [
+        pytest.approx(utils.Point(-math.sqrt(2) / 2, -math.sqrt(2) / 2))]) or
+        (utils.circle_line_intersection(center, radius, line) == [
             pytest.approx(utils.Point(-math.sqrt(2) / 2, -math.sqrt(2) / 2)),
             pytest.approx(utils.Point(math.sqrt(2) / 2, math.sqrt(2) / 2))]))
 
@@ -209,3 +212,41 @@ def test_line_intersection():
         utils.Line(utils.Point(-2.0, -1.0), utils.Point(0.0, -2.0)),
         utils.Line(utils.Point(-1.5, -2.0), utils.Point(0.0, 2.5)),
     ) == pytest.approx(utils.Point(-1.2857142857142858, -1.3571428571428572)))
+
+
+def test_tank_drive_odometry():
+    previous_wheel_distances = (1.0, 2.0)
+    current_wheel_distances = (3.0, 2.0)
+    initial_position = utils.Point(-2.0, 3.0)
+    velocity = 12.0
+
+    orientations = [math.pi / 2, math.pi, 3 * math.pi / 2]
+    positions = [utils.Point(-2.0, 4.0),
+                 utils.Point(-3.0, 3.0), utils.Point(-2.0, 2.0)]
+
+    for orientation, position in zip(orientations, positions):
+        next_state = utils.RobotState(
+            velocity=velocity,
+            position=position,
+            rotation=orientation)
+
+        assert utils.tank_drive_odometry(
+            current_wheel_distances,
+            previous_wheel_distances,
+            initial_position,
+            orientation,
+            velocity) == next_state
+
+
+def test_tank_drive_wheel_velocities():
+    wheel_base = 2
+    forward_speed = 5.0
+
+    assert utils.tank_drive_wheel_velocities(
+        wheel_base, forward_speed, 0.0) == (forward_speed, forward_speed)
+
+    assert utils.tank_drive_wheel_velocities(
+        wheel_base, forward_speed, 0.25) == pytest.approx((3.75, 6.25))
+
+    assert utils.tank_drive_wheel_velocities(
+        wheel_base, forward_speed, -0.25) == pytest.approx((6.25, 3.75))

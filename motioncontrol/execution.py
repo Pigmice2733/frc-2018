@@ -4,11 +4,11 @@ based on path tracking, motion profiling and PID control.
 
 from typing import Callable
 
-from .pid import PIDParameters, PIDController
-from .motionprofiling import PositionProfile, DistanceProfile
-from .path import Path
-from .utils import RobotState, RobotCharacteristics, Completed
-from .utils import distance_between
+from .motionprofiling import DistanceProfile, PositionProfile
+from .path import Path, PathState
+from .pid import PIDController, PIDParameters
+from .utils import (Completed, RobotCharacteristics, RobotState,
+                    distance_between)
 
 
 class PathTracker:
@@ -16,13 +16,15 @@ class PathTracker:
     easy path tracking
     """
 
-    def __init__(self, path: Path,
+    def __init__(self,
+                 path: Path,
                  robot_characteristics: RobotCharacteristics,
                  time_resolution: float,
                  absolute_error: float,
                  input_source: Callable[[], RobotState],
                  velocity_output: Callable[[float], None],
-                 curvature_output: Callable[[float], None]):
+                 curvature_output: Callable[[float], None],
+                 data_output: Callable[[PathState], None]):
         """Create a new PathTracker
 
         `path`: The Path for the robot to follow
@@ -32,11 +34,13 @@ class PathTracker:
         `input_source`: Callable returning the current RobotState of the robot
         `velocity_ouput`: Callable to write the optimal velocity to
         `curvature_output`: Callable to write the optimal curvature to
+        `data_output`: Optional - Callable to send current `PathState` to
         """
         self.path = path
         self.input_source = input_source
         self.velocity_output = velocity_output
         self.curvature_output = curvature_output
+        self.data_output = data_output
 
         distance_profile = DistanceProfile(robot_characteristics)
         self.profile_executor = DistanceProfileExecutor(
@@ -49,11 +53,13 @@ class PathTracker:
 
     def update(self) -> Completed:
         """Gets current RobotState and writes output. Returns
-        `Completed` indictating completion status
+        `Completed` object indictating completion status
         """
-        if not self.profile_executor.update():
-            curvature = self.path.get_heading(self.input_source())
-            self.curvature_output(curvature)
+        if not self.profile_executor.update().done:
+            path_state = self.path.get_path_state(self.input_source())
+            self.curvature_output(path_state.curvature)
+            if self.data_output is not None:
+                self.data_output(path_state)
             return Completed(done=False)
         return Completed(done=True)
 
@@ -66,14 +72,14 @@ class PositionProfileExecutor:
             time_source: Callable[[], float],
             input_source: Callable[[], float],
             output: Callable[[float], None],
-            acceptable_error_margin: float,
+            absolute_error: float,
     ):
         """Combines a PID controller and a position motion profile. Ties
          them together for seemless profile execution.
 
         Uses `input_source` to retrieve current input for motion profile,
-         and `output` to write PID output. `acceptable_error_margin` is the
-         acceptable percent error as a decimal.
+         and `output` to write PID output. `absolute_error` is
+         the acceptable error in terms of the relevant units.
 
         `time_source` should be a method to retreive current time, in the same
          units as the motion profile uses.
@@ -82,17 +88,16 @@ class PositionProfileExecutor:
         self.time_source = time_source
         self.input_source = input_source
         self.output = output
-        self.acceptable_error_margin = acceptable_error_margin
+        self.absolute_error = absolute_error
         self.motion_profile = motion_profile
 
         self.pid = PIDController(pid_params, self.time_source)
 
         self.profile_start_time = self.time_source()
 
-    def update(self) -> bool:
-        """Updates motion profile and writes output. Returns `True`
-         if profile is completed (robot is within error margin of
-         target), otherwise `False`.
+    def update(self) -> Completed:
+        """Updates motion profile and writes output. Returns
+        `Completed` object indictating completion status
         """
         time_delta = self.time_source() - self.profile_start_time
 
@@ -105,9 +110,8 @@ class PositionProfileExecutor:
         final_position = self.motion_profile.position(
             self.motion_profile.end_time)
 
-        error = (abs(final_position - current_position) /
-                 abs(final_position))
-        return error < self.acceptable_error_margin
+        error = abs(final_position - current_position)
+        return Completed(done=(error < self.absolute_error))
 
 
 class DistanceProfileExecutor:
@@ -142,10 +146,9 @@ class DistanceProfileExecutor:
         self.motion_profile = motion_profile
         self.time_look_ahead = time_resolution
 
-    def update(self) -> bool:
-        """Updates motion profile and writes output. Returns `True`
-         if profile is completed (robot is within error margin of
-         target), otherwise `False`.
+    def update(self) -> Completed:
+        """Updates motion profile and writes output. Returns
+        `Completed` object indictating completion status
         """
         remaining_distance = self.distance_input()
         current_velocity = self.velocity_input()
@@ -157,7 +160,6 @@ class DistanceProfileExecutor:
 
         if remaining_distance < self.absolute_error:
             self.output(0.0)
-            return True
-
+            return Completed(done=True)
         self.output(optimal_velocity)
-        return False
+        return Completed(done=False)

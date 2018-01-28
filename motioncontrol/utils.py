@@ -206,3 +206,39 @@ def line_intersection(first: Line, second: Line) -> Point:
     y = determinant(d, y_diff) / divisor
 
     return Point(x, y)
+
+
+def tank_drive_odometry(current_wheel_distances: typing.Tuple[float, float],
+                        previous_wheel_distances: typing.Tuple[float, float],
+                        position: Point,
+                        orientation: float,
+                        velocity: float) -> RobotState:
+    delta_left = current_wheel_distances[0] - previous_wheel_distances[0]
+    delta_right = current_wheel_distances[1] - previous_wheel_distances[1]
+    distance = (delta_left + delta_right) / 2
+
+    delta_x = round(distance * math.cos(orientation), 6)
+    delta_y = round(distance * math.sin(orientation), 6)
+
+    new_position = Point(position.x + delta_x,
+                         position.y + delta_y)
+
+    return RobotState(
+        velocity=velocity, position=new_position, rotation=orientation)
+
+
+def tank_drive_wheel_velocities(wheel_base: float,
+                                forward_speed: float,
+                                curvature: float) -> (float, float):
+    if math.fabs(curvature) > 1e-6:
+        radius = 1.0 / curvature
+        left_radius = (
+            radius - wheel_base / 2)
+        right_radius = (
+            radius + wheel_base / 2)
+
+        v_left = (left_radius / radius) * forward_speed
+        v_right = (right_radius / radius) * forward_speed
+
+        return v_left, v_right
+    return forward_speed, forward_speed

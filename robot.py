@@ -1,22 +1,17 @@
 #!/usr/bin/env python3
 
 import wpilib
+from ctre.wpi_talonsrx import WPI_TalonSRX
+from magicbot import MagicRobot
+from networktables import NetworkTables
+from robotpy_ext.common_drivers.navx.ahrs import AHRS
 from wpilib import drive
 
-from networktables import NetworkTables
-
-from robotpy_ext.common_drivers.navx.ahrs import AHRS
-
-from magicbot import MagicRobot
-
-from ctre.wpi_talonsrx import WPI_TalonSRX
-
-from utils import NetworkTablesSender
-
-from components.drivetrain import Drivetrain
 from components.climber import Climber
+from components.drivetrain import Drivetrain
 from components.intake import Intake
 from components.scale_arm import ScaleArm
+from utils import NetworkTablesSender
 
 
 class Robot(MagicRobot):

@@ -1,6 +1,6 @@
 """PID control of motors and other output"""
 
-from typing import NamedTuple, Callable
+from typing import Callable, NamedTuple
 
 from .utils import clamp
 

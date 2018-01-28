@@ -2,7 +2,7 @@
 
 import math
 
-from .utils import clamp, phase_time, RobotCharacteristics
+from .utils import RobotCharacteristics, clamp, phase_time
 
 
 class PositionProfile:
@@ -11,32 +11,25 @@ class PositionProfile:
     Resolves time to optimal position
     """
 
-    def __init__(self, acceleration_time: float, deceleration_time: float,
-                 max_speed: float, target_distance: float):
+    def __init__(self, robot: RobotCharacteristics, target_distance: float):
         """Create a motion profile to efficiently travel `target_distance`
 
-        `acceleration_time`: Time it takes for robot to accelerate from rest
-         to maximum speed.
-        `deceleration_time`: Time it takes for robot to decelerate from
-         maximum speed to rest.
-        `max_speed`: Robot's maximum speed.
+        `robot`: RobotCharacteristics object describing the robot
         `target_distance`: The distance the robot should travel using the
-         motion profile.
-
-        ** Note: The units don't matter, as long as they are all the same.
-        This means using seconds, meters and meters per second is ok, but
-        seconds, feet and yards per minute will not work**
+        motion profile.
         """
         # Handle negative distances
         self.reverse = (target_distance < 0.0)
         target_distance = abs(target_distance)
 
         # Distance robot takes to accelerate from rest to max speed
-        full_acceleration_distance = 0.5 * acceleration_time * max_speed
-        self.acceleration = max_speed / acceleration_time
+        full_acceleration_distance = (
+            0.5 * robot.acceleration_time * robot.max_speed)
+        self.acceleration = robot.max_speed / robot.acceleration_time
         # Distance robot takes to decelerate from max speed to rest
-        full_deceleration_distance = 0.5 * deceleration_time * max_speed
-        self.deceleration = -max_speed / deceleration_time
+        full_deceleration_distance = (
+            0.5 * robot.deceleration_time * robot.max_speed)
+        self.deceleration = -robot.max_speed / robot.deceleration_time
 
         # Distance needed to go from rest to max speed and back
         distance_for_max_speed = (
@@ -45,24 +38,21 @@ class PositionProfile:
         # Trazezoidal profile - robot can reach max speed without overshooting
         if target_distance >= distance_for_max_speed:
             full_speed_time = (
-                target_distance - distance_for_max_speed) / max_speed
-            self.acceleration_end_time = acceleration_time
+                target_distance - distance_for_max_speed) / robot.max_speed
+            self.acceleration_end_time = robot.acceleration_time
             self.deceleration_start_time = self.acceleration_end_time + \
                 full_speed_time
-            self.end_time = self.deceleration_start_time + deceleration_time
-            self.max_speed = max_speed
+            self.end_time = (self.deceleration_start_time +
+                             robot.deceleration_time)
+            self.max_speed = robot.max_speed
 
         # Triangular profile - robot must start decelerating before max speed
         else:
-            # Distance to get to the top speed the robot will reach - since
-            #  it doesn't have time to accelerate fully this is not the
-            #  same as full_acceleration_distance
-            # This is calculated using the fact that the acceleration and
-            #  deceleration distances for a triangular motion profile are
-            #  directly proportional to the ratio of the acceleration and
-            #  deceleration times
-            partial_acceleration_distance = target_distance * \
-                (acceleration_time / (acceleration_time + deceleration_time))
+            # acceleration distance to deceleration distance is proportional
+            #  to the ratio of acceleration and deceleration times
+            time_ratio = (robot.acceleration_time /
+                          (robot.acceleration_time + robot.deceleration_time))
+            partial_acceleration_distance = target_distance * time_ratio
             self.acceleration_end_time = math.sqrt(
                 (2 * partial_acceleration_distance) / self.acceleration)
             self.deceleration_start_time = self.acceleration_end_time

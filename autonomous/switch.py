@@ -1,9 +1,10 @@
 import math
 
 from magicbot.state_machine import AutonomousStateMachine, state
+
 from components.drivetrain import Drivetrain
 from motioncontrol.path import Path
-from motioncontrol.utils import RobotState, Point
+from motioncontrol.utils import Point, RobotState
 
 
 class SwitchAutonomous(AutonomousStateMachine):
