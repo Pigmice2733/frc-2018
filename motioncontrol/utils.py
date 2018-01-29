@@ -32,6 +32,8 @@ class RobotCharacteristics(typing.NamedTuple):
     deceleration_time: float
     max_speed: float
     wheel_base: float
+    revolutions_to_distance: float
+    curvature_scaling: float
 
 
 def approximately_equal(first, second, error=1e-6):
@@ -233,9 +235,9 @@ def tank_drive_wheel_velocities(wheel_base: float,
     if math.fabs(curvature) > 1e-6:
         radius = 1.0 / curvature
         left_radius = (
-            radius - wheel_base / 2)
-        right_radius = (
             radius + wheel_base / 2)
+        right_radius = (
+            radius - wheel_base / 2)
 
         v_left = (left_radius / radius) * forward_speed
         v_right = (right_radius / radius) * forward_speed

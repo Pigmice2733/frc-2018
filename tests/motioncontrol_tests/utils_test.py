@@ -246,7 +246,7 @@ def test_tank_drive_wheel_velocities():
         wheel_base, forward_speed, 0.0) == (forward_speed, forward_speed)
 
     assert utils.tank_drive_wheel_velocities(
-        wheel_base, forward_speed, 0.25) == pytest.approx((3.75, 6.25))
+        wheel_base, forward_speed, -0.25) == pytest.approx((3.75, 6.25))
 
     assert utils.tank_drive_wheel_velocities(
-        wheel_base, forward_speed, -0.25) == pytest.approx((6.25, 3.75))
+        wheel_base, forward_speed, 0.25) == pytest.approx((6.25, 3.75))

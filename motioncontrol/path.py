@@ -29,7 +29,8 @@ class Path:
     def __init__(self,
                  initial_robot_state: RobotState,
                  default_lookahead: float,
-                 lookahead_reduction_factor,
+                 lookahead_reduction_factor: float,
+                 cte_dynamic_lookahead: bool,
                  actions: typing.List[Action]):
         """Constructs a `Path` using the `actions`, starting from
         `initial_robot_state`.
@@ -38,13 +39,21 @@ class Path:
         `default_lookahead` will be used. During the last segment of the path,
         if the default lookahead is used, it will be linearly scaled from `1`
         to `1/lookahead_reduction_factor` across that last segment.
+
+        Setting `cte_dynamic_lookahead` to `True` will dynamically change the
+        lookahead based on the cross-track-error when the robot is farther
+        than the current lookahead from the path. This will decrease
+        instability as the robot returns to the path, and can help prevent it
+        from leaving it completely - however it may tak the robot a bit longer
+        to get back to the path with this enabled.
         """
-        # How far apart numbers can be and still be considered equal
+        # Error threshold to deal with floating point arithmetic
         self.approximation_error = 1e-3
         self.initial_state = initial_robot_state
 
         self.lookahead = default_lookahead
-        self.lookahead_reduction_factor = lookahead_reduction_factor
+        self.lookahead_reduction = lookahead_reduction_factor
+        self.cte_dynamic_lookahead = cte_dynamic_lookahead
 
         position = self.initial_state.position
         rotation = self.initial_state.rotation
@@ -58,20 +67,21 @@ class Path:
                     y=position.y + (math.sin(rotation) * action.distance))
                 self.points.append(position)
 
-    def get_path_state(self, robot_state: RobotState,
+    def get_path_state(self,
+                       robot_state: RobotState,
                        lookahead: float = None) -> PathState:
         """Given the current pose of the robot and an optional lookahead
         distance, get a `PathState` object describing the optimal state.
         """
-        lookahead_reduction_factor = (
-            1.0 if lookahead is not None else self.lookahead_reduction_factor)
-        lookahead = self.lookahead if lookahead is None else lookahead
-
-        absolute_goal = self._find_goal_point(
-            robot_state, lookahead, lookahead_reduction_factor)
-
         closest, closest_segment_index = self._find_closest_point(
             robot_state.position)
+        lookahead = self._compute_lookahead(
+            closest,
+            closest_segment_index,
+            lookahead)
+
+        absolute_goal = self._find_goal_point(
+            robot_state, lookahead)
 
         relative_goal = utils.vehicle_coords(
             robot_state.position,
@@ -81,7 +91,7 @@ class Path:
         D = utils.distance_between(Point(), relative_goal)
         x = relative_goal.x
 
-        curvature = (-20 * (2 * x)) / (D * D)
+        curvature = (2 * x) / (D * D)
 
         remaining_distance = utils.distance_between(
             robot_state.position, self.points[-1])
@@ -103,23 +113,12 @@ class Path:
                          path_segment=closest_segment_index,
                          remaining_distance=remaining_distance)
 
-    def _find_goal_point(self, robot_state: RobotState,
-                         lookahead: float,
-                         lookahead_reduction_factor: float=1.0) -> Point:
+    def _find_goal_point(self,
+                         robot_state: RobotState,
+                         lookahead: float) -> Point:
         goal_point = None
         closest, closest_segment_index = self._find_closest_point(
             robot_state.position)
-
-        if (closest_segment_index == len(self.points) - 2 and
-                lookahead_reduction_factor != 1.0):
-            last_segment_length = utils.distance_between(
-                self.points[-2], self.points[-1])
-            remaining_distance = utils.distance_between(
-                robot_state.position, self.points[-1])
-            scale = ((last_segment_length +
-                      (lookahead_reduction_factor - 1) * remaining_distance) /
-                     (lookahead_reduction_factor * last_segment_length))
-            lookahead *= scale
 
         for i in range(0, len(self.points) - 1):
             line = Line(self.points[i], self.points[i + 1])
@@ -140,10 +139,11 @@ class Path:
         if goal_point is not None:
             return goal_point
 
-        cross_track_error = utils.distance_between(
-            robot_state.position, closest)
-        lookahead = math.sqrt(
-            math.pow(cross_track_error, 2) + math.pow(lookahead, 2))
+        if self.cte_dynamic_lookahead:
+            cross_track_error = utils.distance_between(
+                robot_state.position, closest)
+            lookahead = math.sqrt(
+                math.pow(cross_track_error, 2) + math.pow(lookahead, 2))
 
         goal_point = self._find_goal_point_from_closest(
             closest, closest_segment_index, lookahead)
@@ -168,7 +168,8 @@ class Path:
 
         return closest, path_index
 
-    def _find_goal_point_from_closest(self, closest_point: Point,
+    def _find_goal_point_from_closest(self,
+                                      closest_point: Point,
                                       path_index: int,
                                       lookahead: float) -> Point:
         remaining_distance = lookahead
@@ -186,6 +187,26 @@ class Path:
         if remaining_distance > self.approximation_error:
             return self.points[-1]
         return goal_point
+
+    def _compute_lookahead(self,
+                           path_position: Point,
+                           path_segment_index: int,
+                           lookahead: float = None) -> float:
+        lookahead_reduction = (
+            1.0 if lookahead is not None else self.lookahead_reduction)
+        lookahead = self.lookahead if lookahead is None else lookahead
+
+        if (path_segment_index == len(self.points) - 2 and
+                lookahead_reduction != 1.0):
+            segment_length = utils.distance_between(
+                self.points[-2], self.points[-1])
+            remaining_distance = utils.distance_between(
+                path_position, self.points[-1])
+            scale = (
+                (segment_length + (lookahead_reduction - 1) *
+                 remaining_distance) / (lookahead_reduction * segment_length))
+            return lookahead * scale
+        return lookahead
 
     @staticmethod
     def forward(units=0):
