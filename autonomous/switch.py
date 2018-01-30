@@ -17,9 +17,12 @@ class SwitchAutonomous(AutonomousStateMachine):
         initial_robot_state = RobotState(
             position=Point(26.0, 0.0), rotation=math.pi / 2)
 
-        waypoints = [Path.forward(10), Path.rotate(
-            90), Path.forward(10), Path.rotate(-90), Path.forward(10)]
-        path = Path(initial_robot_state, 4.0, 12, True, waypoints)
+        waypoints = [Path.forward(6),
+                     Path.rotate(90),
+                     Path.forward(1.0),
+                     Path.rotate(-90),
+                     Path.forward(6)]
+        path = Path(initial_robot_state, 4.0, 20, False, waypoints)
 
         self.drivetrain.set_path(path)
 

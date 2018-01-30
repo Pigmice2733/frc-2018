@@ -26,4 +26,4 @@ class PhysicsEngine:
 
         speed, rotation = two_motor_drivetrain(left_speed, right_speed, 3, 4)
 
-        self.controller.drive(-speed, -rotation * 0.75, tm_diff)
+        self.controller.drive(-speed, rotation * 0.75, tm_diff)

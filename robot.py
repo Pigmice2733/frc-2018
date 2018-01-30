@@ -47,6 +47,13 @@ class Robot(MagicRobot):
         self.path_tracking_sender = NetworkTablesSender(
             path_tracking_table)
 
+    def autonomous(self):
+        self.drivetrain.navx.reset()
+        self.drivetrain.navx.setAngleAdjustment(0)
+        self.left_drive_motor.setQuadraturePosition(0, 0)
+        self.right_drive_motor.setQuadraturePosition(0, 0)
+        super().autonomous()
+
     def teleopPeriodic(self):
         self.drivetrain.turn_at(
             self.drive_joystick.getRawAxis(0), squaredInputs=True)
@@ -65,6 +72,9 @@ class Robot(MagicRobot):
 
         if self.drive_joystick.getRawButton(4):
             self.scale_arm.down()
+
+    def disabledPeriodic(self):
+        self.drivetrain._update_odometry()
 
 
 if __name__ == '__main__':

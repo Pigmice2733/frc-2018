@@ -18,12 +18,12 @@ class Drivetrain:
     forward = 0
     curvature = 0
     robot_characteristics = RobotCharacteristics(
-        acceleration_time=0.5,
-        deceleration_time=3,
-        max_speed=1,
-        wheel_base=0.7,
-        revolutions_to_distance=1.0,
-        curvature_scaling=20)
+        acceleration_time=1,
+        deceleration_time=2,
+        max_speed=1.0,
+        wheel_base=0.6096,
+        revolutions_to_distance=(6 * math.pi * 0.02540),
+        curvature_scaling=14)
     wheel_distances = (0.0, 0.0)
 
     left_drive_motor = WPI_TalonSRX
@@ -47,17 +47,19 @@ class Drivetrain:
 
     def set_path(self, path: Path):
         self.robot_state = path.initial_state
+        self.navx.setAngleAdjustment(math.degrees(self.robot_state.rotation))
 
         self.path_tracker = PathTracker(
             path,
             self.robot_characteristics,
             0.2,
-            0.1,
+            0.2,
             self.get_odometry,
             self.forward_at,
             lambda curvature: self.curve_at(
                 curvature * self.robot_characteristics.curvature_scaling),
             lambda value: self.path_tracking_sender.send(value, "path_state"))
+
         self.path_tracking_sender.send(self.robot_state, "robot_state")
         self.path_tracking_sender.send(path.points, "path")
 
@@ -68,21 +70,23 @@ class Drivetrain:
         return self.robot_state
 
     def _update_odometry(self):
-        encoder_scaling = self.robot_characteristics.revolutions_to_distance
-        current_wheel_distances = (
-            self.left_drive_motor.getQuadraturePosition() / (1024 * 4),
-            -self.right_drive_motor.getQuadraturePosition() / (1024 * 4))
+        encoder_scaling = (
+            1024 * 4 / self.robot_characteristics.revolutions_to_distance)
 
-        current_velocity = ((self.left_drive_motor.getQuadratureVelocity() -
-                             self.right_drive_motor.getQuadratureVelocity()) /
-                            (2 * (1024 * 4))) * encoder_scaling
+        current_wheel_distances = (
+            -self.left_drive_motor.getQuadraturePosition() / encoder_scaling,
+            self.right_drive_motor.getQuadraturePosition() / encoder_scaling)
+
+        enc_velocity = (self.left_drive_motor.getQuadratureVelocity() -
+                        self.right_drive_motor.getQuadratureVelocity()) / 2
+        velocity = enc_velocity / (encoder_scaling)
 
         self.robot_state = tank_drive_odometry(
             current_wheel_distances,
             self.wheel_distances,
             self.robot_state.position,
-            math.radians(-self.navx.getAngle()) + math.pi / 2,
-            current_velocity)
+            math.radians(-self.navx.getAngle()),
+            velocity)
 
         self.wheel_distances = current_wheel_distances
         self.path_tracking_sender.send(self.robot_state, "robot_state")
