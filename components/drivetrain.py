@@ -20,7 +20,7 @@ class Drivetrain:
     robot_characteristics = RobotCharacteristics(
         acceleration_time=0.8,
         deceleration_time=1.25,
-        max_speed=3.0,
+        max_speed=2.5,
         wheel_base=0.6096,
         curvature_scaling=14,
         encoder_ticks=1024 * 4,
@@ -49,13 +49,13 @@ class Drivetrain:
 
     def set_path(self, path: Path):
         self.robot_state = path.initial_state
-        self.navx.setAngleAdjustment(math.degrees(self.robot_state.rotation))
+        self.navx.setAngleAdjustment(math.degrees(-self.robot_state.rotation))
         self.wheel_distances = (0, 0)
 
         self.path_tracker = PathTracker(
             path,
             self.robot_characteristics,
-            0.02,
+            0.1,
             0.2,
             self.get_odometry,
             lambda speed: self.forward_at(
@@ -107,8 +107,6 @@ class Drivetrain:
 
     def execute(self):
         self._update_odometry()
-
-        print(self.forward, self.robot_state.velocity)
 
         if self.curvature is not None:
             v_left, v_right = tank_drive_wheel_velocities(

@@ -19,10 +19,10 @@ class TestAutonomous(AutonomousStateMachine):
 
         waypoints = [Path.forward(6),
                      Path.rotate(90),
-                     Path.forward(1.0),
+                     Path.forward(1.5),
                      Path.rotate(-90),
                      Path.forward(6)]
-        path = Path(initial_robot_state, 4.0, 20, False, waypoints)
+        path = Path(initial_robot_state, 2.5, 20, False, waypoints)
 
         self.drivetrain.set_path(path)
 
