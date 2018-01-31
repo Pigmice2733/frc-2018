@@ -32,8 +32,10 @@ class RobotCharacteristics(typing.NamedTuple):
     deceleration_time: float
     max_speed: float
     wheel_base: float
-    revolutions_to_distance: float
     curvature_scaling: float
+    encoder_ticks: float
+    revolutions_to_distance: float
+    speed_scaling: float
 
 
 def approximately_equal(first, second, error=1e-6):

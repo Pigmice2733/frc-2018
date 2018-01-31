@@ -8,7 +8,7 @@ from .motionprofiling import DistanceProfile, PositionProfile
 from .path import Path, PathState
 from .pid import PIDController, PIDParameters
 from .utils import (Completed, RobotCharacteristics, RobotState,
-                    distance_between)
+                    distance_between, clamp)
 
 
 class PathTracker:
@@ -161,5 +161,5 @@ class DistanceProfileExecutor:
         if remaining_distance < self.absolute_error:
             self.output(0.0)
             return Completed(done=True)
-        self.output(optimal_velocity)
+        self.output(clamp(optimal_velocity, 0, self.motion_profile.max_speed))
         return Completed(done=False)

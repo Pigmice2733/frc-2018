@@ -7,9 +7,9 @@ from motioncontrol.path import Path
 from motioncontrol.utils import Point, RobotState
 
 
-class SwitchAutonomous(AutonomousStateMachine):
-    MODE_NAME = 'Switch'
-    DEFAULT = False
+class TestAutonomous(AutonomousStateMachine):
+    MODE_NAME = 'Test'
+    DEFAULT = True
 
     drivetrain = Drivetrain
 
