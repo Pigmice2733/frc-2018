@@ -9,9 +9,9 @@
             "os_name": "posix",
             "platform_machine": "x86_64",
             "platform_python_implementation": "CPython",
-            "platform_release": "4.14.13-1-ARCH",
+            "platform_release": "4.14.14-1-ARCH",
             "platform_system": "Linux",
-            "platform_version": "#1 SMP PREEMPT Wed Jan 10 11:14:50 UTC 2018",
+            "platform_version": "#1 SMP PREEMPT Fri Jan 19 18:42:04 UTC 2018",
             "python_full_version": "3.6.4",
             "python_version": "3.6",
             "sys_platform": "linux"
@@ -49,9 +49,9 @@
         },
         "pyfrc": {
             "hashes": [
-                "sha256:4845518cc5f6ea1a03907e080410099a4cc45dc16b91e75bfa7a7a14a2f1f493"
+                "sha256:4cb17a3588f18975b27695991e0d2278931508a03517a0f32d6d880b3a9d73ba"
             ],
-            "version": "==2018.0.3"
+            "version": "==2018.0.4"
         },
         "pygame": {
             "hashes": [
@@ -98,9 +98,9 @@
         },
         "robotpy-ctre": {
             "hashes": [
-                "sha256:e50fe7d949e6b203106385d6920a875de3db57c4685536306e03537a61fc0345"
+                "sha256:65e9fd4142b29894938cb7779af24c8992ab18af2c94e46d39c8da42b118b3a6"
             ],
-            "version": "==2018.1.0"
+            "version": "==2018.1.3"
         },
         "robotpy-hal-base": {
             "hashes": [
