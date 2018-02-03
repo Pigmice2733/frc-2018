@@ -49,7 +49,7 @@ class Drivetrain:
 
     def set_path(self, path: Path):
         self.robot_state = path.initial_state
-        self.navx.setAngleAdjustment(math.degrees(-self.robot_state.rotation))
+        self._set_orientation(self.robot_state.rotation)
         self.wheel_distances = (0, 0)
 
         self.path_tracker = PathTracker(
@@ -73,6 +73,13 @@ class Drivetrain:
     def get_odometry(self) -> RobotState:
         return self.robot_state
 
+    def _get_orientation(self) -> float:
+        return math.radians(-self.navx.getAngle())
+
+    def _set_orientation(self, orientation) -> float:
+        self.navx.setAngleAdjustment(0)
+        self.navx.setAngleAdjustment(-self.navx.getAngle() - math.degrees(orientation))
+
     def _update_odometry(self):
         encoder_scaling = (self.robot_characteristics.encoder_ticks /
                            self.robot_characteristics.revolutions_to_distance)
@@ -88,8 +95,9 @@ class Drivetrain:
         self.robot_state = tank_drive_odometry(
             current_wheel_distances,
             self.wheel_distances,
+            self._get_orientation(),
+            self.robot_state.rotation,
             self.robot_state.position,
-            math.radians(-self.navx.getAngle()),
             velocity)
 
         self.wheel_distances = current_wheel_distances

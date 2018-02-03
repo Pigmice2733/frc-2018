@@ -214,21 +214,41 @@ def line_intersection(first: Line, second: Line) -> Point:
 
 def tank_drive_odometry(current_wheel_distances: typing.Tuple[float, float],
                         previous_wheel_distances: typing.Tuple[float, float],
+                        current_orientation: float,
+                        previous_orientation: float,
                         position: Point,
-                        orientation: float,
                         velocity: float) -> RobotState:
+    """Tank drive odometry - use sensors to estimate position
+
+    Models driving as arc segments with arc length equal to the distance driven.
+    """
     delta_left = current_wheel_distances[0] - previous_wheel_distances[0]
     delta_right = current_wheel_distances[1] - previous_wheel_distances[1]
     distance = (delta_left + delta_right) / 2
 
-    delta_x = round(distance * math.cos(orientation), 6)
-    delta_y = round(distance * math.sin(orientation), 6)
+    delta_theta = current_orientation - previous_orientation
+    if abs(delta_theta) > math.pi:
+        delta_theta = math.copysign(2 * math.pi - abs(delta_theta), -delta_theta)
+
+    if abs(delta_theta) < 1e-6:
+        delta_x = round(distance * math.cos(current_orientation), 6)
+        delta_y = round(distance * math.sin(current_orientation), 6)
+        new_position = Point(position.x + delta_x,
+                             position.y + delta_y)
+        return RobotState(
+            velocity=velocity, position=new_position, rotation=current_orientation)
+
+    radius = distance / abs(delta_theta)
+    chord_angle = previous_orientation + delta_theta / 2
+    chord_length = 2 * radius * math.sin(abs(delta_theta) / 2)
+
+    delta_x = round(chord_length * math.cos(chord_angle), 6)
+    delta_y = round(chord_length * math.sin(chord_angle), 6)
 
     new_position = Point(position.x + delta_x,
                          position.y + delta_y)
-
     return RobotState(
-        velocity=velocity, position=new_position, rotation=orientation)
+        velocity=velocity, position=new_position, rotation=current_orientation)
 
 
 def tank_drive_wheel_velocities(wheel_base: float,
