@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+import _thread
+
 import wpilib
 from ctre.wpi_talonsrx import WPI_TalonSRX
 from magicbot import MagicRobot
@@ -7,6 +9,7 @@ from networktables import NetworkTables
 from robotpy_ext.common_drivers.navx.ahrs import AHRS
 from wpilib import drive
 
+from components.paths import Selector
 from components.climber import Climber
 from components.drivetrain import Drivetrain
 from components.intake import Intake
@@ -20,6 +23,7 @@ class Robot(MagicRobot):
     climber = Climber
     intake = Intake
     scale_arm = ScaleArm
+    path_selector = Selector
 
     def createObjects(self):
         self.left_drive_motor = WPI_TalonSRX(0)
@@ -43,9 +47,11 @@ class Robot(MagicRobot):
         self.drive_joystick = wpilib.Joystick(0)
         self.operator_joystick = wpilib.Joystick(1)
 
-        path_tracking_table = NetworkTables.getTable("path_tracking")
-        self.path_tracking_sender = NetworkTablesSender(
-            path_tracking_table)
+        self.path_tracking_table = NetworkTables.getTable("path_tracking")
+        self.path_tracking_sender = NetworkTablesSender(self.path_tracking_table)
+        self.autonomous_chooser_table = NetworkTables.getTable("SmartDashboard/Autonomous Mode")
+        self.path_selection_table = NetworkTables.getTable("path_selection")
+        self.path_selection_sender = NetworkTablesSender(self.path_selection_table)
 
     def autonomous(self):
         self.drivetrain.navx.reset()
