@@ -1,6 +1,6 @@
 import math
 
-from magicbot.state_machine import AutonomousStateMachine, state
+from magicbot.state_machine import AutonomousStateMachine, state, tunable
 
 from components.drivetrain import Drivetrain
 from motioncontrol.path import Path
@@ -12,6 +12,7 @@ class TestAutonomous(AutonomousStateMachine):
     DEFAULT = True
 
     drivetrain = Drivetrain
+    # mirror = tunable(False)
 
     def initialize_path(self):
         initial_robot_state = RobotState(
@@ -22,7 +23,8 @@ class TestAutonomous(AutonomousStateMachine):
                      Path.forward(1.5),
                      Path.rotate(-90),
                      Path.forward(6)]
-        path = Path(initial_robot_state, 2.5, 20, False, waypoints)
+
+        path = Path(initial_robot_state, 2.5, waypoints, 20, self.mirror, False)
 
         self.drivetrain.set_path(path)
 

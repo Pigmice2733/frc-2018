@@ -29,9 +29,10 @@ class Path:
     def __init__(self,
                  initial_robot_state: RobotState,
                  default_lookahead: float,
-                 lookahead_reduction_factor: float,
-                 cte_dynamic_lookahead: bool,
-                 actions: typing.List[Action]):
+                 actions: typing.List[Action],
+                 lookahead_reduction_factor: float = 1.0,
+                 mirror: bool = False,
+                 cte_dynamic_lookahead: bool = True):
         """Constructs a `Path` using the `actions`, starting from
         `initial_robot_state`.
 
@@ -46,6 +47,8 @@ class Path:
         instability as the robot returns to the path, and can help prevent it
         from leaving it completely - however it may tak the robot a bit longer
         to get back to the path with this enabled.
+
+        Setting `mirror` to `True` will mirror the path - negate each rotation.
         """
         # Error threshold to deal with floating point arithmetic
         self.approximation_error = 1e-3
@@ -59,8 +62,10 @@ class Path:
         rotation = self.initial_state.rotation
         self.points = [position]
 
+        rotation_transform = -1 if mirror else 1
+
         for action in actions:
-            rotation += math.radians(action.rotation)
+            rotation += math.radians(action.rotation) * rotation_transform
             if action.distance != 0.0:
                 position = Point(
                     x=position.x + (math.cos(rotation) * action.distance),
