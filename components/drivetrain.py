@@ -19,7 +19,7 @@ class Drivetrain:
     curvature = 0
     robot_characteristics = RobotCharacteristics(
         acceleration_time=0.8,
-        deceleration_time=1.25,
+        deceleration_time=1.5,
         max_speed=2.5,
         wheel_base=0.6096,
         curvature_scaling=14,
@@ -88,8 +88,9 @@ class Drivetrain:
             -self.left_drive_motor.getQuadraturePosition() / encoder_scaling,
             self.right_drive_motor.getQuadraturePosition() / encoder_scaling)
 
-        enc_velocity = (self.left_drive_motor.getQuadratureVelocity() -
-                        self.right_drive_motor.getQuadratureVelocity()) / 2
+        enc_velocity = (self.right_drive_motor.getQuadratureVelocity() -
+                        self.left_drive_motor.getQuadratureVelocity()) / 2
+
         velocity = 10 * enc_velocity / encoder_scaling
 
         self.robot_state = tank_drive_odometry(

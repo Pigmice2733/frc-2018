@@ -46,7 +46,7 @@ class PathTracker:
         self.profile_executor = DistanceProfileExecutor(
             distance_profile, time_resolution,
             (lambda: distance_between(self.input_source().position,
-                                      self.path.points[-1])),
+                                      self.path.end)),
             (lambda: self.input_source().velocity),
             velocity_output, absolute_error
         )
