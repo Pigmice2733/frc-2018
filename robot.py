@@ -5,6 +5,7 @@ from ctre.wpi_talonsrx import WPI_TalonSRX
 from magicbot import MagicRobot
 from networktables import NetworkTables
 from robotpy_ext.common_drivers.navx.ahrs import AHRS
+from robotpy_ext.control.button_debouncer import ButtonDebouncer
 from wpilib import drive
 
 from components.climber import Climber
@@ -33,19 +34,21 @@ class Robot(MagicRobot):
         self.robot_drive = drive.DifferentialDrive(self.left_drive_motor,
                                                    self.right_drive_motor)
 
-        self.l_intake_motor = WPI_TalonSRX(4)
-        self.r_intake_motor = WPI_TalonSRX(5)
-
-        self.elevator_winch = WPI_TalonSRX(6)
-        self.elevator_winch_encoder = wpilib.AnalogPotentiometer(0)
-        self.elevator_winch_encoder.offset = -self.elevator_winch_encoder.get()
-
-        self.climber_motor = WPI_TalonSRX(7)
-
         self.navx = AHRS.create_spi()
 
         self.drive_joystick = wpilib.Joystick(0)
         self.operator_joystick = wpilib.Joystick(1)
+
+        self.l_intake_motor = WPI_TalonSRX(4)
+        self.r_intake_motor = WPI_TalonSRX(5)
+
+        self.elevator_winch = WPI_TalonSRX(6)
+        # Xbox 'A' button
+        self.elevator_up = ButtonDebouncer(self.operator_joystick, 1)
+        # Xbox 'Y' button
+        self.elevator_down = ButtonDebouncer(self.operator_joystick, 4)
+
+        self.climber_motor = WPI_TalonSRX(7)
 
         path_tracking_table = NetworkTables.getTable("path_tracking")
         self.path_tracking_sender = NetworkTablesSender(
@@ -70,6 +73,11 @@ class Robot(MagicRobot):
 
         if self.drive_joystick.getRawButton(2):
             self.intake.outtake()
+
+        if self.elevator_up.get():
+            self.elevator.raise_goal()
+        if self.elevator_down.get():
+            self.elevator.lower_goal()
 
     def disabledPeriodic(self):
         self.drivetrain._update_odometry()
