@@ -17,11 +17,11 @@ class TestAutonomous(AutonomousStateMachine):
         initial_robot_state = RobotState(
             position=Point(26.0, 0.0), rotation=math.pi / 2)
 
-        waypoints = [Path.forward(6),
+        waypoints = [Path.forward(5),
                      Path.rotate(90),
                      Path.forward(1),
                      Path.rotate(-90),
-                     Path.forward(6)]
+                     Path.forward(5)]
         path = Path(initial_robot_state, 3.0, 20, False, 2.0, waypoints)
 
         self.drivetrain.set_path(path)
