@@ -26,11 +26,11 @@ class Elevator:
 
     def raise_goal(self):
         self.goal_index += 1
-        self.goal_index = min(self.goal_index, len(self.goal_positions - 1))
+        self.goal_index = min(self.goal_index, len(self.goal_positions) - 1)
 
     def lower_goal(self):
         self.goal_index -= 1
-        self.goal_index = max(self.goal_index, len(self.goal_positions) - 1)
+        self.goal_index = max(self.goal_index, 0)
 
     def execute(self):
         # Get goal position in revolutions, scale to ticks - MagEncoder is a 1024 cpr quad
