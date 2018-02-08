@@ -32,7 +32,8 @@ class Path:
                  lookahead_reduction_factor: float,
                  cte_dynamic_lookahead: bool,
                  end_stabilization_length: float,
-                 actions: typing.List[Action]):
+                 actions: typing.List[Action] = None,
+                 waypoints: typing.List[Point] = None):
         """Constructs a `Path` using the `actions`, starting from
         `initial_robot_state`.
 
@@ -60,13 +61,16 @@ class Path:
         rotation = self.initial_state.rotation
         self.points = [position]
 
-        for action in actions:
-            rotation += math.radians(action.rotation)
-            if action.distance != 0.0:
-                position = Point(
-                    x=position.x + (math.cos(rotation) * action.distance),
-                    y=position.y + (math.sin(rotation) * action.distance))
-                self.points.append(position)
+        if actions is not None:
+            for action in actions:
+                rotation += math.radians(action.rotation)
+                if action.distance != 0.0:
+                    position = Point(
+                        x=position.x + (math.cos(rotation) * action.distance),
+                        y=position.y + (math.sin(rotation) * action.distance))
+                    self.points.append(position)
+        else:
+            self.points.extend(waypoints)
 
         self.end = self.points[-1]
         self.end_index = len(self.points) - 1

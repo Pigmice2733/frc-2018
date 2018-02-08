@@ -9,7 +9,7 @@ from motioncontrol.utils import Point, RobotState
 
 class TestAutonomous(AutonomousStateMachine):
     MODE_NAME = 'Test'
-    DEFAULT = True
+    DEFAULT = False
 
     drivetrain = Drivetrain
 
