@@ -31,7 +31,9 @@ class Path:
                  default_lookahead: float,
                  lookahead_reduction_factor: float,
                  cte_dynamic_lookahead: bool,
-                 actions: typing.List[Action]):
+                 end_stabilization_length: float,
+                 actions: typing.List[Action] = None,
+                 waypoints: typing.List[Point] = None):
         """Constructs a `Path` using the `actions`, starting from
         `initial_robot_state`.
 
@@ -59,13 +61,23 @@ class Path:
         rotation = self.initial_state.rotation
         self.points = [position]
 
-        for action in actions:
-            rotation += math.radians(action.rotation)
-            if action.distance != 0.0:
-                position = Point(
-                    x=position.x + (math.cos(rotation) * action.distance),
-                    y=position.y + (math.sin(rotation) * action.distance))
-                self.points.append(position)
+        if actions is not None:
+            for action in actions:
+                rotation += math.radians(action.rotation)
+                if action.distance != 0.0:
+                    position = Point(
+                        x=position.x + (math.cos(rotation) * action.distance),
+                        y=position.y + (math.sin(rotation) * action.distance))
+                    self.points.append(position)
+        else:
+            self.points.extend(waypoints)
+
+        self.end = self.points[-1]
+        self.end_index = len(self.points) - 1
+        self.pseudo_end = Point(
+            x=position.x + (math.cos(rotation) * end_stabilization_length),
+            y=position.y + (math.sin(rotation) * end_stabilization_length))
+        self.points.append(self.pseudo_end)
 
     def get_path_state(self,
                        robot_state: RobotState,
@@ -94,7 +106,7 @@ class Path:
         curvature = (2 * x) / (D * D)
 
         remaining_distance = utils.distance_between(
-            robot_state.position, self.points[-1])
+            robot_state.position, self.end)
 
         robot_to_field_rotation = robot_state.rotation - math.pi / 2
         center_of_rotation = Point(None, None)
@@ -128,12 +140,12 @@ class Path:
                 continue
             for candidate in points:
                 candidate = utils.line_segment_clamp(line, candidate)
+
                 if goal_point is None:
                     goal_point = candidate
-                elif ((utils.distance_between(candidate,
-                                              self.points[-1])) <
-                      utils.distance_between(goal_point,
-                                             self.points[-1])):
+                elif (((utils.distance_between(candidate, self.end)) <
+                       utils.distance_between(goal_point, self.end)) and
+                      (utils.distance_between(candidate, robot_state.position) - 1e-3 < lookahead)):
                     goal_point = candidate
 
         if goal_point is not None:
@@ -185,7 +197,7 @@ class Path:
             goal_point = next_point
             path_index += 1
         if remaining_distance > self.approximation_error:
-            return self.points[-1]
+            return self.pseudo_end
         return goal_point
 
     def _compute_lookahead(self,
@@ -196,12 +208,14 @@ class Path:
             1.0 if lookahead is not None else self.lookahead_reduction)
         lookahead = self.lookahead if lookahead is None else lookahead
 
-        if (path_segment_index == len(self.points) - 2 and
+        last_segment_index = self.end_index - 1
+
+        if (path_segment_index == last_segment_index and
                 lookahead_reduction != 1.0):
             segment_length = utils.distance_between(
-                self.points[-2], self.points[-1])
+                self.points[last_segment_index], self.end)
             remaining_distance = utils.distance_between(
-                path_position, self.points[-1])
+                path_position, self.end)
             scale = (
                 (segment_length + (lookahead_reduction - 1) *
                  remaining_distance) / (lookahead_reduction * segment_length))

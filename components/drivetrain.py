@@ -18,11 +18,11 @@ class Drivetrain:
     forward = 0
     curvature = 0
     robot_characteristics = RobotCharacteristics(
-        acceleration_time=0.8,
-        deceleration_time=1.25,
-        max_speed=2.5,
+        acceleration_time=0.7,
+        deceleration_time=2.15,
+        max_speed=2.2,
         wheel_base=0.6096,
-        curvature_scaling=14,
+        curvature_scaling=1.65,
         encoder_ticks=1024 * 4,
         revolutions_to_distance=6 * math.pi * 0.02540,
         speed_scaling=3.7)
@@ -49,13 +49,13 @@ class Drivetrain:
 
     def set_path(self, path: Path):
         self.robot_state = path.initial_state
-        self.navx.setAngleAdjustment(math.degrees(-self.robot_state.rotation))
+        self._set_orientation(self.robot_state.rotation)
         self.wheel_distances = (0, 0)
 
         self.path_tracker = PathTracker(
             path,
             self.robot_characteristics,
-            0.1,
+            0.12,
             0.2,
             self.get_odometry,
             lambda speed: self.forward_at(
@@ -73,6 +73,13 @@ class Drivetrain:
     def get_odometry(self) -> RobotState:
         return self.robot_state
 
+    def _get_orientation(self) -> float:
+        return math.radians(-self.navx.getAngle())
+
+    def _set_orientation(self, orientation) -> float:
+        self.navx.setAngleAdjustment(0)
+        self.navx.setAngleAdjustment(-self.navx.getAngle() - math.degrees(orientation))
+
     def _update_odometry(self):
         encoder_scaling = (self.robot_characteristics.encoder_ticks /
                            self.robot_characteristics.revolutions_to_distance)
@@ -81,15 +88,17 @@ class Drivetrain:
             -self.left_drive_motor.getQuadraturePosition() / encoder_scaling,
             self.right_drive_motor.getQuadraturePosition() / encoder_scaling)
 
-        enc_velocity = (self.left_drive_motor.getQuadratureVelocity() -
-                        self.right_drive_motor.getQuadratureVelocity()) / 2
+        enc_velocity = (self.right_drive_motor.getQuadratureVelocity() -
+                        self.left_drive_motor.getQuadratureVelocity()) / 2
+
         velocity = 10 * enc_velocity / encoder_scaling
 
         self.robot_state = tank_drive_odometry(
             current_wheel_distances,
             self.wheel_distances,
+            self._get_orientation(),
+            self.robot_state.rotation,
             self.robot_state.position,
-            math.radians(-self.navx.getAngle()),
             velocity)
 
         self.wheel_distances = current_wheel_distances
