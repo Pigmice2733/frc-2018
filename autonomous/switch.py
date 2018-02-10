@@ -15,30 +15,27 @@ class SwitchAutonomous(AutonomousStateMachine):
 
     def initialize_path(self):
         initial_robot_state = RobotState(
-            position=Point(7.7796, 0.36), rotation=math.pi)
+            position=Point(8.23 - 0.72 / 2, 0.84 / 2), rotation=math.pi / 2)
 
-        # actions = [Path.rotate(-90),
-        #            Path.forward(0.2),
-        #            Path.rotate(90),
+        # Robot width = 0.72m
+        # Robot height = 0.84m
+        # Side to middle of switch plate = 2.62m
+        # Alliance station wall to edge of switch plate = 3.74m
 
-        #            Path.forward(1.625),
-        #            Path.rotate(-30),
-        #            Path.forward(0.469),
-        #            Path.rotate(-30),
-        #            Path.forward(0.813),
-        #            Path.rotate(-30),
-
-        #            Path.forward(1.562)]
-
-        waypoints = [
-            Point(7.7796, 0.56),
-            Point(6.5315, 0.2),
-            Point(6.3235, 0.4438),
-            Point(6.1155, 0.6876),
-            Point(6.1155, 2.7)
+        near_side_waypoints = [
+            Point(8.23 - (2.62 / 4), 3.74 / 4),
+            Point(8.23 - 2.62 + 0.1, 3.74 / 4),
+            Point(8.23 - 2.62, 3.74 - 0.84 / 2)
         ]
 
-        path = Path(initial_robot_state, 1.8, 20, False, 3.0, waypoints=waypoints)
+        far_side_waypoints = [
+            Point(),
+            Point(),
+            Point()
+        ]
+
+        path = Path(initial_robot_state, 1.8, 1, False, 3.0, waypoints=far_side_waypoints)
+        path = Path(initial_robot_state, 1.8, 1, False, 3.0, waypoints=near_side_waypoints)
 
         self.drivetrain.set_path(path)
 

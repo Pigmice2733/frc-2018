@@ -18,11 +18,11 @@ class Drivetrain:
     forward = 0
     curvature = 0
     robot_characteristics = RobotCharacteristics(
-        acceleration_time=0.8,
-        deceleration_time=1.5,
-        max_speed=2.0,
+        acceleration_time=0.7,
+        deceleration_time=2.15,
+        max_speed=2.2,
         wheel_base=0.6096,
-        curvature_scaling=8,
+        curvature_scaling=1.65,
         encoder_ticks=1024 * 4,
         revolutions_to_distance=6 * math.pi * 0.02540,
         speed_scaling=3.7)
