@@ -216,26 +216,36 @@ def test_line_intersection():
 
 def test_tank_drive_odometry():
     previous_wheel_distances = (1.0, 2.0)
-    current_wheel_distances = (3.0, 2.0)
     initial_position = utils.Point(-2.0, 3.0)
+    initial_orientation = math.pi / 2
     velocity = 12.0
 
-    orientations = [math.pi / 2, math.pi, 3 * math.pi / 2]
-    positions = [utils.Point(-2.0, 4.0),
-                 utils.Point(-3.0, 3.0), utils.Point(-2.0, 2.0)]
+    orientations = [0, math.pi, math.pi / 4]
+    positions = [utils.Point(-1.0, 4.0),
+                 utils.Point(-3.0, 4.0),
+                 utils.Point(-1.0 - math.sqrt(2) / 2, 3.0 + math.sqrt(2) / 2)]
+    current_wheel_distances = [(1.0 + math.pi, 2.0),
+                               (1.0, 2.0 + math.pi), (1.0 + math.pi / 2, 2.0)]
 
-    for orientation, position in zip(orientations, positions):
+    for orientation, position, current_wheel_distances in zip(orientations,
+                                                              positions,
+                                                              current_wheel_distances):
         next_state = utils.RobotState(
             velocity=velocity,
             position=position,
             rotation=orientation)
 
-        assert utils.tank_drive_odometry(
+        calculated_state = utils.tank_drive_odometry(
             current_wheel_distances,
             previous_wheel_distances,
-            initial_position,
             orientation,
-            velocity) == next_state
+            initial_orientation,
+            initial_position,
+            velocity)
+
+        assert calculated_state.position == pytest.approx(next_state.position)
+        assert calculated_state.rotation == pytest.approx(next_state.rotation)
+        assert calculated_state.velocity == pytest.approx(next_state.velocity)
 
 
 def test_tank_drive_wheel_velocities():
