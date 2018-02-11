@@ -36,7 +36,8 @@ class Robot(MagicRobot):
                                  self.path_selection_table,
                                  self.path_tracking_sender,
                                  self.path_selection_sender,
-                                 selector_state_output)
+                                 selector_state_output,
+                                 self.isDisabled)
 
     def createObjects(self):
         self.left_drive_motor = WPI_TalonSRX(0)

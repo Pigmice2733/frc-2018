@@ -12,6 +12,7 @@ from utils import NetworkTablesSender
 
 class Selector:
     path_data = {}
+    starting_position = None
 
     def __init__(self,
                  autonomous_chooser_table: NetworkTable,
@@ -19,13 +20,15 @@ class Selector:
                  path_selection_table: NetworkTable,
                  path_tracking_sender: NetworkTablesSender,
                  path_selection_sender: NetworkTablesSender,
-                 robot_state_output: Callable[[RobotState], None]):
+                 robot_state_output: Callable[[RobotState], None],
+                 is_robot_disabled: Callable[[], bool]):
         self.autonomous_chooser_table = autonomous_chooser_table
         self.path_tracking_table = path_tracking_table
         self.path_selection_table = path_selection_table
         self.path_tracking_sender = path_tracking_sender
         self.path_selection_sender = path_selection_sender
         self.robot_state_output = robot_state_output
+        self.is_robot_disabled = is_robot_disabled
 
         default_mode = self.autonomous_chooser_table.getString("default", None)
         self._update_selected_autonomous(default_mode)
@@ -68,6 +71,7 @@ class Selector:
             return
 
         default_state_name = self.path['initial_states']['default']
+        Selector.starting_position = default_state_name
         initial_state = self.path['initial_states'][default_state_name]
 
         waypoints = self.path['waypoints'][default_state_name]
@@ -78,6 +82,7 @@ class Selector:
         self._update_path(waypoints, initial_state)
 
     def _update_starting_state(self, state_name: str):
+        Selector.starting_position = state_name
         initial_state = self.path['initial_states'][state_name]
         waypoints = self.path['waypoints'][state_name]
 
@@ -86,11 +91,13 @@ class Selector:
     def _update_path(self,
                      waypoints,
                      initial_state):
+        if not self.is_robot_disabled():
+            return
+
         if waypoints is not None and initial_state is not None:
             path = Path(initial_state, 0, waypoints=waypoints)
             self.path_tracking_sender.send(path.points, "path")
             self.path_tracking_sender.send(path.initial_state, "robot_state")
-
             self.robot_state_output(path.initial_state)
             return
         self.path_tracking_sender.send([], 'path')

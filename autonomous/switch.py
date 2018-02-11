@@ -46,11 +46,10 @@ class SwitchAutonomous(AutonomousStateMachine):
 
     def initialize_path(self):
         initial_robot_state = self.right_position
-
-        # Robot width = 0.72m
-        # Robot height = 0.84m
-        # Side to middle of switch plate = 2.62m
-        # Alliance station wall to edge of switch plate = 3.74m
+        waypoints = self.right_near_side_waypoints
+        if Selector.starting_position == 'left':
+            initial_robot_state = self.left_position
+            waypoints = self.left_near_side_waypoints
 
         path = Path(initial_robot_state,
                     1.8,
@@ -58,7 +57,7 @@ class SwitchAutonomous(AutonomousStateMachine):
                     end_stabilization_length=1.8,
                     lookahead_reduction_factor=1,
                     cte_dynamic_lookahead=False,
-                    waypoints=self.right_near_side_waypoints)
+                    waypoints=waypoints)
 
         self.drivetrain.set_path(path)
 
