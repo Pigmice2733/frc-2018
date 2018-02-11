@@ -34,6 +34,9 @@ class NetworkTablesSender:
             success = self.table.putBoolean(path + key, value)
         elif isinstance(value, str):
             success = self.table.putString(path + key, value)
+        elif isinstance(value, list):
+            str_array = [json.dumps(x) for x in value]
+            success = self.table.putStringArray(path + key, str_array)
         else:
             success = self.table.putString(path + key, json.dumps(value))
 
