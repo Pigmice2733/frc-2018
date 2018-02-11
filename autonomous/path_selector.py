@@ -1,6 +1,6 @@
 import math
 import _thread
-from typing import Callable
+from typing import Callable, List
 
 from networktables.networktable import NetworkTable
 
@@ -50,6 +50,14 @@ class Selector:
         for state in initial_states:
             Selector.path_data[mode_name]['initial_states'][state[0]] = state[1]
             Selector.path_data[mode_name]['waypoints'][state[0]] = waypoints[state[0]]
+
+    @staticmethod
+    def mirror_waypoints(waypoints: List[Point], field_width: float) -> List[Point]:
+        def mirrored_point(point: Point) -> Point:
+            return Point(field_width - point.x, point.y)
+
+        mirrored_waypoints = [mirrored_point(point) for point in waypoints]
+        return mirrored_waypoints
 
     def _register_network_tables_listeners(self):
         def mode_listener(source, key, value, isNew): return _thread.start_new_thread(

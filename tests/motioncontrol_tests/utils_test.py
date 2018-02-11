@@ -214,6 +214,27 @@ def test_line_intersection():
     ) == pytest.approx(utils.Point(-1.2857142857142858, -1.3571428571428572)))
 
 
+def test_on_segment():
+    horizontal = utils.Line(utils.Point(-1, 2.33333), utils.Point(5, 2.33333))
+    vertical = utils.Line(utils.Point(-5.66, -56), utils.Point(-5.66, -58))
+    angled = utils.Line(utils.Point(-12, -5), utils.Point(-2, 5))
+
+    assert utils.on_segment(utils.Point(-0.5, 2.33333), horizontal)
+    assert not utils.on_segment(utils.Point(-0.5, 2.32), horizontal)
+    assert not utils.on_segment(utils.Point(5.1, 2.33333), horizontal)
+
+    assert utils.on_segment(utils.Point(-5.66, -57), vertical)
+    assert not utils.on_segment(utils.Point(-5.67, -57), vertical)
+    assert not utils.on_segment(utils.Point(-5.66, 57), vertical)
+
+    assert utils.on_segment(utils.Point(-7, 0), angled)
+    assert utils.on_segment(utils.Point(-12, -5), angled)
+    assert not utils.on_segment(utils.Point(-7, 1), angled)
+    assert not utils.on_segment(utils.Point(-7, -1), angled)
+    assert not utils.on_segment(utils.Point(-13, -3), angled)
+    assert not utils.on_segment(utils.Point(1, 0), angled)
+
+
 def test_tank_drive_odometry():
     previous_wheel_distances = (1.0, 2.0)
     initial_position = utils.Point(-2.0, 3.0)

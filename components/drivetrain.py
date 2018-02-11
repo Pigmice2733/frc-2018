@@ -20,9 +20,11 @@ class Drivetrain:
     robot_characteristics = RobotCharacteristics(
         acceleration_time=0.7,
         deceleration_time=2.15,
-        max_speed=2.2,
+        max_speed=2.0,
+        # max_speed=1.0,
         wheel_base=0.6096,
         curvature_scaling=1.65,
+        # curvature_scaling=2,
         encoder_ticks=1024 * 4,
         revolutions_to_distance=6 * math.pi * 0.02540,
         speed_scaling=3.7)
@@ -121,6 +123,10 @@ class Drivetrain:
         self._update_odometry()
 
         if self.curvature is not None:
+            if self.curvature > 1e-6:
+                radius = abs(1 / self.curvature)
+                if radius < 1.2:
+                    self.forward *= (radius / 2)
             v_left, v_right = tank_drive_wheel_velocities(
                 self.robot_characteristics.wheel_base,
                 self.forward,

@@ -14,16 +14,20 @@ class SwitchAutonomous(AutonomousStateMachine):
 
     drivetrain = Drivetrain
 
-    left_near_side_waypoints = [
-        Point(2.62 / 4, 3.74 / 4),
-        Point(2.62 + 0.1, 3.74 / 4),
-        Point(2.62, 3.74 - 0.84 / 2)
-    ]
-
     right_near_side_waypoints = [
         Point(8.23 - (2.62 / 4), 3.74 / 4),
         Point(8.23 - 2.62 + 0.1, 3.74 / 4),
         Point(8.23 - 2.62, 3.74 - 0.84 / 2)
+    ]
+
+    right_far_side_waypoints = [
+        Point(8.23 - 0.48, 5.20),
+        Point(8.23 - 1.5, 6.05),
+        Point(2.16, 6.00),
+        Point(1.44, 6.00),
+        Point(0.8, 5.36),
+        Point(0.8, 4.45),
+        Point(2.16 - 1.01 / 2 - 0.2, 4.45)
     ]
 
     left_position = RobotState(
@@ -37,7 +41,7 @@ class SwitchAutonomous(AutonomousStateMachine):
         initial_states = [('left', self.left_position), ('right', self.right_position)]
 
         waypoints = {
-            'left': self.left_near_side_waypoints,
+            'left': Selector.mirror_waypoints(self.right_near_side_waypoints, 8.23),
             'right': self.right_near_side_waypoints
         }
 
@@ -45,19 +49,41 @@ class SwitchAutonomous(AutonomousStateMachine):
             self.MODE_NAME, 'right', initial_states, waypoints)
 
     def initialize_path(self):
-        initial_robot_state = self.right_position
-        waypoints = self.right_near_side_waypoints
-        if Selector.starting_position == 'left':
-            initial_robot_state = self.left_position
-            waypoints = self.left_near_side_waypoints
+        initial_robot_state = RobotState(
+            position=Point(8.23 - 0.76 - 0.89 / 2, 1.01 / 2), rotation=math.pi / 2)
+
+        # Robot width = 0.89m
+        # Robot height = 0.1.01m
+        # Side to middle of switch plate = 2.62m
+        # Portal x width = 0.76m
+        # Alliance station wall to edge of switch plate = 3.74m
+        # Alliance station wall to close edge of scale platform = 6.65m
+
+        near_side_waypoints = [
+            Point(8.23 - 0.762 - (2.62 / 3), 3.74 / 4.5),
+            Point(8.23 - 2.62 + 0.05, 3.74 / 3.3),
+            Point(8.23 - 2.62, 3.74 - (0.84 / 2))
+        ]
+
+        far_side_waypoints = [
+            Point(8.23 - 0.48, 5.20),
+            Point(8.23 - 1.5, 6.05),
+            Point(2.16, 6.00),
+            Point(1.44, 6.00),
+            Point(0.8, 5.36),
+            Point(0.8, 4.45),
+            Point(2.16 - 1.01 / 2 - 0.2, 4.45)
+        ]
 
         path = Path(initial_robot_state,
-                    1.8,
-                    end_angle=math.pi / 2,
-                    end_stabilization_length=1.8,
-                    lookahead_reduction_factor=1,
-                    cte_dynamic_lookahead=False,
-                    waypoints=waypoints)
+                    1.1,
+                    0,
+                    1.4,
+                    1.2,
+                    False,
+                    waypoints=far_side_waypoints)
+        # path = Path(initial_robot_state, math.pi / 2, 1.3, 1.5,
+        #             False, 1.5, waypoints=near_side_waypoints)
 
         self.drivetrain.set_path(path)
 

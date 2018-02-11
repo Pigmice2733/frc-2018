@@ -20,6 +20,13 @@ class PathState(typing.NamedTuple):
     remaining_distance: float
 
 
+class PathTuning(typing.NamedTuple):
+    default_lookahead: float
+    lookahead_reduction_factor: float
+    cte_dynamic_lookahead: bool
+    end_stabilization_length: float
+
+
 class Path:
     """Represents a path between a set of points
 
@@ -132,28 +139,19 @@ class Path:
     def _find_goal_point(self,
                          robot_state: RobotState,
                          lookahead: float) -> Point:
-        goal_point = None
         closest, closest_segment_index = self._find_closest_point(
             robot_state.position)
 
-        for i in range(0, len(self.points) - 1):
+        for i in range(len(self.points) - 2, -1, -1):
             line = Line(self.points[i], self.points[i + 1])
-            points = utils.circle_line_intersection(
+            intersections = utils.circle_line_intersection(
                 robot_state.position, lookahead, line)
-            if points is None:
-                continue
-            for candidate in points:
-                candidate = utils.line_segment_clamp(line, candidate)
-
-                if goal_point is None:
-                    goal_point = candidate
-                elif (((utils.distance_between(candidate, self.end)) <
-                       utils.distance_between(goal_point, self.end)) and
-                      (utils.distance_between(candidate, robot_state.position) - 1e-3 < lookahead)):
-                    goal_point = candidate
-
-        if goal_point is not None:
-            return goal_point
+            if intersections is not None:
+                intersections = [inter for inter in intersections if utils.on_segment(inter, line)]
+                candidates = sorted(intersections,
+                                    key=(lambda x: utils.distance_between(x, self.points[i + 1])))
+                if len(candidates) > 0:
+                    return candidates[0]
 
         if self.cte_dynamic_lookahead:
             cross_track_error = utils.distance_between(
@@ -207,7 +205,7 @@ class Path:
     def _compute_lookahead(self,
                            path_position: Point,
                            path_segment_index: int,
-                           lookahead: float = None) -> float:
+                           lookahead: float=None) -> float:
         lookahead_reduction = (
             1.0 if lookahead is not None else self.lookahead_reduction)
         lookahead = self.lookahead if lookahead is None else lookahead
