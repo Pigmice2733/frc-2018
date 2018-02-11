@@ -212,6 +212,16 @@ def line_intersection(first: Line, second: Line) -> Point:
     return Point(x, y)
 
 
+def on_segment(point: Point, segment: Line) -> bool:
+    if abs(clamp(point.x, segment.start.x, segment.end.x) - point.x) > 1e-4:
+        return False
+    if abs(segment.start.x - segment.end.x) < 1e-4:
+        return abs(clamp(point.y, segment.start.y, segment.end.y) - point.y) < 1e-4
+    segment_slope = slope(segment)
+    y = (segment_slope * point.x) + (segment.start.y - (segment_slope * segment.start.x))
+    return abs(point.y - y) < 1e-4
+
+
 def tank_drive_odometry(current_wheel_distances: typing.Tuple[float, float],
                         previous_wheel_distances: typing.Tuple[float, float],
                         current_orientation: float,
