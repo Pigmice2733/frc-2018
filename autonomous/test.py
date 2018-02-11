@@ -10,7 +10,7 @@ from motioncontrol.utils import Point, RobotState
 
 class TestAutonomous(AutonomousStateMachine):
     MODE_NAME = 'Test'
-    DEFAULT = True
+    DEFAULT = False
 
     drivetrain = Drivetrain
     path_selector = Selector
@@ -29,8 +29,15 @@ class TestAutonomous(AutonomousStateMachine):
         self.path_selector.add_new_path(self.MODE_NAME, self.main_path, 'left', initial_states)
 
     def initialize_path(self):
-        initial_robot_state = self.left_position
-        path = Path(initial_robot_state, 2.5, self.main_path, 20, False, False)
+        initial_robot_state = RobotState(
+            position=Point(26.0, 0.0), rotation=math.pi / 2)
+
+        waypoints = [Path.forward(5),
+                     Path.rotate(90),
+                     Path.forward(1),
+                     Path.rotate(-90),
+                     Path.forward(5)]
+        path = Path(initial_robot_state, 3.0, 20, False, 2.0, waypoints)
 
         self.drivetrain.set_path(path)
 
