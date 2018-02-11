@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 
-import _thread
-
 import wpilib
 from ctre.wpi_talonsrx import WPI_TalonSRX
 from magicbot import MagicRobot
@@ -9,12 +7,14 @@ from networktables import NetworkTables
 from robotpy_ext.common_drivers.navx.ahrs import AHRS
 from wpilib import drive
 
-from components.paths import Selector
+from autonomous.path_selector import Selector
 from components.climber import Climber
 from components.drivetrain import Drivetrain
 from components.intake import Intake
 from components.scale_arm import ScaleArm
 from utils import NetworkTablesSender
+
+from motioncontrol.utils import RobotState
 
 
 class Robot(MagicRobot):
@@ -23,7 +23,20 @@ class Robot(MagicRobot):
     climber = Climber
     intake = Intake
     scale_arm = ScaleArm
-    path_selector = Selector
+
+    def robotInit(self):
+        super().robotInit()
+
+        def selector_state_output(state: RobotState):
+            self.drivetrain.robot_state = state
+            self.drivetrain._set_orientation(state.rotation)
+
+        self.selector = Selector(self.autonomous_chooser_table,
+                                 self.path_tracking_table,
+                                 self.path_selection_table,
+                                 self.path_tracking_sender,
+                                 self.path_selection_sender,
+                                 selector_state_output)
 
     def createObjects(self):
         self.left_drive_motor = WPI_TalonSRX(0)
@@ -53,17 +66,11 @@ class Robot(MagicRobot):
         self.path_selection_table = NetworkTables.getTable("path_selection")
         self.path_selection_sender = NetworkTablesSender(self.path_selection_table)
 
-    def autonomous(self):
-        self.drivetrain.navx.reset()
-        self.drivetrain.navx.setAngleAdjustment(0)
-        self.left_drive_motor.setQuadraturePosition(0, 0)
-        self.right_drive_motor.setQuadraturePosition(0, 0)
-        super().autonomous()
-
     def teleopPeriodic(self):
         self.drivetrain.turn_at(
             self.drive_joystick.getRawAxis(0), squaredInputs=True)
         self.drivetrain.forward_at(-self.drive_joystick.getRawAxis(1))
+
         if self.operator_joystick.getRawButton(10):
             self.climber.climb()
 

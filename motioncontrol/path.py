@@ -29,10 +29,10 @@ class Path:
     def __init__(self,
                  initial_robot_state: RobotState,
                  default_lookahead: float,
+                 end_angle: float = None,
+                 end_stabilization_length: float = None,
                  lookahead_reduction_factor: float = 1.0,
                  cte_dynamic_lookahead: bool = True,
-                 mirror: bool = False,
-                 end_stabilization_length: float = 0.0,
                  actions: typing.List[Action] = None,
                  waypoints: typing.List[Point] = None):
         """Constructs a `Path` using the `actions`, starting from
@@ -49,8 +49,6 @@ class Path:
         instability as the robot returns to the path, and can help prevent it
         from leaving it completely - however it may tak the robot a bit longer
         to get back to the path with this enabled.
-
-        Setting `mirror` to `True` will mirror the path - negate each rotation.
         """
         # Error threshold to deal with floating point arithmetic
         self.approximation_error = 1e-3
@@ -64,12 +62,9 @@ class Path:
         rotation = self.initial_state.rotation
         self.points = [position]
 
-        rotation_transform = -1 if mirror else 1
-
         if actions is not None:
-            rotation_transform = -1 if mirror else 1
             for action in actions:
-                rotation += math.radians(action.rotation) * rotation_transform
+                rotation += math.radians(action.rotation)
                 if action.distance != 0.0:
                     position = Point(
                         x=position.x + (math.cos(rotation) * action.distance),
@@ -80,9 +75,12 @@ class Path:
 
         self.end = self.points[-1]
         self.end_index = len(self.points) - 1
-        self.pseudo_end = Point(
-            x=position.x + (math.cos(rotation) * end_stabilization_length),
-            y=position.y + (math.sin(rotation) * end_stabilization_length))
+        if end_stabilization_length is not None and end_angle is not None:
+            self.pseudo_end = Point(
+                x=self.end.x + (math.cos(end_angle) * end_stabilization_length),
+                y=self.end.y + (math.sin(end_angle) * end_stabilization_length))
+        else:
+            self.pseudo_end = self.end
         self.points.append(self.pseudo_end)
 
     def get_path_state(self,
