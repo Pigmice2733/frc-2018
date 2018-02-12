@@ -4,7 +4,6 @@ from typing import Callable, List
 
 from networktables.networktable import NetworkTable
 
-from motioncontrol.path import Path
 from motioncontrol.utils import RobotState, Point
 
 from utils import NetworkTablesSender
@@ -103,10 +102,9 @@ class Selector:
             return
 
         if waypoints is not None and initial_state is not None:
-            path = Path(initial_state, 0, waypoints=waypoints)
-            self.path_tracking_sender.send(path.points, "path")
-            self.path_tracking_sender.send(path.initial_state, "robot_state")
-            self.robot_state_output(path.initial_state)
+            self.path_tracking_sender.send(waypoints, "path")
+            self.path_tracking_sender.send(initial_state, "robot_state")
+            self.robot_state_output(initial_state)
             return
         self.path_tracking_sender.send([], 'path')
         self.path_selection_sender.send([], 'starting_positions')
