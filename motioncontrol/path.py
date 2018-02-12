@@ -34,8 +34,12 @@ class Path:
     Provides methods to calculate desired robot heading to follow path
     """
 
-    def __init__(self, tuning_parameters: PathTuning, initial_robot_state: RobotState,
-                 waypoints: typing.List[Point]):
+    def __init__(
+            self,
+            tuning_parameters: PathTuning,
+            initial_robot_state: RobotState,
+            waypoints: typing.List[Point],
+    ):
         """Path starting from `initial_robot_state` following between the `waypoints`
 
         Tuning parameters:

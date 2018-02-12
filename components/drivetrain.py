@@ -6,8 +6,7 @@ from wpilib import drive
 
 from motioncontrol.execution import PathTracker
 from motioncontrol.path import Path
-from motioncontrol.utils import (Completed, RobotCharacteristics, RobotState,
-                                 tank_drive_odometry,
+from motioncontrol.utils import (Completed, RobotCharacteristics, RobotState, tank_drive_odometry,
                                  tank_drive_wheel_velocities)
 from utils import NetworkTablesSender
 

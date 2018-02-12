@@ -7,8 +7,7 @@ from typing import Callable
 from .motionprofiling import DistanceProfile, PositionProfile
 from .path import Path, PathState
 from .pid import PIDController, PIDParameters
-from .utils import (Completed, RobotCharacteristics, RobotState, clamp,
-                    distance_between)
+from .utils import (Completed, RobotCharacteristics, RobotState, clamp, distance_between)
 
 
 class PathTracker:
