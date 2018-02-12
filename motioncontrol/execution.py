@@ -7,8 +7,8 @@ from typing import Callable
 from .motionprofiling import DistanceProfile, PositionProfile
 from .path import Path, PathState
 from .pid import PIDController, PIDParameters
-from .utils import (Completed, RobotCharacteristics, RobotState,
-                    distance_between, clamp)
+from .utils import (Completed, RobotCharacteristics, RobotState, clamp,
+                    distance_between)
 
 
 class PathTracker:
@@ -16,15 +16,17 @@ class PathTracker:
     easy path tracking
     """
 
-    def __init__(self,
-                 path: Path,
-                 robot_characteristics: RobotCharacteristics,
-                 time_resolution: float,
-                 absolute_error: float,
-                 input_source: Callable[[], RobotState],
-                 velocity_output: Callable[[float], None],
-                 curvature_output: Callable[[float], None],
-                 data_output: Callable[[PathState], None]):
+    def __init__(
+            self,
+            path: Path,
+            robot_characteristics: RobotCharacteristics,
+            time_resolution: float,
+            absolute_error: float,
+            input_source: Callable[[], RobotState],
+            velocity_output: Callable[[float], None],
+            curvature_output: Callable[[float], None],
+            data_output: Callable[[PathState], None],
+    ):
         """Create a new PathTracker
 
         `path`: The Path for the robot to follow
@@ -44,11 +46,12 @@ class PathTracker:
 
         distance_profile = DistanceProfile(robot_characteristics)
         self.profile_executor = DistanceProfileExecutor(
-            distance_profile, time_resolution,
-            (lambda: distance_between(self.input_source().position,
-                                      self.path.end)),
+            distance_profile,
+            time_resolution,
+            (lambda: distance_between(self.input_source().position, self.path.end)),
             (lambda: self.input_source().velocity),
-            velocity_output, absolute_error
+            velocity_output,
+            absolute_error,
         )
 
     def update(self) -> Completed:
@@ -107,8 +110,7 @@ class PositionProfileExecutor:
 
         output = self.pid.get_output(current_position, current_goal_position)
         self.output(output)
-        final_position = self.motion_profile.position(
-            self.motion_profile.end_time)
+        final_position = self.motion_profile.position(self.motion_profile.end_time)
 
         error = abs(final_position - current_position)
         return Completed(done=(error < self.absolute_error))
@@ -153,8 +155,7 @@ class DistanceProfileExecutor:
         remaining_distance = self.distance_input()
         current_velocity = self.velocity_input()
 
-        velocity, acceleration = self.motion_profile.velocity(
-            current_velocity, remaining_distance)
+        velocity, acceleration = self.motion_profile.velocity(current_velocity, remaining_distance)
 
         optimal_velocity = velocity + (acceleration * self.time_look_ahead)
 

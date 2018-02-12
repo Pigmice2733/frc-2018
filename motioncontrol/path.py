@@ -34,9 +34,7 @@ class Path:
     Provides methods to calculate desired robot heading to follow path
     """
 
-    def __init__(self,
-                 tuning_parameters: PathTuning,
-                 initial_robot_state: RobotState,
+    def __init__(self, tuning_parameters: PathTuning, initial_robot_state: RobotState,
                  waypoints: typing.List[Point]):
         """Path starting from `initial_robot_state` following between the `waypoints`
 
@@ -71,8 +69,12 @@ class Path:
         self.pseudo_end = Point(
             x=self.end.x + (math.cos(end_angle) * end_stabilization_length),
             y=self.end.y + (math.sin(end_angle) * end_stabilization_length))
-        self.segments.append(PathSegment(start=self.end, end=self.pseudo_end,
-                                         length=end_stabilization_length, angle=end_angle))
+        self.segments.append(
+            PathSegment(
+                start=self.end,
+                end=self.pseudo_end,
+                length=end_stabilization_length,
+                angle=end_angle))
 
     def get_path_state(self, robot_state: RobotState) -> PathState:
         """Given the current pose of the robot and an optional lookahead
@@ -95,18 +97,17 @@ class Path:
         center_of_rotation = Point(None, None)
         if curvature != 0.0:
             radius = 1.0 / curvature
-            center_x = (robot_state.position.x +
-                        (radius * math.cos(robot_to_field_rotation)))
-            center_y = (robot_state.position.y +
-                        (radius * math.sin(robot_to_field_rotation)))
+            center_x = (robot_state.position.x + (radius * math.cos(robot_to_field_rotation)))
+            center_y = (robot_state.position.y + (radius * math.sin(robot_to_field_rotation)))
             center_of_rotation = utils.Point(center_x, center_y)
 
-        return PathState(center_of_rotation=center_of_rotation,
-                         curvature=curvature,
-                         goal_point=absolute_goal,
-                         path_position=closest,
-                         path_segment=closest_segment_index,
-                         remaining_distance=remaining_distance)
+        return PathState(
+            center_of_rotation=center_of_rotation,
+            curvature=curvature,
+            goal_point=absolute_goal,
+            path_position=closest,
+            path_segment=closest_segment_index,
+            remaining_distance=remaining_distance)
 
     def _find_goal_point(self, robot_state: RobotState, lookahead: float) -> Point:
         """Find a goal point - point on path `lookahead` from robot that is closest by on-path
@@ -118,8 +119,7 @@ class Path:
             intersections = utils.circle_line_intersection(robot_state.position, lookahead, segment)
             intersections = [n for n in intersections if utils.on_segment(n, segment)]
             if intersections:
-                return min(intersections,
-                           key=(lambda x: utils.distance_between(x, segment.end)))
+                return min(intersections, key=(lambda x: utils.distance_between(x, segment.end)))
 
         return None
 
@@ -148,9 +148,8 @@ class Path:
 
         if on_end_segment:
             remaining_distance = utils.distance_between(path_position, self.end)
-            scale = (
-                (segment.length + (self.lookahead_reduction - 1) *
-                 remaining_distance) / (self.lookahead_reduction * segment.length))
+            scale = ((segment.length + (self.lookahead_reduction - 1) * remaining_distance) /
+                     (self.lookahead_reduction * segment.length))
             return self.lookahead * scale
 
         return self.lookahead

@@ -94,13 +94,11 @@ def line_segment_clamp(segment: Line, point: Point) -> Point:
     x = clamp(point.x, segment.start.x, segment.end.x)
     segment_slope = slope(segment)
     # y = mx + b => b = y - mx
-    y = (segment_slope * x) + (segment.start.y -
-                               (segment_slope * segment.start.x))
+    y = (segment_slope * x) + (segment.start.y - (segment_slope * segment.start.x))
     return Point(x, y)
 
 
-def move_point_along_line(segment: Line, point: Point,
-                          distance: float) -> Point:
+def move_point_along_line(segment: Line, point: Point, distance: float) -> Point:
     """Get a new point `distance` farther along `segment` than `point`"""
     v = (segment.end.x - segment.start.x, segment.end.y - segment.start.y)
     length = distance_between(segment.start, segment.end)
@@ -109,8 +107,7 @@ def move_point_along_line(segment: Line, point: Point,
     # Normalize direction vector
     u = (v[0] / length, v[1] / length)
     return line_segment_clamp(segment,
-                              Point(point.x + (distance * u[0]),
-                                    point.y + (distance * u[1])))
+                              Point(point.x + (distance * u[0]), point.y + (distance * u[1])))
 
 
 def closest_point_on_line(line_segment: Line, point: Point) -> Point:
@@ -120,15 +117,13 @@ def closest_point_on_line(line_segment: Line, point: Point) -> Point:
     closest = None
     if approximately_equal(line_segment.start.x, line_segment.end.x):
         closest = Point(line_segment.start.x,
-                        clamp(point.y,
-                              line_segment.start.y, line_segment.end.y))
+                        clamp(point.y, line_segment.start.y, line_segment.end.y))
     elif approximately_equal(line_segment.start.y, line_segment.end.y):
-        closest = Point(clamp(point.x, line_segment.start.x,
-                              line_segment.end.x), line_segment.start.y)
+        closest = Point(
+            clamp(point.x, line_segment.start.x, line_segment.end.x), line_segment.start.y)
     else:
         perpendicular_slope = -1 / slope(line_segment)
-        closest = line_intersection(
-            line_segment, line_from_point_slope(perpendicular_slope, point))
+        closest = line_intersection(line_segment, line_from_point_slope(perpendicular_slope, point))
         # There should always be an intersection between perpendicular
         # lines, if none is found this code is broken
         assert closest is not None
@@ -150,9 +145,7 @@ def vehicle_coords(state: RobotState, point: Point) -> Point:
     return Point(x=x, y=y)
 
 
-def circle_line_intersection(center: Point,
-                             radius: float,
-                             line: Line) -> typing.List[Point]:
+def circle_line_intersection(center: Point, radius: float, line: Line) -> typing.List[Point]:
     """Calculate intersections between the circle defined by `center` and
     `radius`, and `line`. If there are no intersections, `None` will be
     returned. Otherwise the return value will be a list of intersections.
@@ -166,7 +159,8 @@ def circle_line_intersection(center: Point,
     discriminant = (math.pow(radius, 2) * math.pow(dr, 2)) - math.pow(D, 2)
 
     # Not signum, sgn(0) should be 1
-    def sgn(x): return -1 if x < 0.0 else 1
+    def sgn(x):
+        return -1 if x < 0.0 else 1
 
     # No intersection
     if discriminant < 0.0:
@@ -177,15 +171,13 @@ def circle_line_intersection(center: Point,
 
         # Tangent/degenerate intersection
         if approximately_equal(discriminant, 0.0, 1e-6):
-            return (Point(x + center.x, y + center.y),)
+            return (Point(x + center.x, y + center.y), )
 
         x_diff = sgn(dy) * dx * math.sqrt(discriminant) / math.pow(dr, 2)
         y_diff = math.fabs(dy) * math.sqrt(discriminant) / math.pow(dr, 2)
 
-        first_intersection = Point(
-            x + x_diff + center.x, y + y_diff + center.y)
-        second_intersection = Point(
-            x - x_diff + center.x, y - y_diff + center.y)
+        first_intersection = Point(x + x_diff + center.x, y + y_diff + center.y)
+        second_intersection = Point(x - x_diff + center.x, y - y_diff + center.y)
         return (first_intersection, second_intersection)
 
 
@@ -224,9 +216,7 @@ def on_segment(point: Point, segment: Line) -> bool:
 
 def tank_drive_odometry(current_wheel_distances: typing.Tuple[float, float],
                         previous_wheel_distances: typing.Tuple[float, float],
-                        current_orientation: float,
-                        previous_orientation: float,
-                        position: Point,
+                        current_orientation: float, previous_orientation: float, position: Point,
                         velocity: float) -> RobotState:
     """Tank drive odometry - use sensors to estimate position
 
@@ -243,10 +233,8 @@ def tank_drive_odometry(current_wheel_distances: typing.Tuple[float, float],
     if abs(delta_theta) < 1e-6:
         delta_x = round(distance * math.cos(current_orientation), 6)
         delta_y = round(distance * math.sin(current_orientation), 6)
-        new_position = Point(position.x + delta_x,
-                             position.y + delta_y)
-        return RobotState(
-            velocity=velocity, position=new_position, rotation=current_orientation)
+        new_position = Point(position.x + delta_x, position.y + delta_y)
+        return RobotState(velocity=velocity, position=new_position, rotation=current_orientation)
 
     radius = distance / abs(delta_theta)
     chord_angle = previous_orientation + delta_theta / 2
@@ -255,21 +243,16 @@ def tank_drive_odometry(current_wheel_distances: typing.Tuple[float, float],
     delta_x = round(chord_length * math.cos(chord_angle), 6)
     delta_y = round(chord_length * math.sin(chord_angle), 6)
 
-    new_position = Point(position.x + delta_x,
-                         position.y + delta_y)
-    return RobotState(
-        velocity=velocity, position=new_position, rotation=current_orientation)
+    new_position = Point(position.x + delta_x, position.y + delta_y)
+    return RobotState(velocity=velocity, position=new_position, rotation=current_orientation)
 
 
-def tank_drive_wheel_velocities(wheel_base: float,
-                                forward_speed: float,
+def tank_drive_wheel_velocities(wheel_base: float, forward_speed: float,
                                 curvature: float) -> (float, float):
     if math.fabs(curvature) > 1e-6:
         radius = 1.0 / curvature
-        left_radius = (
-            radius + wheel_base / 2)
-        right_radius = (
-            radius - wheel_base / 2)
+        left_radius = (radius + wheel_base / 2)
+        right_radius = (radius - wheel_base / 2)
 
         v_left = (left_radius / radius) * forward_speed
         v_right = (right_radius / radius) * forward_speed

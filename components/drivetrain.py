@@ -52,15 +52,9 @@ class Drivetrain:
         self.wheel_distances = (0, 0)
 
         self.path_tracker = PathTracker(
-            path,
-            self.robot_characteristics,
-            0.12,
-            0.2,
-            self.get_odometry,
-            lambda speed: self.forward_at(
-                speed / self.robot_characteristics.speed_scaling),
-            self.curve_at,
-            lambda value: self.path_tracking_sender.send(value, "path_state"))
+            path, self.robot_characteristics, 0.12, 0.2, self.get_odometry,
+            lambda speed: self.forward_at(speed / self.robot_characteristics.speed_scaling),
+            self.curve_at, lambda value: self.path_tracking_sender.send(value, "path_state"))
 
         self.path_tracking_sender.send(self.robot_state, "robot_state")
         path_points = []
@@ -86,22 +80,17 @@ class Drivetrain:
         encoder_scaling = (self.robot_characteristics.encoder_ticks /
                            self.robot_characteristics.revolutions_to_distance)
 
-        current_wheel_distances = (
-            -self.left_drive_motor.getQuadraturePosition() / encoder_scaling,
-            self.right_drive_motor.getQuadraturePosition() / encoder_scaling)
+        current_wheel_distances = (-self.left_drive_motor.getQuadraturePosition() / encoder_scaling,
+                                   self.right_drive_motor.getQuadraturePosition() / encoder_scaling)
 
         enc_velocity = (self.right_drive_motor.getQuadratureVelocity() -
                         self.left_drive_motor.getQuadratureVelocity()) / 2
 
         velocity = 10 * enc_velocity / encoder_scaling
 
-        self.robot_state = tank_drive_odometry(
-            current_wheel_distances,
-            self.wheel_distances,
-            self._get_orientation(),
-            self.robot_state.rotation,
-            self.robot_state.position,
-            velocity)
+        self.robot_state = tank_drive_odometry(current_wheel_distances, self.wheel_distances,
+                                               self._get_orientation(), self.robot_state.rotation,
+                                               self.robot_state.position, velocity)
 
         self.wheel_distances = current_wheel_distances
         self.path_tracking_sender.send(self.robot_state, "robot_state")
@@ -124,17 +113,12 @@ class Drivetrain:
                 radius = abs(1 / self.curvature)
                 if radius < 1.2:
                     self.forward *= (radius / 2)
-            v_left, v_right = tank_drive_wheel_velocities(
-                self.robot_characteristics.wheel_base,
-                self.forward,
-                self.curvature)
-            v_left, v_right = self._scale_speeds(
-                v_left, v_right)
-            self.robot_drive.tankDrive(
-                v_left, v_right, squaredInputs=False)
+            v_left, v_right = tank_drive_wheel_velocities(self.robot_characteristics.wheel_base,
+                                                          self.forward, self.curvature)
+            v_left, v_right = self._scale_speeds(v_left, v_right)
+            self.robot_drive.tankDrive(v_left, v_right, squaredInputs=False)
         else:
-            self.robot_drive.arcadeDrive(
-                self.forward, self.rotation, squaredInputs=False)
+            self.robot_drive.arcadeDrive(self.forward, self.rotation, squaredInputs=False)
 
         self.rotation = 0
         self.forward = 0
