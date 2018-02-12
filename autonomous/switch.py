@@ -15,19 +15,18 @@ class SwitchAutonomous(AutonomousStateMachine):
 
     def initialize_path(self):
         initial_robot_state = RobotState(
-            position=Point(8.23 - 0.76 - 0.89 / 2, 1.01 / 2), rotation=math.pi / 2)
+            position=Point(8.23 - 0.76 - 0.89 / 2, 1.01 / 2),
+            rotation=math.pi / 2)
 
         near_path_tuning = PathTuning(
             lookahead=1.3,
             lookahead_reduction_factor=1.5,
-            curvature_scaling=1.65
-        )
+            curvature_scaling=1.65)
 
         far_path_tuning = PathTuning(
             lookahead=0.9,
             lookahead_reduction_factor=1.4,
-            curvature_scaling=2.8
-        )
+            curvature_scaling=2.8)
 
         near_side_waypoints = [
             Point(8.23 - 0.762 - (2.62 / 3), 3.74 / 4.5),
