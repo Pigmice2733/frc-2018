@@ -70,7 +70,7 @@ class Selector:
             mode_listener, immediateNotify=True, localNotify=True, key="selected")
 
         self.path_selection_table.addEntryListener(
-            initial_state_listener, immediateNotify=True, localNotify=True, key="initial_state")
+            initial_state_listener, immediateNotify=True, localNotify=True, key="starting_position")
 
     def _update_selected_autonomous(self, mode: str):
         self.path = Selector.path_data.get(mode, None)
@@ -109,7 +109,7 @@ class Selector:
             self.robot_state_output(path.initial_state)
             return
         self.path_tracking_sender.send([], 'path')
-        self.path_selection_sender.send([], 'initial_states')
+        self.path_selection_sender.send([], 'starting_positions')
         self.path_tracking_sender.send(RobotState(
             position=Point(), rotation=math.pi / 2), 'robot_state')
         self.robot_state_output(RobotState(position=Point(), rotation=math.pi / 2))
