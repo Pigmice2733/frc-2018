@@ -16,15 +16,12 @@ class Drivetrain:
     robot_drive = drive.DifferentialDrive
     rotation = 0
     forward = 0
-    curvature = 0
+    curvature = None
     robot_characteristics = RobotCharacteristics(
         acceleration_time=0.7,
         deceleration_time=2.15,
         max_speed=2.0,
-        # max_speed=1.0,
         wheel_base=0.6096,
-        curvature_scaling=1.65,
-        # curvature_scaling=2,
         encoder_ticks=1024 * 4,
         revolutions_to_distance=6 * math.pi * 0.02540,
         speed_scaling=3.7)
@@ -62,12 +59,15 @@ class Drivetrain:
             self.get_odometry,
             lambda speed: self.forward_at(
                 speed / self.robot_characteristics.speed_scaling),
-            lambda curvature: self.curve_at(
-                curvature * self.robot_characteristics.curvature_scaling),
+            self.curve_at,
             lambda value: self.path_tracking_sender.send(value, "path_state"))
 
         self.path_tracking_sender.send(self.robot_state, "robot_state")
-        self.path_tracking_sender.send(path.points, "path")
+        path_points = []
+        for segment in path.segments:
+            path_points.append(segment.start)
+        path_points.append(path.segments[-1].end)
+        self.path_tracking_sender.send(path_points, "path")
 
     def follow_path(self) -> Completed:
         return self.path_tracker.update()

@@ -32,7 +32,6 @@ class RobotCharacteristics(typing.NamedTuple):
     deceleration_time: float
     max_speed: float
     wheel_base: float
-    curvature_scaling: float
     encoder_ticks: float
     revolutions_to_distance: float
     speed_scaling: float
@@ -65,7 +64,7 @@ def distance_between(first, second) -> float:
     return math.sqrt(math.pow(x_diff, 2) + math.pow(y_diff, 2))
 
 
-def line_angle(first, second) -> float:
+def angle_between(first, second) -> float:
     """Find the angle of a line between the two points"""
     dy = second.y - first.y
     dx = second.x - first.x
@@ -137,15 +136,16 @@ def closest_point_on_line(line_segment: Line, point: Point) -> Point:
     return line_segment_clamp(line_segment, closest)
 
 
-def vehicle_coords(position: Point, rotation: float, point: Point) -> Point:
-    """Transform `point` into vehicle coords based on
-    `position` and `rotation`
+def vehicle_coords(state: RobotState, point: Point) -> Point:
+    """Transform `point` into vehicle coords based on `state`
     """
-    dx = point.x - position.x
-    dy = point.y - position.y
+    dx = point.x - state.position.x
+    dy = point.y - state.position.y
 
-    x = (dx * math.cos(rotation)) - (dy * math.sin(rotation))
-    y = (dy * math.cos(rotation)) + (dx * math.sin(rotation))
+    rotation_transform = math.pi / 2 - state.rotation
+
+    x = (dx * math.cos(rotation_transform)) - (dy * math.sin(rotation_transform))
+    y = (dy * math.cos(rotation_transform)) + (dx * math.sin(rotation_transform))
 
     return Point(x=x, y=y)
 
@@ -170,14 +170,14 @@ def circle_line_intersection(center: Point,
 
     # No intersection
     if discriminant < 0.0:
-        return None
+        return ()
     else:
         x = (D * dy) / math.pow(dr, 2)
         y = (-D * dx) / math.pow(dr, 2)
 
         # Tangent/degenerate intersection
         if approximately_equal(discriminant, 0.0, 1e-6):
-            return [Point(x + center.x, y + center.y)]
+            return (Point(x + center.x, y + center.y),)
 
         x_diff = sgn(dy) * dx * math.sqrt(discriminant) / math.pow(dr, 2)
         y_diff = math.fabs(dy) * math.sqrt(discriminant) / math.pow(dr, 2)
@@ -186,7 +186,7 @@ def circle_line_intersection(center: Point,
             x + x_diff + center.x, y + y_diff + center.y)
         second_intersection = Point(
             x - x_diff + center.x, y - y_diff + center.y)
-        return [first_intersection, second_intersection]
+        return (first_intersection, second_intersection)
 
 
 def line_intersection(first: Line, second: Line) -> Point:
@@ -205,7 +205,7 @@ def line_intersection(first: Line, second: Line) -> Point:
         # No useful intersection - either coincident or parallel lines
         return None
 
-    d = (determinant(*first), determinant(*second))
+    d = (determinant(first.start, first.end), determinant(second.start, second.end))
     x = determinant(d, x_diff) / divisor
     y = determinant(d, y_diff) / divisor
 

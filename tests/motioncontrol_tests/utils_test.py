@@ -41,7 +41,7 @@ def test_distance_between():
     assert utils.distance_between(p4, p3) == pytest.approx(5.0)
 
 
-def test_line_angle():
+def test_angle_between():
     origin = utils.Point(0.0, 0.0)
 
     positive_horizontal = utils.Point(5.0, 0.0)
@@ -51,16 +51,16 @@ def test_line_angle():
     quadrant_four = utils.Point(1 / 2, -math.sqrt(3) / 2)
     quadrant_two = utils.Point(-math.sqrt(3) / 2, 1 / 2)
 
-    assert utils.line_angle(origin, positive_horizontal) == pytest.approx(0.0)
-    assert utils.line_angle(
+    assert utils.angle_between(origin, positive_horizontal) == pytest.approx(0.0)
+    assert utils.angle_between(
         origin, negative_horizontal) == pytest.approx(math.pi)
-    assert utils.line_angle(
+    assert utils.angle_between(
         origin, negative_vertical) == pytest.approx(3 * math.pi / 2)
-    assert utils.line_angle(
+    assert utils.angle_between(
         origin, quadrant_three) == pytest.approx(4 * math.pi / 3)
-    assert utils.line_angle(
+    assert utils.angle_between(
         origin, quadrant_four) == pytest.approx(5 * math.pi / 3)
-    assert utils.line_angle(
+    assert utils.angle_between(
         origin, quadrant_two) == pytest.approx(5 * math.pi / 6)
 
 
@@ -156,20 +156,22 @@ def test_closest_point_on_line():
 
 
 def test_vehicle_coords():
-    origin = utils.Point(12, 12)
-    point = utils.Point(12, 14)
-    coords = utils.vehicle_coords(origin, math.pi / 2 - math.pi / 2, point)
+    state = utils.RobotState(position=utils.Point(12, 12), rotation=math.pi / 2)
+    coords = utils.vehicle_coords(state, utils.Point(12, 14))
     assert coords == pytest.approx(utils.Point(0, 2))
-    coords = utils.vehicle_coords(origin, math.pi / 2 + math.pi / 2, point)
+
+    state = utils.RobotState(position=utils.Point(12, 12), rotation=-math.pi / 2)
+    coords = utils.vehicle_coords(state, utils.Point(12, 14))
     assert coords == pytest.approx(utils.Point(0, -2))
-    coords = utils.vehicle_coords(origin, math.pi / 2 - math.pi / 4, point)
+
+    state = utils.RobotState(position=utils.Point(12, 12), rotation=math.pi / 4)
+    coords = utils.vehicle_coords(state, utils.Point(12, 14))
     x = - math.sqrt(2)
     y = math.sqrt(2)
     assert coords == pytest.approx(utils.Point(x, y))
-    origin = utils.Point(-10, 10)
-    point = utils.Point(-8, 10)
-    coords = utils.vehicle_coords(
-        origin, math.pi / 2 - (3 * math.pi / 2), point)
+
+    state = utils.RobotState(position=utils.Point(-10, 10), rotation=3 * math.pi / 2)
+    coords = utils.vehicle_coords(state, utils.Point(-8, 10))
     assert coords == pytest.approx(utils.Point(-2, 0))
 
 
@@ -177,17 +179,19 @@ def test_circle_line_intersection():
     center = utils.Point(-3.2, 5.6)
     radius = 4.2
     line = utils.Line(utils.Point(1, -10), utils.Point(1, 10))
-    assert utils.circle_line_intersection(center, radius, line) == [
-        pytest.approx(utils.Point(1, 5.6))]
+    assert utils.circle_line_intersection(center, radius, line) == (
+        pytest.approx(utils.Point(1, 5.6)),)
     center = utils.Point(0.0, 0.0)
     radius = 1.0
     line = utils.Line(utils.Point(-2, -2), utils.Point(2, 2))
-    assert ((utils.circle_line_intersection(center, radius, line) == [
+    assert ((utils.circle_line_intersection(center, radius, line) == (
         pytest.approx(utils.Point(math.sqrt(2) / 2, math.sqrt(2) / 2)),
-        pytest.approx(utils.Point(-math.sqrt(2) / 2, -math.sqrt(2) / 2))]) or
-        (utils.circle_line_intersection(center, radius, line) == [
+        pytest.approx(utils.Point(-math.sqrt(2) / 2, -math.sqrt(2) / 2)))) or
+        (utils.circle_line_intersection(center, radius, line) == (
             pytest.approx(utils.Point(-math.sqrt(2) / 2, -math.sqrt(2) / 2)),
-            pytest.approx(utils.Point(math.sqrt(2) / 2, math.sqrt(2) / 2))]))
+            pytest.approx(utils.Point(math.sqrt(2) / 2, math.sqrt(2) / 2)))))
+    line = utils.Line(utils.Point(-2, 2), utils.Point(2, 2))
+    assert utils.circle_line_intersection(center, radius, line) == ()
 
 
 def test_line_intersection():
