@@ -14,23 +14,30 @@ class SwitchAutonomous(AutonomousStateMachine):
     drivetrain = Drivetrain
 
     def initialize_path(self):
-        initial_robot_state = RobotState(
-            position=Point(8.23 - 0.76 - 0.89 / 2, 1.01 / 2),
-            rotation=math.pi / 2)
+        right_starting_position = RobotState(
+            position=Point(8.23 - 0.76 - 0.89 / 2, 1.01 / 2), rotation=math.pi / 2)
+
+        center_starting_position = RobotState(
+            position=Point(8.23 / 2, 1.01 / 2), rotation=math.pi / 2)
+
+        center_path_tuning = PathTuning(
+            lookahead=1.2, lookahead_reduction_factor=1.5, curvature_scaling=1.55)
 
         near_path_tuning = PathTuning(
-            lookahead=1.3,
-            lookahead_reduction_factor=1.5,
-            curvature_scaling=1.65)
+            lookahead=1.12, lookahead_reduction_factor=1.1, curvature_scaling=1.28)
 
         far_path_tuning = PathTuning(
-            lookahead=0.9,
-            lookahead_reduction_factor=1.4,
-            curvature_scaling=2.8)
+            lookahead=0.9, lookahead_reduction_factor=1.4, curvature_scaling=2.8)
 
         near_side_waypoints = [
             Point(8.23 - 0.762 - (2.62 / 3), 3.74 / 4.5),
-            Point(8.23 - 2.62 + 0.05, 3.74 / 3.3),
+            Point(8.23 - 2.62 + 0.25, 3.74 / 3.3),
+            Point(8.23 - 2.62, 3.74 - (0.84 / 2))
+        ]
+
+        center_waypoints = [
+            Point(8.23 - 2.62 - 0.3, 3.74 / 3.5),
+            Point(8.23 - 2.62, 3.74 / 2),
             Point(8.23 - 2.62, 3.74 - (0.84 / 2))
         ]
 
@@ -45,7 +52,7 @@ class SwitchAutonomous(AutonomousStateMachine):
             Point(2.16 - 1.01 / 2 - 0.2, 4.42)
         ]
 
-        path = Path(far_path_tuning, initial_robot_state, far_side_waypoints)
+        path = Path(center_path_tuning, center_starting_position, center_waypoints)
 
         self.drivetrain.set_path(path)
 
