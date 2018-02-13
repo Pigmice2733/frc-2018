@@ -51,7 +51,7 @@ class Drivetrain:
         self.wheel_distances = (0, 0)
 
         self.path_tracker = PathTracker(
-            path, self.robot_characteristics, 0.15, 0.2, self.get_odometry,
+            path, self.robot_characteristics, 0.12, 0.2, self.get_odometry,
             lambda speed: self.forward_at(speed / self.robot_characteristics.speed_scaling),
             self.curve_at, lambda value: self.path_tracking_sender.send(value, "path_state"))
 
