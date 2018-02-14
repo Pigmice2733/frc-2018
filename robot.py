@@ -7,11 +7,14 @@ from networktables import NetworkTables
 from robotpy_ext.common_drivers.navx.ahrs import AHRS
 from wpilib import drive
 
+from autonomous.path_selector import Selector
 from components.climber import Climber
 from components.drivetrain import Drivetrain
 from components.intake import Intake
 from components.scale_arm import ScaleArm
 from utils import NetworkTablesSender
+
+from motioncontrol.utils import RobotState
 
 
 class Robot(MagicRobot):
@@ -20,6 +23,17 @@ class Robot(MagicRobot):
     climber = Climber
     intake = Intake
     scale_arm = ScaleArm
+
+    def robotInit(self):
+        super().robotInit()
+
+        def selector_state_output(state: RobotState):
+            self.drivetrain.robot_state = state
+            self.drivetrain._set_orientation(state.rotation)
+
+        self.selector = Selector(self.autonomous_chooser_table, self.path_tracking_table,
+                                 self.path_selection_table, self.path_tracking_sender,
+                                 self.path_selection_sender, selector_state_output, self.isDisabled)
 
     def createObjects(self):
         self.left_drive_motor = WPI_TalonSRX(0)
@@ -40,19 +54,16 @@ class Robot(MagicRobot):
         self.drive_joystick = wpilib.Joystick(0)
         self.operator_joystick = wpilib.Joystick(1)
 
-        path_tracking_table = NetworkTables.getTable("path_tracking")
-        self.path_tracking_sender = NetworkTablesSender(path_tracking_table)
-
-    def autonomous(self):
-        self.drivetrain.navx.reset()
-        self.drivetrain.navx.setAngleAdjustment(0)
-        self.left_drive_motor.setQuadraturePosition(0, 0)
-        self.right_drive_motor.setQuadraturePosition(0, 0)
-        super().autonomous()
+        self.path_tracking_table = NetworkTables.getTable("path_tracking")
+        self.path_tracking_sender = NetworkTablesSender(self.path_tracking_table)
+        self.autonomous_chooser_table = NetworkTables.getTable("SmartDashboard/Autonomous Mode")
+        self.path_selection_table = NetworkTables.getTable("path_selection")
+        self.path_selection_sender = NetworkTablesSender(self.path_selection_table)
 
     def teleopPeriodic(self):
         self.drivetrain.turn_at(self.drive_joystick.getRawAxis(0), squaredInputs=True)
         self.drivetrain.forward_at(-self.drive_joystick.getRawAxis(1))
+
         if self.operator_joystick.getRawButton(10):
             self.climber.climb()
 

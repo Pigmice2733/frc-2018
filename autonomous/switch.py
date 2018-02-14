@@ -2,6 +2,7 @@ import math
 
 from magicbot.state_machine import AutonomousStateMachine, state
 
+from .path_selector import Selector
 from components.drivetrain import Drivetrain
 from motioncontrol.path import Path, PathTuning
 from motioncontrol.utils import Point, RobotState
@@ -12,6 +13,37 @@ class SwitchAutonomous(AutonomousStateMachine):
     DEFAULT = True
 
     drivetrain = Drivetrain
+
+    right_near_side_waypoints = [
+        Point(8.23 - (2.62 / 4), 3.74 / 4),
+        Point(8.23 - 2.62 + 0.1, 3.74 / 4),
+        Point(8.23 - 2.62, 3.74 - 0.84 / 2)
+    ]
+
+    right_far_side_waypoints = [
+        Point(8.23 - 0.48, 5.20),
+        Point(8.23 - 1.5, 6.05),
+        Point(2.16, 6.00),
+        Point(1.44, 6.00),
+        Point(0.8, 5.36),
+        Point(0.8, 4.45),
+        Point(2.16 - 1.01 / 2 - 0.2, 4.45)
+    ]
+
+    left_position = RobotState(position=Point(0.76 + 0.89 / 2, 1.01 / 2), rotation=math.pi / 2)
+
+    right_position = RobotState(
+        position=Point(8.23 - 0.76 - 0.89 / 2, 1.01 / 2), rotation=math.pi / 2)
+
+    def __init__(self):
+        initial_states = [('left', self.left_position), ('right', self.right_position)]
+
+        waypoints = {
+            'left': Selector.mirror_waypoints(self.right_near_side_waypoints, 8.23),
+            'right': self.right_near_side_waypoints
+        }
+
+        Selector.add_new_path(self.MODE_NAME, 'right', initial_states, waypoints)
 
     def initialize_path(self):
         right_starting_position = RobotState(

@@ -48,6 +48,9 @@ class Drivetrain:
     def set_path(self, path: Path):
         self.robot_state = path.initial_state
         self._set_orientation(self.robot_state.rotation)
+
+        self.left_drive_motor.setQuadraturePosition(0, 0)
+        self.right_drive_motor.setQuadraturePosition(0, 0)
         self.wheel_distances = (0, 0)
 
         self.path_tracker = PathTracker(
