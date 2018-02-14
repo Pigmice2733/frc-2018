@@ -23,27 +23,22 @@ class PositionProfile:
         target_distance = abs(target_distance)
 
         # Distance robot takes to accelerate from rest to max speed
-        full_acceleration_distance = (
-            0.5 * robot.acceleration_time * robot.max_speed)
+        full_acceleration_distance = (0.5 * robot.acceleration_time * robot.max_speed)
         self.acceleration = robot.max_speed / robot.acceleration_time
         # Distance robot takes to decelerate from max speed to rest
-        full_deceleration_distance = (
-            0.5 * robot.deceleration_time * robot.max_speed)
+        full_deceleration_distance = (0.5 * robot.deceleration_time * robot.max_speed)
         self.deceleration = -robot.max_speed / robot.deceleration_time
 
         # Distance needed to go from rest to max speed and back
-        distance_for_max_speed = (
-            full_acceleration_distance + full_deceleration_distance)
+        distance_for_max_speed = (full_acceleration_distance + full_deceleration_distance)
 
         # Trazezoidal profile - robot can reach max speed without overshooting
         if target_distance >= distance_for_max_speed:
-            full_speed_time = (
-                target_distance - distance_for_max_speed) / robot.max_speed
+            full_speed_time = (target_distance - distance_for_max_speed) / robot.max_speed
             self.acceleration_end_time = robot.acceleration_time
             self.deceleration_start_time = self.acceleration_end_time + \
                 full_speed_time
-            self.end_time = (self.deceleration_start_time +
-                             robot.deceleration_time)
+            self.end_time = (self.deceleration_start_time + robot.deceleration_time)
             self.max_speed = robot.max_speed
 
         # Triangular profile - robot must start decelerating before max speed
@@ -79,8 +74,7 @@ class PositionProfile:
 
         position = 0
         # Acceleration phase - time after start before max speed is reached
-        acceleration_phase_time = phase_time(time, 0,
-                                             self.acceleration_end_time)
+        acceleration_phase_time = phase_time(time, 0, self.acceleration_end_time)
         position += distance(0.0, self.acceleration, acceleration_phase_time)
 
         # Max speed phase - time since the start of the max speed pahse,
@@ -90,10 +84,8 @@ class PositionProfile:
         position += max_speed_phase_time * self.max_speed
 
         # Deceleration phase - time after deceleration start and before the end
-        deceleration_phase_time = phase_time(
-            time, self.deceleration_start_time, self.end_time)
-        position += distance(self.max_speed, self.deceleration,
-                             deceleration_phase_time)
+        deceleration_phase_time = phase_time(time, self.deceleration_start_time, self.end_time)
+        position += distance(self.max_speed, self.deceleration, deceleration_phase_time)
 
         # Handle reverse (negative) directions
         return position if not self.reverse else -position
@@ -110,8 +102,7 @@ class PositionProfile:
             return self.max_speed * sign
         elif time <= self.end_time:
             max_speed = (self.acceleration * self.acceleration_end_time)
-            return (max_speed + (self.deceleration *
-                                 (time - self.deceleration_start_time))) * sign
+            return (max_speed + (self.deceleration * (time - self.deceleration_start_time))) * sign
         else:
             return 0
 
@@ -152,9 +143,7 @@ class DistanceProfile:
         deceleration_distance = 0.5 * deceleration_time * current_velocity
 
         if deceleration_distance >= remaining_distance:
-            optimal_current_velocity = math.sqrt(
-                -2 * remaining_distance * self.deceleration)
+            optimal_current_velocity = math.sqrt(-2 * remaining_distance * self.deceleration)
             return optimal_current_velocity, self.deceleration
         else:
-            return clamp(current_velocity, 0,
-                         self.max_speed), self.acceleration
+            return clamp(current_velocity, 0, self.max_speed), self.acceleration
