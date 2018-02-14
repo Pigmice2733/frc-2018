@@ -47,8 +47,7 @@ class PIDController:
     continuous as the position "wraps around" at some point.
     """
 
-    def __init__(self, parameters: PIDParameters,
-                 time_source: Callable[[], float]):
+    def __init__(self, parameters: PIDParameters, time_source: Callable[[], float]):
         """PID controller constructor
 
         `parameters`: PIDParameters for controller
