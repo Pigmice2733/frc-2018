@@ -53,12 +53,18 @@ class SwitchAutonomous(AutonomousStateMachine):
         Selector.add_new_path(self.MODE_NAME, 'left', initial_states, waypoints)
 
     def initialize_path(self):
-        if Selector.starting_position == 'left':
-            left_waypoints = Selector.mirror_waypoints(self.right_far_side_waypoints, 8.23)
-            path = Path(self.far_path_tuning, self.left_position, left_waypoints)
-        else:
-            path = Path(self.far_path_tuning, self.right_position, self.right_far_side_waypoints)
+        switch_side = 'left' if Selector.game_message()[0] == 'L' else 'right'
+        robot_side = Selector.starting_position
+        same_side = robot_side == switch_side
 
+        tuning = self.near_path_tuning if same_side else self.far_path_tuning
+        position = self.left_position if robot_side == 'left' else self.right_position
+        waypoints = self.right_near_side_waypoints if same_side else self.right_far_side_waypoints
+
+        if robot_side == 'left':
+            waypoints = Selector.mirror_waypoints(waypoints, 8.23)
+
+        path = Path(tuning, position, waypoints)
         self.drivetrain.set_path(path)
 
     @state(first=True)

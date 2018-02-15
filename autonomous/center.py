@@ -19,7 +19,7 @@ class CenterAutonomous(AutonomousStateMachine):
     center_path_tuning = PathTuning(
         lookahead=1.2, lookahead_reduction_factor=1.5, curvature_scaling=1.55)
 
-    center_waypoints = [
+    right_side_waypoints = [
         Point(8.23 - 2.62 - 0.3, 3.74 / 3.5),
         Point(8.23 - 2.62, 3.74 / 2),
         Point(8.23 - 2.62, 3.74 - (0.84 / 2))
@@ -29,14 +29,18 @@ class CenterAutonomous(AutonomousStateMachine):
         initial_states = [('center', self.center_starting_position)]
 
         waypoints = {
-            'center': self.center_waypoints,
+            'center': self.right_side_waypoints,
         }
 
         Selector.add_new_path(self.MODE_NAME, 'center', initial_states, waypoints)
 
     def initialize_path(self):
-        path = Path(self.center_path_tuning, self.center_starting_position, self.center_waypoints)
+        if Selector.game_message()[0] == 'R':
+            waypoints = self.right_side_waypoints
+        else:
+            waypoints = Selector.mirror_waypoints(self.right_side_waypoints, 8.23)
 
+        path = Path(self.center_path_tuning, self.center_starting_position, waypoints)
         self.drivetrain.set_path(path)
 
     @state(first=True)

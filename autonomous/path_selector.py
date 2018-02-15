@@ -2,6 +2,8 @@ import math
 import _thread
 from typing import Callable, List
 
+import wpilib
+
 from networktables.networktable import NetworkTable
 
 from motioncontrol.utils import RobotState, Point
@@ -13,11 +15,8 @@ class Selector:
     path_data = {}
     starting_position = None
 
-    def __init__(self,
-                 autonomous_chooser_table: NetworkTable,
-                 path_tracking_table: NetworkTable,
-                 path_selection_table: NetworkTable,
-                 path_tracking_sender: NetworkTablesSender,
+    def __init__(self, autonomous_chooser_table: NetworkTable, path_tracking_table: NetworkTable,
+                 path_selection_table: NetworkTable, path_tracking_sender: NetworkTablesSender,
                  path_selection_sender: NetworkTablesSender,
                  robot_state_output: Callable[[RobotState], None],
                  is_robot_disabled: Callable[[], bool]):
@@ -35,10 +34,11 @@ class Selector:
         self._register_network_tables_listeners()
 
     @staticmethod
-    def add_new_path(mode_name,
-                     default_state,
-                     initial_states,
-                     waypoints):
+    def game_message() -> str:
+        return wpilib.DriverStation.getInstance().getGameSpecificMessage()
+
+    @staticmethod
+    def add_new_path(mode_name, default_state, initial_states, waypoints):
         Selector.path_data[mode_name] = {
             'waypoints': {},
             'initial_states': {
@@ -59,11 +59,11 @@ class Selector:
         return mirrored_waypoints
 
     def _register_network_tables_listeners(self):
-        def mode_listener(source, key, value, isNew): return _thread.start_new_thread(
-            self._update_selected_autonomous, (value,))
+        def mode_listener(source, key, value, isNew):
+            return _thread.start_new_thread(self._update_selected_autonomous, (value, ))
 
-        def initial_state_listener(source, key, value, isNew): return _thread.start_new_thread(
-            self._update_starting_state, (value,))
+        def initial_state_listener(source, key, value, isNew):
+            return _thread.start_new_thread(self._update_starting_state, (value, ))
 
         self.autonomous_chooser_table.addEntryListener(
             mode_listener, immediateNotify=True, localNotify=True, key="selected")
@@ -95,9 +95,7 @@ class Selector:
 
         self._update_path(waypoints, initial_state)
 
-    def _update_path(self,
-                     waypoints,
-                     initial_state):
+    def _update_path(self, waypoints, initial_state):
         if not self.is_robot_disabled():
             return
 
@@ -108,6 +106,6 @@ class Selector:
             return
         self.path_tracking_sender.send([], 'path')
         self.path_selection_sender.send([], 'starting_positions')
-        self.path_tracking_sender.send(RobotState(
-            position=Point(), rotation=math.pi / 2), 'robot_state')
+        self.path_tracking_sender.send(
+            RobotState(position=Point(), rotation=math.pi / 2), 'robot_state')
         self.robot_state_output(RobotState(position=Point(), rotation=math.pi / 2))
