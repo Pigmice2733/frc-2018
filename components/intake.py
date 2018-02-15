@@ -1,6 +1,6 @@
 import enum
 
-from ctre.wpi_talonsrx import WPI_TalonSRX
+from ctre.wpi_victorspx import WPI_VictorSPX
 
 
 class Action(enum.Enum):
@@ -15,8 +15,8 @@ def mirror(l, r, val):
 
 
 class Intake:
-    l_intake_motor = WPI_TalonSRX
-    r_intake_motor = WPI_TalonSRX
+    l_intake_motor = WPI_VictorSPX
+    r_intake_motor = WPI_VictorSPX
 
     state = Action.Stop
 
@@ -31,9 +31,9 @@ class Intake:
 
     def execute(self):
         if self.state == Action.Intake:
-            mirror(self.l_intake_motor, self.r_intake_motor, 1.0)
+            mirror(self.l_intake_motor, self.r_intake_motor, -0.6)
         elif self.state == Action.Outtake:
-            mirror(self.l_intake_motor, self.r_intake_motor, -1.0)
+            mirror(self.l_intake_motor, self.r_intake_motor, 0.6)
         else:
             mirror(self.l_intake_motor, self.r_intake_motor, 0.0)
 
