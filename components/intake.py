@@ -31,10 +31,10 @@ class Intake:
 
     def execute(self):
         if self.state == Action.Intake:
-            mirror(self.l_intake_motor, self.r_intake_motor, -0.6)
-        elif self.state == Action.Outtake:
             mirror(self.l_intake_motor, self.r_intake_motor, 0.6)
+        elif self.state == Action.Outtake:
+            mirror(self.l_intake_motor, self.r_intake_motor, -0.5)
         else:
-            mirror(self.l_intake_motor, self.r_intake_motor, 0.0)
+            mirror(self.l_intake_motor, self.r_intake_motor, 0)
 
         self.state = Action.Stop
