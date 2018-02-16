@@ -2,6 +2,7 @@
 
 import wpilib
 from ctre.wpi_talonsrx import WPI_TalonSRX
+from ctre.wpi_victorspx import WPI_VictorSPX
 from magicbot import MagicRobot
 from networktables import NetworkTables
 from robotpy_ext.common_drivers.navx.ahrs import AHRS
@@ -44,8 +45,8 @@ class Robot(MagicRobot):
 
         self.robot_drive = drive.DifferentialDrive(self.left_drive_motor, self.right_drive_motor)
 
-        self.l_intake_motor = WPI_TalonSRX(4)
-        self.r_intake_motor = WPI_TalonSRX(5)
+        self.l_intake_motor = WPI_VictorSPX(4)
+        self.r_intake_motor = WPI_VictorSPX(5)
         self.scale_arm_motor = WPI_TalonSRX(6)
         self.climber_motor = WPI_TalonSRX(7)
 
