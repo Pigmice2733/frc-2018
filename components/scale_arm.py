@@ -17,7 +17,7 @@ class ScaleArm:
         self.speed = -0.1
 
     def down(self):
-        self.state = 0.2
+        self.speed = 0.2
 
     def set_speed(self, speed):
         self.speed = speed
