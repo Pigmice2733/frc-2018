@@ -7,7 +7,7 @@ from wpilib import drive
 from motioncontrol.execution import PathTracker
 from motioncontrol.path import Path
 from motioncontrol.utils import (Completed, RobotCharacteristics, RobotState, tank_drive_odometry,
-                                 tank_drive_wheel_velocities)
+                                 tank_drive_wheel_velocities, interpolate)
 from utils import NetworkTablesSender
 
 
@@ -19,7 +19,7 @@ class Drivetrain:
     robot_characteristics = RobotCharacteristics(
         acceleration_time=0.7,
         deceleration_time=2.15,
-        max_speed=2.3,
+        max_speed=3.0,
         wheel_base=0.6096,
         encoder_ticks=1024 * 4,
         revolutions_to_distance=6 * math.pi * 0.02540,
@@ -45,7 +45,7 @@ class Drivetrain:
     def curve_at(self, curvature):
         self.curvature = curvature
 
-    def set_path(self, path: Path):
+    def set_path(self, max_speed: float, end_threshold: float, path: Path):
         self.robot_state = path.initial_state
         self._set_orientation(self.robot_state.rotation)
 
@@ -53,8 +53,17 @@ class Drivetrain:
         self.right_drive_motor.setQuadraturePosition(0, 0)
         self.wheel_distances = (0, 0)
 
+        robot_characteristics = RobotCharacteristics(
+            acceleration_time=self.robot_characteristics.acceleration_time,
+            deceleration_time=self.robot_characteristics.deceleration_time,
+            max_speed=max_speed,
+            wheel_base=self.robot_characteristics.wheel_base,
+            encoder_ticks=self.robot_characteristics.encoder_ticks,
+            revolutions_to_distance=self.robot_characteristics.revolutions_to_distance,
+            speed_scaling=self.robot_characteristics.speed_scaling)
+
         self.path_tracker = PathTracker(
-            path, self.robot_characteristics, 0.12, 0.2, self.get_odometry,
+            path, robot_characteristics, 0.12, end_threshold, self.get_odometry,
             lambda speed: self.forward_at(speed / self.robot_characteristics.speed_scaling),
             self.curve_at, lambda value: self.path_tracking_sender.send(value, "path_state"))
 
@@ -113,8 +122,10 @@ class Drivetrain:
         if self.curvature is not None:
             if self.curvature > 1e-4:
                 radius = abs(1 / self.curvature)
-                if radius < 1.2 and (self.forward / self.robot_characteristics.speed_scaling) > 0.6:
-                    self.forward *= (radius / 1.2)
+                large_scale = interpolate(0.35, 1, 0, 0.9, radius)
+                # small_scale = interpolate(0.2, 1, 0, 1.4, radius)
+                scale = min(large_scale, 1.0)
+                self.forward *= scale
             v_left, v_right = tank_drive_wheel_velocities(self.robot_characteristics.wheel_base,
                                                           self.forward, self.curvature)
             v_left, v_right = self._scale_speeds(v_left, v_right)

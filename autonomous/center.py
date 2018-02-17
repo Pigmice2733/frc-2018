@@ -35,13 +35,19 @@ class CenterAutonomous(AutonomousStateMachine):
         Selector.add_new_path(self.MODE_NAME, 'center', initial_states, waypoints)
 
     def initialize_path(self):
-        if Selector.game_message()[0] == 'R':
+        try:
+            if Selector.game_message()[0] == 'R':
+                waypoints = self.right_side_waypoints
+            else:
+                waypoints = Selector.mirror_waypoints(self.right_side_waypoints, 8.23)
+        except IndexError:
             waypoints = self.right_side_waypoints
-        else:
-            waypoints = Selector.mirror_waypoints(self.right_side_waypoints, 8.23)
 
         path = Path(self.center_path_tuning, self.center_starting_position, waypoints)
-        self.drivetrain.set_path(path)
+        max_speed = 2.2
+        end_threshold = 0.25
+
+        self.drivetrain.set_path(max_speed, end_threshold, path)
 
     @state(first=True)
     def start(self, initial_call):
