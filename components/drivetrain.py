@@ -9,6 +9,7 @@ from motioncontrol.path import Path
 from motioncontrol.utils import (Completed, RobotCharacteristics, RobotState, tank_drive_odometry,
                                  tank_drive_wheel_velocities, interpolate)
 from utils import NetworkTablesSender
+from wpilib import Timer
 
 
 class Drivetrain:
@@ -29,6 +30,9 @@ class Drivetrain:
     left_drive_motor = WPI_TalonSRX
     right_drive_motor = WPI_TalonSRX
     navx = AHRS
+
+    end = 0
+    start = 0
 
     robot_state = RobotState()
 
@@ -88,6 +92,7 @@ class Drivetrain:
         self.navx.setAngleAdjustment(-self.navx.getAngle() - math.degrees(orientation))
 
     def _update_odometry(self):
+        self.start = Timer.getFPGATimestamp() * 1000
         encoder_scaling = (self.robot_characteristics.encoder_ticks /
                            self.robot_characteristics.revolutions_to_distance)
 
@@ -104,7 +109,9 @@ class Drivetrain:
                                                self.robot_state.position, velocity)
 
         self.wheel_distances = current_wheel_distances
-        self.path_tracking_sender.send(self.robot_state, "robot_state")
+        # self.path_tracking_sender.send(self.robot_state, "robot_state")
+        self.end = Timer.getFPGATimestamp() * 1000
+        print("odometry", self.end - self.start)
 
     def _scale_speeds(self, vl: float, vr: float) -> (float, float):
         """Scales left and right motor speeds to a max of ±1.0 if either is
@@ -117,6 +124,8 @@ class Drivetrain:
         return vl, vr
 
     def execute(self):
+        Timer.delay(0.02)
+
         self._update_odometry()
 
         if self.curvature is not None:
