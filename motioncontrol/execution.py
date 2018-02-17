@@ -57,13 +57,15 @@ class PathTracker:
         """Gets current RobotState and writes output. Returns
         `Completed` object indictating completion status
         """
-        if not self.profile_executor.update().done:
-            path_state = self.path.get_path_state(self.input_source())
-            self.curvature_output(path_state.curvature)
-            if self.data_output is not None:
-                self.data_output(path_state)
-            return Completed(done=False)
-        return Completed(done=True)
+        path_state = self.path.get_path_state(self.input_source())
+        self.curvature_output(path_state.curvature)
+
+        remaining_distance = path_state.remaining_distance * path_state.goal_direction
+        done = self.profile_executor.update(remaining_distance=remaining_distance).done
+
+        if self.data_output is not None:
+            self.data_output(path_state)
+        return Completed(done=done)
 
 
 class PositionProfileExecutor:
@@ -147,12 +149,17 @@ class DistanceProfileExecutor:
         self.motion_profile = motion_profile
         self.time_look_ahead = time_resolution
 
-    def update(self) -> Completed:
+    def update(self, remaining_distance: float = None, current_velocity: float = None):
         """Updates motion profile and writes output. Returns
         `Completed` object indictating completion status
         """
-        remaining_distance = self.distance_input()
-        current_velocity = self.velocity_input()
+        if remaining_distance is None:
+            remaining_distance = self.distance_input()
+        if current_velocity is None:
+            current_velocity = self.velocity_input()
+
+        reverse = -1 if remaining_distance < 0 else 1
+        remaining_distance = abs(remaining_distance)
 
         velocity, acceleration = self.motion_profile.velocity(current_velocity, remaining_distance)
 
@@ -161,5 +168,5 @@ class DistanceProfileExecutor:
         if remaining_distance < self.absolute_error:
             self.output(0.0)
             return Completed(done=True)
-        self.output(clamp(optimal_velocity, 0, self.motion_profile.max_speed))
+        self.output(clamp(optimal_velocity, 0, self.motion_profile.max_speed) * reverse)
         return Completed(done=False)
