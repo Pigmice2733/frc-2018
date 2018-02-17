@@ -74,11 +74,7 @@ class Robot(MagicRobot):
         if self.drive_joystick.getRawButton(2):
             self.intake.outtake()
 
-        if self.drive_joystick.getRawButton(3):
-            self.scale_arm.up()
-
-        if self.drive_joystick.getRawButton(4):
-            self.scale_arm.down()
+        self.scale_arm.set_speed(self.operator_joystick.getY(0))
 
     def disabledPeriodic(self):
         self.drivetrain._update_odometry()

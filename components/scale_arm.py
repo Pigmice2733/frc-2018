@@ -11,19 +11,17 @@ class State(Enum):
 
 class ScaleArm:
     scale_arm_motor = WPI_TalonSRX
-    state = State.REST
+    speed = 0
 
     def up(self):
-        self.state = State.UP
+        self.speed = -0.1
 
     def down(self):
-        self.state = State.DOWN
+        self.speed = 0.2
+
+    def set_speed(self, speed):
+        self.speed = speed
 
     def execute(self):
-        if self.state == State.UP:
-            self.scale_arm_motor.set(0.2)
-        elif self.state == State.DOWN:
-            self.scale_arm_motor.set(-0.2)
-        else:
-            self.scale_arm_motor.set(0)
-        self.state = State.REST
+        self.scale_arm_motor.set(self.speed)
+        self.speed = 0
