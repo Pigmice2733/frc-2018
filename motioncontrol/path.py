@@ -95,13 +95,12 @@ class Path:
         curvature = self.curvature_scaling * ((2 * x) / (D * D))
 
         remaining_distance = utils.distance_between(robot_state.position, self.end)
-        goal_direction = -1 if relative_goal.y < robot_state.position.y else 1
 
         return PathState(
             curvature=curvature,
             goal_point=absolute_goal,
             path_position=closest,
-            goal_direction=goal_direction,
+            goal_direction=utils.signum(relative_goal.y),
             remaining_distance=remaining_distance)
 
     def _find_goal_point(self, robot_state: RobotState, lookahead: float) -> Point:

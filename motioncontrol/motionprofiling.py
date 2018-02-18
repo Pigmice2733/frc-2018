@@ -2,7 +2,7 @@
 
 import math
 
-from .utils import RobotCharacteristics, clamp, phase_time
+from .utils import RobotCharacteristics, phase_time, signum
 
 
 class PositionProfile:
@@ -134,16 +134,22 @@ class DistanceProfile:
         `remaining_distance`: The distance the robot still needs to travel.
 
         Returns optimal velocity and optimal acceleration.
-         Robot's velocity should be set to the optimal velocity at some look
-         ahead time:
+        Robot's velocity should be set to the optimal velocity at some look
+        ahead time:
         velocity = optimal velocity + (optimal acceleration * look ahead time)
         """
         # Deceleration time and distance from current velocity
-        deceleration_time = -current_velocity / self.deceleration
+        deceleration_time = abs(current_velocity / self.deceleration)
         deceleration_distance = 0.5 * deceleration_time * current_velocity
 
-        if deceleration_distance >= remaining_distance:
-            optimal_current_velocity = math.sqrt(-2 * remaining_distance * self.deceleration)
-            return optimal_current_velocity, self.deceleration
+        if signum(deceleration_distance) == 0:
+            acceleration = self.acceleration * signum(remaining_distance)
+        elif signum(deceleration_distance) != signum(remaining_distance):
+            acceleration = self.deceleration * signum(deceleration_distance, separate_zero=False)
         else:
-            return clamp(current_velocity, 0, self.max_speed), self.acceleration
+            if abs(deceleration_distance) >= abs(remaining_distance):
+                acceleration = self.deceleration * signum(deceleration_distance)
+            else:
+                acceleration = self.acceleration * signum(deceleration_distance)
+
+        return current_velocity, acceleration

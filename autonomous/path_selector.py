@@ -3,11 +3,9 @@ import _thread
 from typing import Callable, List
 
 import wpilib
-
 from networktables.networktable import NetworkTable
 
-from motioncontrol.utils import RobotState, Point
-
+from motioncontrol.utils import Point, RobotState
 from utils import NetworkTablesSender
 
 

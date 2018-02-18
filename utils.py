@@ -1,4 +1,23 @@
 import json
+from typing import Callable
+
+from networktables.networktable import NetworkTable
+from wpilib import Timer
+
+
+class RateLimiter:
+    """Limit an action to once per configurable interval"""
+
+    def __init__(self, interval: float, action: Callable):
+        self.interval = interval
+        self.action = action
+        self.last_execution = Timer.getFPGATimestamp() * 1000
+
+    def execute(self, *args):
+        time = Timer.getFPGATimestamp() * 1000
+        if time - self.last_execution > self.interval:
+            self.action(args)
+            self.last_execution = time
 
 
 class NetworkTablesSender:
@@ -9,10 +28,10 @@ class NetworkTablesSender:
     identical to that of the tuple. Lists will be sent as a json dump.
     """
 
-    def __init__(self, table):
+    def __init__(self, table: NetworkTable):
         self.table = table
 
-    def send(self, value, name):
+    def send(self, value, name: str):
         """Send a value into NetworkTables using `name` as the root of the
         path.
         """
@@ -22,7 +41,7 @@ class NetworkTablesSender:
         else:
             self._send_value("", value, name)
 
-    def _send_value(self, key, value, path):
+    def _send_value(self, key: str, value, path: str):
         success = True
         if isinstance(value, tuple):
             path = path + key + "/"

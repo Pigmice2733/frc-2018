@@ -13,9 +13,8 @@ from components.climber import Climber
 from components.drivetrain import Drivetrain
 from components.intake import Intake
 from components.scale_arm import ScaleArm
+from motioncontrol.utils import RobotState, interpolate
 from utils import NetworkTablesSender
-
-from motioncontrol.utils import RobotState, clamp, interpolate
 
 
 class Robot(MagicRobot):

@@ -7,7 +7,7 @@ from typing import Callable
 from .motionprofiling import DistanceProfile, PositionProfile
 from .path import Path, PathState
 from .pid import PIDController, PIDParameters
-from .utils import (Completed, RobotCharacteristics, RobotState, clamp, distance_between)
+from .utils import Completed, RobotCharacteristics, RobotState, clamp, distance_between
 
 
 class PathTracker:
@@ -53,7 +53,7 @@ class PathTracker:
             absolute_error,
         )
 
-    def update(self) -> Completed:
+    def update(self) -> (Completed, float):
         """Gets current RobotState and writes output. Returns
         `Completed` object indictating completion status
         """
@@ -64,8 +64,8 @@ class PathTracker:
         done = self.profile_executor.update(remaining_distance=remaining_distance).done
 
         if self.data_output is not None:
-            pass  #self.data_output(path_state)
-        return Completed(done=done)
+            self.data_output(path_state)
+        return Completed(done=done), path_state.remaining_distance
 
 
 class PositionProfileExecutor:
@@ -158,9 +158,6 @@ class DistanceProfileExecutor:
         if current_velocity is None:
             current_velocity = self.velocity_input()
 
-        reverse = -1 if remaining_distance < 0 else 1
-        remaining_distance = abs(remaining_distance)
-
         velocity, acceleration = self.motion_profile.velocity(current_velocity, remaining_distance)
 
         optimal_velocity = velocity + (acceleration * self.time_look_ahead)
@@ -168,5 +165,6 @@ class DistanceProfileExecutor:
         if remaining_distance < self.absolute_error:
             self.output(0.0)
             return Completed(done=True)
-        self.output(clamp(optimal_velocity, 0, self.motion_profile.max_speed) * reverse)
+        self.output(
+            clamp(optimal_velocity, -self.motion_profile.max_speed, self.motion_profile.max_speed))
         return Completed(done=False)

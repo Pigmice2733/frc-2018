@@ -2,16 +2,17 @@ import math
 
 from magicbot.state_machine import AutonomousStateMachine, state
 
-from .path_selector import Selector
 from components.drivetrain import Drivetrain
 from components.intake import Intake
 from motioncontrol.path import Path, PathTuning
 from motioncontrol.utils import Point, RobotState
 
+from .path_selector import Selector
+
 
 class SwitchAutonomous(AutonomousStateMachine):
     MODE_NAME = 'Side Switch'
-    DEFAULT = True
+    DEFAULT = False
 
     drivetrain = Drivetrain
     intake = Intake
@@ -59,7 +60,7 @@ class SwitchAutonomous(AutonomousStateMachine):
         try:
             switch_side = 'left' if Selector.game_message()[0] == 'L' else 'right'
         except IndexError:
-            switch_side = 'right'
+            switch_side = None
 
         robot_side = Selector.starting_position()
 
@@ -74,6 +75,9 @@ class SwitchAutonomous(AutonomousStateMachine):
         if robot_side == 'left':
             waypoints = Selector.mirror_waypoints(waypoints, 8.23)
 
+        if robot_side is None or switch_side is None:
+            waypoints = [position.position, position.position]
+
         path = Path(tuning, position, waypoints)
 
         self.drivetrain.set_path(max_speed, end_threshold, path)
@@ -83,7 +87,9 @@ class SwitchAutonomous(AutonomousStateMachine):
         if initial_call:
             self.initialize_path()
 
-        #self.intake.set(0.1, -0.2)
+        self.intake.set(0.1, -0.2)
 
-        if self.drivetrain.follow_path().done:
+        completion, remaining_distance = self.drivetrain.follow_path()
+
+        if completion.done:
             self.done()

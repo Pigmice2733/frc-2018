@@ -2,10 +2,11 @@ import math
 
 from magicbot.state_machine import AutonomousStateMachine, state
 
-from .path_selector import Selector
 from components.drivetrain import Drivetrain
 from motioncontrol.path import Path, PathTuning
 from motioncontrol.utils import Point, RobotState
+
+from .path_selector import Selector
 
 
 class CenterAutonomous(AutonomousStateMachine):
@@ -54,5 +55,7 @@ class CenterAutonomous(AutonomousStateMachine):
         if initial_call:
             self.initialize_path()
 
-        if self.drivetrain.follow_path().done:
+        completion, remaining_distance = self.drivetrain.follow_path()
+
+        if completion.done:
             self.done()
