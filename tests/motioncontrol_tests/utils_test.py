@@ -8,10 +8,11 @@ from motioncontrol import utils
 
 
 def test_signum():
-    assert utils.signum(0) == 0
     assert utils.signum(100000) == 1
     assert utils.signum(-8.7) == -1
     assert utils.signum(0.00001) == 1
+    assert utils.signum(0, separate_zero=False) ==1
+    assert utils.signum(0, separate_zero=True) == 0
 
 
 def test_approximately_equal():
