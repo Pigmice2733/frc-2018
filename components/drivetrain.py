@@ -7,7 +7,7 @@ from wpilib import drive
 from motioncontrol.execution import PathTracker
 from motioncontrol.path import Path
 from motioncontrol.utils import (Completed, RobotCharacteristics, RobotState, tank_drive_odometry,
-                                 tank_drive_wheel_velocities, interpolate)
+                                 tank_drive_wheel_velocities, interpolate, signum)
 from utils import NetworkTablesSender
 from wpilib import Timer
 
@@ -26,13 +26,13 @@ class Drivetrain:
         revolutions_to_distance=6 * math.pi * 0.02540,
         speed_scaling=3.7)
     wheel_distances = (0.0, 0.0)
+    previous_motor_voltages = (0.0, 0.0)
 
     left_drive_motor = WPI_TalonSRX
     right_drive_motor = WPI_TalonSRX
     navx = AHRS
 
-    end = 0
-    start = 0
+    nt_last_send_time = 0
 
     robot_state = RobotState()
 
@@ -48,6 +48,10 @@ class Drivetrain:
 
     def curve_at(self, curvature):
         self.curvature = curvature
+
+    def tank(self, left, right):
+        self.left = left
+        self.right = right
 
     def set_path(self, max_speed: float, end_threshold: float, path: Path):
         self.robot_state = path.initial_state
@@ -92,7 +96,6 @@ class Drivetrain:
         self.navx.setAngleAdjustment(-self.navx.getAngle() - math.degrees(orientation))
 
     def _update_odometry(self):
-        self.start = Timer.getFPGATimestamp() * 1000
         encoder_scaling = (self.robot_characteristics.encoder_ticks /
                            self.robot_characteristics.revolutions_to_distance)
 
@@ -109,9 +112,10 @@ class Drivetrain:
                                                self.robot_state.position, velocity)
 
         self.wheel_distances = current_wheel_distances
-        # self.path_tracking_sender.send(self.robot_state, "robot_state")
-        self.end = Timer.getFPGATimestamp() * 1000
-        print("odometry", self.end - self.start)
+        time = Timer.getFPGATimestamp() * 1000
+        if time - self.nt_last_send_time > 150:
+            self.path_tracking_sender.send(self.robot_state, "robot_state")
+            self.nt_last_send_time = time
 
     def _scale_speeds(self, vl: float, vr: float) -> (float, float):
         """Scales left and right motor speeds to a max of ±1.0 if either is
@@ -124,24 +128,34 @@ class Drivetrain:
         return vl, vr
 
     def execute(self):
-        Timer.delay(0.02)
-
         self._update_odometry()
 
         if self.curvature is not None:
             if self.curvature > 1e-4:
                 radius = abs(1 / self.curvature)
-                large_scale = interpolate(0.35, 1, 0, 0.9, radius)
-                # small_scale = interpolate(0.2, 1, 0, 1.4, radius)
-                scale = min(large_scale, 1.0)
+                scale = interpolate(0.35, 1, 0, 0.9, radius)
+                scale = min(scale, 1.0)
                 self.forward *= scale
             v_left, v_right = tank_drive_wheel_velocities(self.robot_characteristics.wheel_base,
                                                           self.forward, self.curvature)
             v_left, v_right = self._scale_speeds(v_left, v_right)
             self.robot_drive.tankDrive(v_left, v_right, squaredInputs=False)
         else:
-            self.robot_drive.arcadeDrive(self.forward, self.rotation, squaredInputs=False)
+            left_diff = self.previous_motor_voltages[0] - self.left
+            right_diff = self.previous_motor_voltages[1] - self.right
+
+            accel_limit = 0.02
+
+            if abs(left_diff) > accel_limit and self.previous_motor_voltages[0] > 0.25:
+                self.left = self.previous_motor_voltages[0] - accel_limit * signum(left_diff)
+            if abs(right_diff) > accel_limit and self.previous_motor_voltages[1] > 0.25:
+                self.right = self.previous_motor_voltages[1] - accel_limit * signum(right_diff)
+            self.previous_motor_voltages = (self.left, self.right)
+
+            self.robot_drive.tankDrive(self.left, self.right, squaredInputs=False)
 
         self.rotation = 0
         self.forward = 0
         self.curvature = None
+        self.left = 0
+        self.right = 0

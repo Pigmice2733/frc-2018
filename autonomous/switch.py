@@ -4,6 +4,7 @@ from magicbot.state_machine import AutonomousStateMachine, state
 
 from .path_selector import Selector
 from components.drivetrain import Drivetrain
+from components.intake import Intake
 from motioncontrol.path import Path, PathTuning
 from motioncontrol.utils import Point, RobotState
 
@@ -13,6 +14,7 @@ class SwitchAutonomous(AutonomousStateMachine):
     DEFAULT = True
 
     drivetrain = Drivetrain
+    intake = Intake
 
     right_near_side_waypoints = [
         Point(8.23 - 0.76 - (2.62 / 3), 3.74 / 2.9),
@@ -80,6 +82,8 @@ class SwitchAutonomous(AutonomousStateMachine):
     def start(self, initial_call):
         if initial_call:
             self.initialize_path()
+
+        #self.intake.set(0.1, -0.2)
 
         if self.drivetrain.follow_path().done:
             self.done()

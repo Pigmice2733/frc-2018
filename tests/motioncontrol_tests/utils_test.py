@@ -28,6 +28,7 @@ def test_interpolate():
     assert utils.interpolate(0, 1, 0, 0.6, 0.3) == pytest.approx(0.5)
     assert utils.interpolate(0, 1, 0, 0.6, 0.15) == pytest.approx(0.25)
     assert utils.interpolate(0.2, 1.0, 0.2, 0.4, 0.3) == pytest.approx(0.6)
+    assert utils.interpolate(-0.5, 0, -1, 0, -0.5) == pytest.approx(-0.25)
 
 
 def test_phase_time():

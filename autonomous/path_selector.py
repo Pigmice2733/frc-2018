@@ -80,7 +80,7 @@ class Selector:
     def _update_selected_autonomous(mode: str):
         Selector.path = Selector.path_data.get(mode, None)
         if Selector.path is None:
-            Selector._update_path('None', None)
+            Selector._update_path(None, None)
             return
 
         default_state_name = Selector.path['starting_positions']['default']
@@ -97,8 +97,9 @@ class Selector:
 
     @staticmethod
     def _update_starting_state(state_name: str):
-        initial_state = Selector.path['starting_positions'][state_name]
-        waypoints = Selector.path['waypoints'][state_name]
+        if Selector.path is not None:
+            initial_state = Selector.path['starting_positions'].get(state_name, None)
+            waypoints = Selector.path['waypoints'].get(state_name, None)
 
         Selector._update_path(waypoints, initial_state)
 

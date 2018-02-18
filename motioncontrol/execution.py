@@ -64,7 +64,7 @@ class PathTracker:
         done = self.profile_executor.update(remaining_distance=remaining_distance).done
 
         if self.data_output is not None:
-            self.data_output(path_state)
+            pass  #self.data_output(path_state)
         return Completed(done=done)
 
 

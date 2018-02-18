@@ -1,40 +1,32 @@
-import enum
-
 from ctre.wpi_victorspx import WPI_VictorSPX
 
-
-class Action(enum.Enum):
-    Intake = 1
-    Stop = 0
-    Outtake = -1
-
-
-def mirror(l, r, val):
-    l.set(val)
-    r.set(-val)
+# def mirror(l, r, val):
+#     l.set(val)
+#     r.set(-val)
 
 
 class Intake:
     l_intake_motor = WPI_VictorSPX
     r_intake_motor = WPI_VictorSPX
 
-    state = Action.Stop
+    left = 0
+    right = 0
+
+    def set(self, left, right):
+        self.left = left
+        self.right = right
 
     def intake(self):
-        self.state = Action.Intake
+        self.left = 0.6
+        self.right = -0.6
 
     def outtake(self):
-        self.state = Action.Outtake
-
-    def stop(self):
-        self.state = Action.Stop
+        self.left = -0.5
+        self.right = 0.5
 
     def execute(self):
-        if self.state == Action.Intake:
-            mirror(self.l_intake_motor, self.r_intake_motor, 0.6)
-        elif self.state == Action.Outtake:
-            mirror(self.l_intake_motor, self.r_intake_motor, -0.5)
-        else:
-            mirror(self.l_intake_motor, self.r_intake_motor, 0)
+        self.l_intake_motor.set(self.left)
+        self.r_intake_motor.set(self.right)
 
-        self.state = Action.Stop
+        self.left = 0
+        self.right = 0
