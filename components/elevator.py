@@ -20,18 +20,21 @@ class Elevator:
 
         pid_parameters = PIDParameters(pid_coefs)
 
-        self.pid = PIDController(pid_parameters, wpilib.Timer.getFPGATimestamp())
+        self.pid = PIDController(pid_parameters, wpilib.Timer.getFPGATimestamp)
 
-    def set_speed(self, speed):
+    def set_speed(self, speed: float):
         self.speed = speed
 
-    def set_position(self, position):
+    def set_position(self, position: float):
         self.target_position = position
+
+    def get_position(self) -> float:
+        return self.winch.getQuadraturePosition() / -4096
 
     def execute(self):
         position = self.winch.getQuadraturePosition() / -4096
 
-        if self.limit_switch.get():
+        if not self.limit_switch.get():
             self.winch.setQuadraturePosition(0, 0)
             position = 0
 
@@ -44,12 +47,14 @@ class Elevator:
             if position < 2.3 and self.speed < 0:
                 scale = interpolate(0.01, 1, 0, 2.3, position)
                 self.speed *= scale
+
             if self.speed < 0:
                 self.speed *= 0.2
             else:
-                self.speed *= 1.2
+                self.speed *= 3
+
             if position > 200:
-                self.speed += 0.1
+                self.speed += 0.12
 
         self.winch.set(self.speed)
         self.speed = 0

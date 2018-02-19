@@ -1,8 +1,7 @@
 import math
 
-from magicbot.state_machine import AutonomousStateMachine, state
+from magicbot.state_machine import AutonomousStateMachine, state, timed_state
 
-from .path_selector import Selector
 from components.drivetrain import Drivetrain
 from components.elevator import Elevator
 from components.intake import Intake
@@ -26,12 +25,31 @@ class TestAutonomous(AutonomousStateMachine):
 
     def initialize_path(self):
         path = Path(self.path_tuning, self.position, self.forward_waypoints)
-        self.drivetrain.set_path(path)
+        self.drivetrain.set_path(2.0, 0.2, path)
 
     @state(first=True)
     def start(self, initial_call):
         if initial_call:
             self.initialize_path()
 
-        if self.drivetrain.follow_path().done:
-            self.done()
+        completion, remaining_distance = self.drivetrain.follow_path()
+
+        self.intake.set(0.2, -0.35)
+
+        if remaining_distance < 0.5:
+            self.elevator.set_position(3)
+
+        if completion.done:
+            self.next_state('raise_elevator')
+
+    @state
+    def raise_elevator(self):
+        if self.elevator.get_position() > 3:
+            self.next_state('outtake')
+        else:
+            self.elevator.set_position(3)
+            self.intake.set(0.2, -0.35)
+
+    @timed_state(duration=2)
+    def outtake(self):
+        self.intake.outtake()
