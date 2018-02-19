@@ -53,7 +53,7 @@ class Robot(MagicRobot):
         self.navx = AHRS.create_spi()
 
         self.drive_joystick = wpilib.Joystick(0)
-        self.operator_joystick = wpilib.Joystick(1)
+        self.operator_joystick = wpilib.Joystick(2)
 
         self.elevator_winch = WPI_TalonSRX(6)
         # Xbox 'A' button
