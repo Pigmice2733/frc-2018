@@ -10,7 +10,7 @@ from motioncontrol.utils import Point, RobotState
 
 class SwitchAutonomous(AutonomousStateMachine):
     MODE_NAME = 'Switch'
-    DEFAULT = True
+    DEFAULT = False
 
     drivetrain = Drivetrain
 

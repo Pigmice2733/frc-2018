@@ -60,6 +60,7 @@ class Robot(MagicRobot):
         self.elevator_up = ButtonDebouncer(self.operator_joystick, 1)
         # Xbox 'Y' button
         self.elevator_down = ButtonDebouncer(self.operator_joystick, 4)
+        self.elevator_limit_switch = wpilib.DigitalInput(0)
 
         self.climber_motor = WPI_TalonSRX(7)
 
@@ -76,16 +77,13 @@ class Robot(MagicRobot):
         if self.operator_joystick.getRawButton(10):
             self.climber.climb()
 
-        if self.drive_joystick.getRawButton(1):
+        if self.operator_joystick.getRawButton(1):
             self.intake.intake()
 
-        if self.drive_joystick.getRawButton(2):
+        if self.operator_joystick.getRawButton(2):
             self.intake.outtake()
 
-        if self.elevator_up.get():
-            self.elevator.raise_goal()
-        if self.elevator_down.get():
-            self.elevator.lower_goal()
+        self.elevator.set_speed(-self.operator_joystick.getY(0))
 
     def disabledPeriodic(self):
         self.drivetrain._update_odometry()
