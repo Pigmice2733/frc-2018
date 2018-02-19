@@ -19,8 +19,8 @@ class Drivetrain:
     right = 0
     curvature = None
     robot_characteristics = RobotCharacteristics(
-        acceleration_time=0.7,
-        deceleration_time=2.15,
+        acceleration_time=0.4,
+        deceleration_time=2,
         max_speed=3.0,
         wheel_base=0.6096,
         encoder_ticks=1024 * 4,
@@ -44,12 +44,14 @@ class Drivetrain:
             150, lambda args: self.path_tracking_sender.send(args[0], "robot_state"))
 
     def forward_at(self, speed):
+        self.left = speed
+        self.right = speed
         self.forward = speed
 
-    def turn_at(self, speed, squaredInputs=False):
-        self.rotation = speed
-        if squaredInputs:
-            self.rotation = math.copysign(speed**2, speed)
+    # def turn_at(self, speed, squaredInputs=False):
+    #     self.rotation = speed
+    #     if squaredInputs:
+    #         self.rotation = math.copysign(speed**2, speed)
 
     def curve_at(self, curvature):
         self.curvature = curvature
@@ -79,7 +81,7 @@ class Drivetrain:
             150, lambda args: self.path_tracking_sender.send(args[0], "path_state"))
 
         self.path_tracker = PathTracker(
-            path, robot_characteristics, 0.12, end_threshold, self.get_odometry,
+            path, robot_characteristics, 0.1, end_threshold, self.get_odometry,
             lambda speed: self.forward_at(speed / self.robot_characteristics.speed_scaling),
             self.curve_at, path_state_output.execute)
 
@@ -149,14 +151,13 @@ class Drivetrain:
             left_diff = self.previous_motor_voltages[0] - self.left
             right_diff = self.previous_motor_voltages[1] - self.right
 
-            accel_limit = 0.02
+            accel_limit = 0.04
 
             if abs(left_diff) > accel_limit and self.previous_motor_voltages[0] > 0.25:
                 self.left = self.previous_motor_voltages[0] - accel_limit * signum(left_diff)
             if abs(right_diff) > accel_limit and self.previous_motor_voltages[1] > 0.25:
                 self.right = self.previous_motor_voltages[1] - accel_limit * signum(right_diff)
             self.previous_motor_voltages = (self.left, self.right)
-
             self.robot_drive.tankDrive(self.left, self.right, squaredInputs=False)
 
         self.rotation = 0

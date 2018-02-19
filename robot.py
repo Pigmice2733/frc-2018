@@ -45,8 +45,10 @@ class Robot(MagicRobot):
 
         self.robot_drive = drive.DifferentialDrive(self.left_drive_motor, self.right_drive_motor)
 
-        self.l_intake_motor = WPI_VictorSPX(4)
-        self.r_intake_motor = WPI_VictorSPX(5)
+        self.r_intake_motor = WPI_VictorSPX(4)
+        self.l_intake_motor = WPI_VictorSPX(5)
+        self.intake_solenoid = wpilib.DoubleSolenoid(0, 1)
+
         self.climber_motor = WPI_TalonSRX(7)
 
         self.navx = AHRS.create_spi()
@@ -71,21 +73,26 @@ class Robot(MagicRobot):
         self.path_selection_sender = NetworkTablesSender(self.path_selection_table)
 
     def teleopPeriodic(self):
-        # self.drivetrain.turn_at(self.drive_joystick.getRawAxis(0), squaredInputs=True)
-        # self.drivetrain.forward_at(-self.drive_joystick.getRawAxis(1))
         self.drivetrain.tank(-self.right_drive_joystick.getRawAxis(1),
                              -self.left_drive_joystick.getRawAxis(1))
 
-        if self.operator_joystick.getRawButton(10):
-            self.climber.climb()
-
         if self.operator_joystick.getRawButton(1):
             self.intake.intake()
+            self.intake.open_arm()
+        else:
+            self.intake.close_arm()
+            self.intake.hold()
 
         if self.operator_joystick.getRawButton(2):
             self.intake.outtake()
+        elif self.operator_joystick.getRawButton(3):
+            self.intake.intake()
 
-        self.elevator.set_speed(-self.operator_joystick.getY(0))
+        elevator_speed = -self.operator_joystick.getY(0)
+        if abs(elevator_speed) < 0.08:
+            self.elevator.hold()
+        else:
+            self.elevator.set_speed(elevator_speed)
 
     def disabledPeriodic(self):
         self.drivetrain._update_odometry()

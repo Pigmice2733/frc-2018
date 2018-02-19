@@ -1,7 +1,7 @@
 from ctre.wpi_talonsrx import WPI_TalonSRX
 
 import wpilib
-from motioncontrol.utils import interpolate
+from motioncontrol.utils import interpolate, clamp
 from motioncontrol.pid import PIDCoefficients, PIDParameters, PIDController
 
 
@@ -10,20 +10,31 @@ class Elevator:
     limit_switch = wpilib.DigitalInput
     speed = 0
     target_position = None
+    holding_position = None
     using_position_control = False
 
     def setup(self):
         self.winch.setQuadraturePosition(0, 0)
+
+        self.winch.configPeakOutputForward(1, 0)
+        self.winch.configPeakOutputReverse(-1, 0)
+        self.winch.configNominalOutputForward(0, 0)
+        self.winch.configNominalOutputReverse(0, 0)
+
         self.winch.setInverted(True)
 
-        pid_coefs = PIDCoefficients(0.04, 0.00001, 0.0)
-
-        pid_parameters = PIDParameters(pid_coefs)
-
-        self.pid = PIDController(pid_parameters, wpilib.Timer.getFPGATimestamp)
+        position_pid_coefs = PIDCoefficients(0.36, 0.0006)
+        position_pid_parameters = PIDParameters(position_pid_coefs, output_max=1, output_min=0)
+        self.position_pid = PIDController(position_pid_parameters, wpilib.Timer.getFPGATimestamp)
 
     def set_speed(self, speed: float):
         self.speed = speed
+        self.holding_position = None
+
+    def hold(self):
+        if self.holding_position is None:
+            self.holding_position = self.get_position()
+        self.target_position = self.holding_position
 
     def set_position(self, position: float):
         """Set a target position for the elevator
@@ -31,12 +42,13 @@ class Elevator:
         'position' is measured in revolutions of the elevator winch.
         """
         self.target_position = position
+        self.holding_position = None
 
     def get_position(self) -> float:
         return self.winch.getQuadraturePosition() / -4096
 
     def execute(self):
-        position = self.winch.getQuadraturePosition() / -4096
+        position = self.get_position()
 
         if not self.limit_switch.get():
             self.winch.setQuadraturePosition(0, 0)
@@ -44,12 +56,13 @@ class Elevator:
 
         if self.target_position is not None:
             if not self.using_position_control:
-                self.pid.reset()
+                self.position_pid.reset()
             self.using_position_control = True
-            self.speed = self.pid.get_output(position, self.target_position)
+            self.speed = self.position_pid.get_output(position, self.target_position)
+
         else:
             if position < 2.3 and self.speed < 0:
-                scale = interpolate(0.01, 1, 0, 2.3, position)
+                scale = interpolate(0.05, 1, 0, 2.3, position)
                 self.speed *= scale
 
         if self.speed < 0:
@@ -59,6 +72,8 @@ class Elevator:
 
         if position > 200:
             self.speed += 0.12
+
+        self.speed = clamp(self.speed, -1, 1)
 
         self.winch.set(self.speed)
         self.speed = 0
