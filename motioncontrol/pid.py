@@ -54,7 +54,7 @@ class PIDController:
         """
 
         # PID control coefficients
-        self._coefs = parameters.pid_coefs
+        self._coefs = parameters.coefs
 
         # Internal variables used in the control alogorithm
         self._integral_term = 0.0
