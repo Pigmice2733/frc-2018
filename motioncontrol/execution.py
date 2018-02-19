@@ -162,7 +162,7 @@ class DistanceProfileExecutor:
 
         optimal_velocity = velocity + (acceleration * self.time_look_ahead)
 
-        if remaining_distance < self.absolute_error:
+        if abs(remaining_distance) < self.absolute_error:
             self.output(0.0)
             return Completed(done=True)
         self.output(

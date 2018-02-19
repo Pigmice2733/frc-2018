@@ -20,6 +20,10 @@ class Intake:
         self.left = -0.5
         self.right = 0.5
 
+    def hold(self):
+        self.left = 0.1
+        self.right = -0.25
+
     def execute(self):
         self.l_intake_motor.set(self.left)
         self.r_intake_motor.set(self.right)

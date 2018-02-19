@@ -100,7 +100,7 @@ class Path:
             curvature=curvature,
             goal_point=absolute_goal,
             path_position=closest,
-            goal_direction=utils.signum(relative_goal.y),
+            goal_direction=utils.signum(relative_goal.y, separate_zero=False),
             remaining_distance=remaining_distance)
 
     def _find_goal_point(self, robot_state: RobotState, lookahead: float) -> Point:

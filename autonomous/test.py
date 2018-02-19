@@ -17,7 +17,7 @@ class TestAutonomous(AutonomousStateMachine):
     elevator = Elevator
     intake = Intake
 
-    forward_waypoints = [Point(2, 0), Point(2.25, 0)]
+    forward_waypoints = [Point(0, 2), Point(0, 2.25)]
 
     position = RobotState(position=Point(0, 0), rotation=math.pi / 2)
 
@@ -34,7 +34,7 @@ class TestAutonomous(AutonomousStateMachine):
 
         completion, remaining_distance = self.drivetrain.follow_path()
 
-        self.intake.set(0.2, -0.35)
+        self.intake.hold()
 
         if remaining_distance < 0.5:
             self.elevator.set_position(3)
@@ -47,8 +47,8 @@ class TestAutonomous(AutonomousStateMachine):
         if self.elevator.get_position() > 3:
             self.next_state('outtake')
         else:
-            self.elevator.set_position(3)
-            self.intake.set(0.2, -0.35)
+            self.elevator.set_position(3.2)
+            self.intake.hold()
 
     @timed_state(duration=2)
     def outtake(self):

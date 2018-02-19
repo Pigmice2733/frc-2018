@@ -16,7 +16,7 @@ class Elevator:
         self.winch.setQuadraturePosition(0, 0)
         self.winch.setInverted(True)
 
-        pid_coefs = PIDCoefficients(0.04, 0.0, 0.0)
+        pid_coefs = PIDCoefficients(0.04, 0.00001, 0.0)
 
         pid_parameters = PIDParameters(pid_coefs)
 
@@ -26,6 +26,10 @@ class Elevator:
         self.speed = speed
 
     def set_position(self, position: float):
+        """Set a target position for the elevator
+
+        'position' is measured in revolutions of the elevator winch.
+        """
         self.target_position = position
 
     def get_position(self) -> float:
@@ -48,13 +52,13 @@ class Elevator:
                 scale = interpolate(0.01, 1, 0, 2.3, position)
                 self.speed *= scale
 
-            if self.speed < 0:
-                self.speed *= 0.2
-            else:
-                self.speed *= 3
+        if self.speed < 0:
+            self.speed *= 0.2
+        else:
+            self.speed *= 1.4
 
-            if position > 200:
-                self.speed += 0.12
+        if position > 200:
+            self.speed += 0.12
 
         self.winch.set(self.speed)
         self.speed = 0
