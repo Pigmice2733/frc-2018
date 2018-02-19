@@ -6,14 +6,15 @@ from ctre.wpi_victorspx import WPI_VictorSPX
 from magicbot import MagicRobot
 from networktables import NetworkTables
 from robotpy_ext.common_drivers.navx.ahrs import AHRS
+from robotpy_ext.control.button_debouncer import ButtonDebouncer
 from wpilib import drive
 
 from autonomous.path_selector import Selector
 from components.climber import Climber
 from components.drivetrain import Drivetrain
+from components.elevator import Elevator
 from components.intake import Intake
-from components.scale_arm import ScaleArm
-from motioncontrol.utils import RobotState, interpolate
+from motioncontrol.utils import RobotState
 from utils import NetworkTablesSender
 
 
@@ -21,8 +22,8 @@ class Robot(MagicRobot):
 
     drivetrain = Drivetrain
     climber = Climber
+    elevator = Elevator
     intake = Intake
-    scale_arm = ScaleArm
 
     def robotInit(self):
         super().robotInit()
@@ -46,7 +47,6 @@ class Robot(MagicRobot):
 
         self.l_intake_motor = WPI_VictorSPX(4)
         self.r_intake_motor = WPI_VictorSPX(5)
-        self.scale_arm_motor = WPI_TalonSRX(6)
         self.climber_motor = WPI_TalonSRX(7)
 
         self.navx = AHRS.create_spi()
@@ -54,6 +54,15 @@ class Robot(MagicRobot):
         self.right_drive_joystick = wpilib.Joystick(0)
         self.left_drive_joystick = wpilib.Joystick(1)
         self.operator_joystick = wpilib.Joystick(2)
+
+        self.elevator_winch = WPI_TalonSRX(6)
+        # Xbox 'A' button
+        self.elevator_up = ButtonDebouncer(self.operator_joystick, 1)
+        # Xbox 'Y' button
+        self.elevator_down = ButtonDebouncer(self.operator_joystick, 4)
+        self.elevator_limit_switch = wpilib.DigitalInput(0)
+
+        self.climber_motor = WPI_TalonSRX(7)
 
         self.path_tracking_table = NetworkTables.getTable("path_tracking")
         self.path_tracking_sender = NetworkTablesSender(self.path_tracking_table)
@@ -76,15 +85,7 @@ class Robot(MagicRobot):
         if self.operator_joystick.getRawButton(2):
             self.intake.outtake()
 
-        if self.operator_joystick.getRawAxis(2) > 0.6:
-            self.intake.set(0.35, 0)
-        elif self.operator_joystick.getRawAxis(3) > 0.6:
-            self.intake.set(0, 1)
-
-        elevator_speed = self.operator_joystick.getY(0)
-        if elevator_speed > 0:
-            elevator_speed = interpolate(0, 0.15, 0, 1, elevator_speed)
-        self.scale_arm.set_speed(elevator_speed)
+        self.elevator.set_speed(-self.operator_joystick.getY(0))
 
     def disabledPeriodic(self):
         self.drivetrain._update_odometry()

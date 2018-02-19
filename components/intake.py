@@ -1,9 +1,5 @@
 from ctre.wpi_victorspx import WPI_VictorSPX
 
-# def mirror(l, r, val):
-#     l.set(val)
-#     r.set(-val)
-
 
 class Intake:
     l_intake_motor = WPI_VictorSPX
