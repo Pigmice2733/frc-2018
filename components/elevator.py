@@ -1,43 +1,27 @@
 from ctre.wpi_talonsrx import WPI_TalonSRX
 
+from motioncontrol.utils import interpolate
+
 
 class Elevator:
     winch = WPI_TalonSRX
-    goal_positions = [0, 2.55, 10.25]
-    goal_index = goal_positions[0]
+    speed = 0
 
     def setup(self):
-        self.winch.configSelectedFeedbackSensor(
-            WPI_TalonSRX.FeedbackDevice.CTRE_MagEncoder_Relative, 0, 0)
-        self.winch.setSensorPhase(False)
-        self.winch.setInverted(True)
+        self.winch.setQuadraturePosition(0, 0)
 
-        self.winch.configNominalOutputForward(0, 0)
-        self.winch.configNominalOutputReverse(0, 0)
-        self.winch.configPeakOutputForward(0.5, 0)
-        self.winch.configPeakOutputReverse(-0.5, 0)
-
-        self.winch.config_kP(0, 0.04, 0)
-        self.winch.config_kI(0, 0.00005, 0)
-        self.winch.config_kD(0, 0.0, 0)
-        self.winch.config_kF(0, 0.0, 0)
-
-        self.winch.selectProfileSlot(0, 0)
-
-        self.winch.configAllowableClosedloopError(0, 100, 0)
-
-        self.winch.setSelectedSensorPosition(0, 0, 0)
-
-    def raise_goal(self):
-        self.goal_index += 1
-        self.goal_index = min(self.goal_index, len(self.goal_positions) - 1)
-
-    def lower_goal(self):
-        self.goal_index -= 1
-        self.goal_index = max(self.goal_index, 0)
+    def set_speed(self, speed):
+        self.speed = speed
 
     def execute(self):
-        # Get goal position in revolutions, scale to ticks - MagEncoder is a 1024 cpr quad
-        target_position = self.goal_positions[self.goal_index] * 1024 * 4
-        self.winch.set(WPI_TalonSRX.ControlMode.Position, target_position)
-        print(target_position, " : ", self.winch.getQuadraturePosition())
+        position = self.winch.getQuadraturePosition()
+
+        if position < 1:
+            scale = interpolate(0.05, 1, -0.05, 1, position)
+            self.speed *= scale
+        elif position > 9.5:
+            scale = interpolate(1, 0.05, 9.5, 10.5, position)
+            self.speed *= scale
+
+        self.winch.set(self.speed)
+        self.speed = 0

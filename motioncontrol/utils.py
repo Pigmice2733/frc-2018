@@ -52,6 +52,13 @@ def clamp(value, minimum, maximum):
     return value
 
 
+def interpolate(min_out, max_out, min_in, max_in, val):
+    val -= min_in
+    val /= max_in - min_in
+    dy = max_out - min_out
+    return val * dy + min_out
+
+
 def phase_time(time, start, end):
     """Return phase time - time since start of phase, but not after end"""
     return clamp(time - start, 0, end - start)
