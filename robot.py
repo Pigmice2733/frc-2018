@@ -94,6 +94,8 @@ class Robot(MagicRobot):
         else:
             self.elevator.set_speed(elevator_speed)
 
+        self.climber.set_speed(self.operator_joystick.getRawAxis(5))
+
     def disabledPeriodic(self):
         self.drivetrain._update_odometry()
 
