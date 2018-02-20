@@ -13,8 +13,8 @@ class PIDCoefficients(NamedTuple):
     `d`: Derivative term coeffcient.
     """
     p: float
-    i: float
-    d: float
+    i: float = 0.0
+    d: float = 0.0
 
 
 class PIDParameters(NamedTuple):

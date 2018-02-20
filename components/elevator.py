@@ -23,7 +23,7 @@ class Elevator:
 
         self.winch.setInverted(True)
 
-        position_pid_coefs = PIDCoefficients(0.36, 0.0006, 0)
+        position_pid_coefs = PIDCoefficients(0.36, 0.0006)
         position_pid_parameters = PIDParameters(position_pid_coefs, output_max=1, output_min=0)
         self.position_pid = PIDController(position_pid_parameters, wpilib.Timer.getFPGATimestamp)
 

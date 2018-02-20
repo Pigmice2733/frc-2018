@@ -87,7 +87,7 @@ class SwitchAutonomous(AutonomousStateMachine):
         if initial_call:
             self.initialize_path()
 
-        self.intake.set(0.1, -0.2)
+        self.intake.strong_hold()
 
         completion, remaining_distance = self.drivetrain.follow_path()
 
