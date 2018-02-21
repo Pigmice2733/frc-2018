@@ -50,7 +50,7 @@ class Robot(MagicRobot):
 
         self.r_intake_motor = WPI_VictorSPX(4)
         self.l_intake_motor = WPI_VictorSPX(5)
-        self.intake_solenoid = wpilib.DoubleSolenoid(0, 1)
+        self.intake_solenoid = wpilib.DoubleSolenoid(2, 3)
 
         self.compressor = wpilib.Compressor()
 
