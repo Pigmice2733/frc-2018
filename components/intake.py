@@ -20,6 +20,12 @@ class Intake:
     right = 0
     arm_state = ArmState.closed
 
+    def toggle_arm(self):
+        if self.arm_state == ArmState.opened or self.arm_state == ArmState.neutral:
+            self.arm_state = ArmState.closed
+        else:
+            self.arm_state = ArmState.opened
+    
     def open_arm(self):
         self.arm_state = ArmState.opened
 

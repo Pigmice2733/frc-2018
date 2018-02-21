@@ -65,6 +65,8 @@ class Robot(MagicRobot):
         self.elevator_down = ButtonDebouncer(self.operator_joystick, 4)
         self.elevator_limit_switch = wpilib.DigitalInput(0)
 
+        self.toggle_arm_button = ButtonDebouncer(self.operator_joystick, 1)
+
         self.climber_motor = WPI_TalonSRX(7)
 
         self.path_tracking_table = NetworkTables.getTable("path_tracking")
@@ -77,17 +79,16 @@ class Robot(MagicRobot):
         self.drivetrain.tank(-self.right_drive_joystick.getRawAxis(1),
                              -self.left_drive_joystick.getRawAxis(1))
 
-        if self.operator_joystick.getRawButton(1):
-            self.intake.intake()
-            self.intake.open_arm()
-        else:
-            self.intake.close_arm()
-            self.intake.hold()
+        if self.toggle_arm_button.get():
+            self.intake.toggle_arm()
 
         if self.operator_joystick.getRawButton(2):
             self.intake.outtake()
         elif self.operator_joystick.getRawButton(3):
             self.intake.intake()
+        else:
+            self.intake.hold()
+
 
         elevator_speed = -self.operator_joystick.getY(0)
         if abs(elevator_speed) < 0.08:
