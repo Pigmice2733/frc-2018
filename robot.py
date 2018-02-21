@@ -31,18 +31,22 @@ class Robot(MagicRobot):
             self.drivetrain.robot_state = state
             self.drivetrain._set_orientation(state.rotation)
 
-        Selector.set_up(self.autonomous_chooser_table, self.path_tracking_table,
-                        self.path_selection_table, self.path_tracking_sender,
-                        self.path_selection_sender, selector_state_output, self.isDisabled)
+        Selector.set_up(self.autonomous_chooser_table,
+                        self.path_tracking_table, self.path_selection_table,
+                        self.path_tracking_sender, self.path_selection_sender,
+                        selector_state_output, self.isDisabled)
 
     def createObjects(self):
         self.left_drive_motor = WPI_TalonSRX(0)
         self.right_drive_motor = WPI_TalonSRX(2)
 
-        WPI_TalonSRX(1).set(WPI_TalonSRX.ControlMode.Follower, self.left_drive_motor.getDeviceID())
-        WPI_TalonSRX(3).set(WPI_TalonSRX.ControlMode.Follower, self.right_drive_motor.getDeviceID())
+        WPI_TalonSRX(1).set(WPI_TalonSRX.ControlMode.Follower,
+                            self.left_drive_motor.getDeviceID())
+        WPI_TalonSRX(3).set(WPI_TalonSRX.ControlMode.Follower,
+                            self.right_drive_motor.getDeviceID())
 
-        self.robot_drive = wpilib.drive.DifferentialDrive(self.left_drive_motor, self.right_drive_motor)
+        self.robot_drive = wpilib.drive.DifferentialDrive(
+            self.left_drive_motor, self.right_drive_motor)
 
         self.r_intake_motor = WPI_VictorSPX(4)
         self.l_intake_motor = WPI_VictorSPX(5)
@@ -70,10 +74,13 @@ class Robot(MagicRobot):
         self.climber_motor = WPI_TalonSRX(7)
 
         self.path_tracking_table = NetworkTables.getTable("path_tracking")
-        self.path_tracking_sender = NetworkTablesSender(self.path_tracking_table)
-        self.autonomous_chooser_table = NetworkTables.getTable("SmartDashboard/Autonomous Mode")
+        self.path_tracking_sender = NetworkTablesSender(
+            self.path_tracking_table)
+        self.autonomous_chooser_table = NetworkTables.getTable(
+            "SmartDashboard/Autonomous Mode")
         self.path_selection_table = NetworkTables.getTable("path_selection")
-        self.path_selection_sender = NetworkTablesSender(self.path_selection_table)
+        self.path_selection_sender = NetworkTablesSender(
+            self.path_selection_table)
 
     def teleopPeriodic(self):
         self.drivetrain.tank(-self.right_drive_joystick.getRawAxis(1),
@@ -89,14 +96,15 @@ class Robot(MagicRobot):
         else:
             self.intake.hold()
 
-
         elevator_speed = -self.operator_joystick.getY(0)
         if abs(elevator_speed) < 0.08:
             self.elevator.hold()
         else:
             self.elevator.set_speed(elevator_speed)
 
-        self.climber.set_speed(self.operator_joystick.getRawAxis(5))
+        # if self.operator_joystick.getRawButton(
+        #         6) and self.operator_joystick.getRawButton(5):
+        #     self.climber.set_speed(-self.operator_joystick.getRawAxis(5))
 
     def disabledPeriodic(self):
         self.drivetrain._update_odometry()
