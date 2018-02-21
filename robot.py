@@ -7,7 +7,6 @@ from magicbot import MagicRobot
 from networktables import NetworkTables
 from robotpy_ext.common_drivers.navx.ahrs import AHRS
 from robotpy_ext.control.button_debouncer import ButtonDebouncer
-from wpilib import drive
 
 from autonomous.path_selector import Selector
 from components.climber import Climber
@@ -43,11 +42,13 @@ class Robot(MagicRobot):
         WPI_TalonSRX(1).set(WPI_TalonSRX.ControlMode.Follower, self.left_drive_motor.getDeviceID())
         WPI_TalonSRX(3).set(WPI_TalonSRX.ControlMode.Follower, self.right_drive_motor.getDeviceID())
 
-        self.robot_drive = drive.DifferentialDrive(self.left_drive_motor, self.right_drive_motor)
+        self.robot_drive = wpilib.drive.DifferentialDrive(self.left_drive_motor, self.right_drive_motor)
 
         self.r_intake_motor = WPI_VictorSPX(4)
         self.l_intake_motor = WPI_VictorSPX(5)
         self.intake_solenoid = wpilib.DoubleSolenoid(0, 1)
+
+        self.compressor = wpilib.Compressor()
 
         self.climber_motor = WPI_TalonSRX(7)
 

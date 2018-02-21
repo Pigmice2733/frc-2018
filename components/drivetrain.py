@@ -2,7 +2,7 @@ import math
 
 from ctre.wpi_talonsrx import WPI_TalonSRX
 from robotpy_ext.common_drivers.navx.ahrs import AHRS
-from wpilib import drive
+from wpilib import drive, Compressor
 
 from motioncontrol.execution import PathTracker
 from motioncontrol.path import Path
@@ -13,6 +13,7 @@ from utils import NetworkTablesSender, RateLimiter
 
 class Drivetrain:
     robot_drive = drive.DifferentialDrive
+    compressor = Compressor
     rotation = 0
     forward = 0
     left = 0
@@ -147,6 +148,12 @@ class Drivetrain:
                                                           self.forward, self.curvature)
             v_left, v_right = self._scale_speeds(v_left, v_right)
             self.robot_drive.tankDrive(v_left, v_right, squaredInputs=False)
+
+            if v_left > 0.2 or v_right > 0.2:
+                self.compressor.stop()
+            else:
+                self.compressor.start()
+
         else:
             left_diff = self.previous_motor_voltages[0] - self.left
             right_diff = self.previous_motor_voltages[1] - self.right
@@ -159,6 +166,13 @@ class Drivetrain:
                 self.right = self.previous_motor_voltages[1] - accel_limit * signum(right_diff)
             self.previous_motor_voltages = (self.left, self.right)
             self.robot_drive.tankDrive(self.left, self.right, squaredInputs=False)
+
+            if self.left > 0.2 or self.right > 0.2:
+                self.compressor.stop()
+            else:
+                self.compressor.start()
+
+        print(self.compressor.getClosedLoopControl())
 
         self.rotation = 0
         self.forward = 0
