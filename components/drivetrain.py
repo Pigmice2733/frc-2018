@@ -2,50 +2,66 @@ import math
 
 from ctre.wpi_talonsrx import WPI_TalonSRX
 from robotpy_ext.common_drivers.navx.ahrs import AHRS
-from wpilib import drive
+from wpilib import drive, Compressor
 
 from motioncontrol.execution import PathTracker
 from motioncontrol.path import Path
-from motioncontrol.utils import (Completed, RobotCharacteristics, RobotState, tank_drive_odometry,
-                                 tank_drive_wheel_velocities)
-from utils import NetworkTablesSender
+from motioncontrol.utils import (Completed, RobotCharacteristics, RobotState, interpolate, signum,
+                                 tank_drive_odometry, tank_drive_wheel_velocities)
+from utils import NetworkTablesSender, RateLimiter
 
 
 class Drivetrain:
     robot_drive = drive.DifferentialDrive
+    compressor = Compressor
     rotation = 0
     forward = 0
+    left = 0
+    right = 0
     curvature = None
     robot_characteristics = RobotCharacteristics(
-        acceleration_time=0.7,
-        deceleration_time=2.15,
-        max_speed=1.85,
+        acceleration_time=0.4,
+        deceleration_time=2,
+        max_speed=3.0,
         wheel_base=0.6096,
         encoder_ticks=1024 * 4,
         revolutions_to_distance=6 * math.pi * 0.02540,
         speed_scaling=3.7)
     wheel_distances = (0.0, 0.0)
+    previous_motor_voltages = (0.0, 0.0)
 
     left_drive_motor = WPI_TalonSRX
     right_drive_motor = WPI_TalonSRX
     navx = AHRS
 
+    nt_last_send_time = 0
+
     robot_state = RobotState()
 
     path_tracking_sender = NetworkTablesSender
 
+    def setup(self):
+        self.robot_state_output = RateLimiter(
+            150, lambda args: self.path_tracking_sender.send(args[0], "robot_state"))
+
     def forward_at(self, speed):
+        self.left = speed
+        self.right = speed
         self.forward = speed
 
-    def turn_at(self, speed, squaredInputs=False):
-        self.rotation = speed
-        if squaredInputs:
-            self.rotation = math.copysign(speed**2, speed)
+    # def turn_at(self, speed, squaredInputs=False):
+    #     self.rotation = speed
+    #     if squaredInputs:
+    #         self.rotation = math.copysign(speed**2, speed)
 
     def curve_at(self, curvature):
         self.curvature = curvature
 
-    def set_path(self, path: Path):
+    def tank(self, left, right):
+        self.left = left
+        self.right = right
+
+    def set_path(self, max_speed: float, end_threshold: float, path: Path):
         self.robot_state = path.initial_state
         self._set_orientation(self.robot_state.rotation)
 
@@ -53,10 +69,22 @@ class Drivetrain:
         self.right_drive_motor.setQuadraturePosition(0, 0)
         self.wheel_distances = (0, 0)
 
+        robot_characteristics = RobotCharacteristics(
+            acceleration_time=self.robot_characteristics.acceleration_time,
+            deceleration_time=self.robot_characteristics.deceleration_time,
+            max_speed=max_speed,
+            wheel_base=self.robot_characteristics.wheel_base,
+            encoder_ticks=self.robot_characteristics.encoder_ticks,
+            revolutions_to_distance=self.robot_characteristics.revolutions_to_distance,
+            speed_scaling=self.robot_characteristics.speed_scaling)
+
+        path_state_output = RateLimiter(
+            150, lambda args: self.path_tracking_sender.send(args[0], "path_state"))
+
         self.path_tracker = PathTracker(
-            path, self.robot_characteristics, 0.12, 0.2, self.get_odometry,
+            path, robot_characteristics, 0.1, end_threshold, self.get_odometry,
             lambda speed: self.forward_at(speed / self.robot_characteristics.speed_scaling),
-            self.curve_at, lambda value: self.path_tracking_sender.send(value, "path_state"))
+            self.curve_at, path_state_output.execute)
 
         self.path_tracking_sender.send(self.robot_state, "robot_state")
         path_points = []
@@ -65,7 +93,7 @@ class Drivetrain:
         path_points.append(path.segments[-1].end)
         self.path_tracking_sender.send(path_points, "path")
 
-    def follow_path(self) -> Completed:
+    def follow_path(self) -> (Completed, float):
         return self.path_tracker.update()
 
     def get_odometry(self) -> RobotState:
@@ -95,7 +123,7 @@ class Drivetrain:
                                                self.robot_state.position, velocity)
 
         self.wheel_distances = current_wheel_distances
-        self.path_tracking_sender.send(self.robot_state, "robot_state")
+        self.robot_state_output.execute(self.robot_state)
 
     def _scale_speeds(self, vl: float, vr: float) -> (float, float):
         """Scales left and right motor speeds to a max of ±1.0 if either is
@@ -113,19 +141,46 @@ class Drivetrain:
         if self.curvature is not None:
             if self.curvature > 1e-4:
                 radius = abs(1 / self.curvature)
-                if radius < 1.2 and (self.forward / self.robot_characteristics.speed_scaling) > 0.6:
-                    self.forward *= (radius / 1.2)
+                scale = interpolate(0.35, 1, 0, 0.9, radius)
+                scale = min(scale, 1.0)
+                self.forward *= scale
             v_left, v_right = tank_drive_wheel_velocities(self.robot_characteristics.wheel_base,
                                                           self.forward, self.curvature)
             v_left, v_right = self._scale_speeds(v_left, v_right)
             self.robot_drive.tankDrive(v_left, v_right, squaredInputs=False)
+
+            if v_left > 0.2 or v_right > 0.2:
+                self.compressor.stop()
+            else:
+                self.compressor.start()
+
         else:
             pitch = self.navx.getPitch()
             if abs(pitch) > 20:
                 self.rotation = 0
                 self.forward = pitch / 360 # needs tuning
             self.robot_drive.arcadeDrive(self.forward, self.rotation, squaredInputs=False)
+            left_diff = self.previous_motor_voltages[0] - self.left
+            right_diff = self.previous_motor_voltages[1] - self.right
+
+            accel_limit = 0.04
+
+            if abs(left_diff) > accel_limit and self.previous_motor_voltages[0] > 0.25:
+                self.left = self.previous_motor_voltages[0] - accel_limit * signum(left_diff)
+            if abs(right_diff) > accel_limit and self.previous_motor_voltages[1] > 0.25:
+                self.right = self.previous_motor_voltages[1] - accel_limit * signum(right_diff)
+            self.previous_motor_voltages = (self.left, self.right)
+            self.robot_drive.tankDrive(self.left, self.right, squaredInputs=False)
+
+            if self.left > 0.2 or self.right > 0.2:
+                self.compressor.stop()
+            else:
+                self.compressor.start()
+
+        print(self.compressor.getClosedLoopControl())
 
         self.rotation = 0
         self.forward = 0
         self.curvature = None
+        self.left = 0
+        self.right = 0

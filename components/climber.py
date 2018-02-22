@@ -3,14 +3,11 @@ from ctre.wpi_talonsrx import WPI_TalonSRX
 
 class Climber:
     climber_motor = WPI_TalonSRX
-    climbing = False
+    speed = 0
 
-    def climb(self):
-        self.climbing = True
+    def set_speed(self, speed):
+        self.speed = speed
 
     def execute(self):
-        if self.climbing:
-            self.climber_motor.set(0.2)
-        else:
-            self.climber_motor.set(0)
-        self.climbing = False
+        self.climber_motor.set(self.speed)
+        self.speed = 0

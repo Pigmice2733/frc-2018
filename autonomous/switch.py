@@ -2,38 +2,49 @@ import math
 
 from magicbot.state_machine import AutonomousStateMachine, state
 
-from .path_selector import Selector
 from components.drivetrain import Drivetrain
+from components.intake import Intake
 from motioncontrol.path import Path, PathTuning
 from motioncontrol.utils import Point, RobotState
 
+from .path_selector import Selector
+
 
 class SwitchAutonomous(AutonomousStateMachine):
-    MODE_NAME = 'Switch'
+    MODE_NAME = 'Side Switch'
     DEFAULT = False
 
     drivetrain = Drivetrain
+    intake = Intake
 
     right_near_side_waypoints = [
-        Point(8.23 - (2.62 / 4), 3.74 / 4),
-        Point(8.23 - 2.62 + 0.1, 3.74 / 4),
-        Point(8.23 - 2.62, 3.74 - 0.84 / 2)
+        Point(8.23 - 0.76 - (2.62 / 3), 3.74 / 2.9),
+        Point(8.23 - 2.62 + 0.35, 3.74 / 2),
+        Point(8.23 - 2.62 + 0.2, 3.74 / 1.4),
+        Point(8.23 - 2.62 + 0.2, 3.74 - (0.84 / 2) - 0.05)
     ]
 
     right_far_side_waypoints = [
         Point(8.23 - 0.48, 5.20),
-        Point(8.23 - 1.5, 6.05),
+        Point(8.23 - 1.5, 6.00),
         Point(2.16, 6.00),
         Point(1.44, 6.00),
-        Point(0.8, 5.36),
-        Point(0.8, 4.45),
-        Point(2.16 - 1.01 / 2 - 0.2, 4.45)
+        Point(0.6, 5.50),
+        Point(0.6, 4.92 - 0.2),
+        Point(2.16 - 1.01 / 2 - 0.2, 4.42 - 0.28),
+        Point(2.16 - 1.01 / 2 - 0.1, 4.42 - 0.28)
     ]
 
     left_position = RobotState(position=Point(0.76 + 0.89 / 2, 1.01 / 2), rotation=math.pi / 2)
 
     right_position = RobotState(
         position=Point(8.23 - 0.76 - 0.89 / 2, 1.01 / 2), rotation=math.pi / 2)
+
+    near_path_tuning = PathTuning(
+        lookahead=0.9, lookahead_reduction_factor=0.8, curvature_scaling=1.38)
+
+    far_path_tuning = PathTuning(
+        lookahead=1.7, lookahead_reduction_factor=1.4, curvature_scaling=2.35)
 
     def __init__(self):
         initial_states = [('left', self.left_position), ('right', self.right_position)]
@@ -46,52 +57,39 @@ class SwitchAutonomous(AutonomousStateMachine):
         Selector.add_new_path(self.MODE_NAME, 'right', initial_states, waypoints)
 
     def initialize_path(self):
-        right_starting_position = RobotState(
-            position=Point(8.23 - 0.76 - 0.89 / 2, 1.01 / 2), rotation=math.pi / 2)
+        try:
+            switch_side = 'left' if Selector.game_message()[0] == 'L' else 'right'
+        except IndexError:
+            switch_side = None
 
-        center_starting_position = RobotState(
-            position=Point(8.23 / 2, 1.01 / 2), rotation=math.pi / 2)
+        robot_side = Selector.starting_position()
 
-        center_path_tuning = PathTuning(
-            lookahead=1.2, lookahead_reduction_factor=1.5, curvature_scaling=1.55)
+        same_side = robot_side == switch_side
 
-        near_path_tuning = PathTuning(
-            lookahead=1.12, lookahead_reduction_factor=1.1, curvature_scaling=1.28)
+        tuning = self.near_path_tuning if same_side else self.far_path_tuning
+        position = self.left_position if robot_side == 'left' else self.right_position
+        waypoints = self.right_near_side_waypoints if same_side else self.right_far_side_waypoints
+        max_speed = 1.4 if same_side else 2.0
+        end_threshold = 0.35
 
-        far_path_tuning = PathTuning(
-            lookahead=0.9, lookahead_reduction_factor=1.4, curvature_scaling=2.8)
+        if robot_side == 'left':
+            waypoints = Selector.mirror_waypoints(waypoints, 8.23)
 
-        near_side_waypoints = [
-            Point(8.23 - 0.762 - (2.62 / 3), 3.74 / 4.5),
-            Point(8.23 - 2.62 + 0.25, 3.74 / 3.3),
-            Point(8.23 - 2.62, 3.74 - (0.84 / 2))
-        ]
+        if robot_side is None or switch_side is None:
+            waypoints = [position.position, position.position]
 
-        center_waypoints = [
-            Point(8.23 - 2.62 - 0.3, 3.74 / 3.5),
-            Point(8.23 - 2.62, 3.74 / 2),
-            Point(8.23 - 2.62, 3.74 - (0.84 / 2))
-        ]
+        path = Path(tuning, position, waypoints)
 
-        far_side_waypoints = [
-            Point(8.23 - 0.48, 5.20),
-            Point(8.23 - 1.5, 6.00),
-            Point(2.16, 6.00),
-            Point(1.44, 6.00),
-            Point(0.55, 5.50),
-            Point(0.55, 4.92),
-            Point(2.16 - 1.01 / 2 - 0.3, 4.42),
-            Point(2.16 - 1.01 / 2 - 0.2, 4.42)
-        ]
-
-        path = Path(center_path_tuning, center_starting_position, center_waypoints)
-
-        self.drivetrain.set_path(path)
+        self.drivetrain.set_path(max_speed, end_threshold, path)
 
     @state(first=True)
     def start(self, initial_call):
         if initial_call:
             self.initialize_path()
 
-        if self.drivetrain.follow_path().done:
+        self.intake.strong_hold()
+
+        completion, remaining_distance = self.drivetrain.follow_path()
+
+        if completion.done:
             self.done()

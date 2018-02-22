@@ -37,6 +37,14 @@ class RobotCharacteristics(typing.NamedTuple):
     speed_scaling: float
 
 
+def signum(value: float, separate_zero=True) -> int:
+    if value < 0:
+        return -1
+    if value > 0:
+        return 1
+    return 0 if separate_zero else 1
+
+
 def approximately_equal(first, second, error=1e-6):
     return math.fabs(first - second) < error
 
