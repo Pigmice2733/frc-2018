@@ -168,8 +168,8 @@ class Drivetrain:
 
             pitch = self.navx.getPitch()
             if abs(pitch) > 20: # needs tuning
-                self.rotation = 0
-                self.forward = pitch / 360 # needs tuning
+                self.left = pitch / 360
+                self.right = self.left
 
             self.robot_drive.tankDrive(self.left, self.right, squaredInputs=False)
 
