@@ -165,6 +165,12 @@ class Drivetrain:
             if abs(right_diff) > accel_limit and self.previous_motor_voltages[1] > 0.25:
                 self.right = self.previous_motor_voltages[1] - accel_limit * signum(right_diff)
             self.previous_motor_voltages = (self.left, self.right)
+
+            pitch = self.navx.getPitch()
+            if abs(pitch) > 20: # needs tuning
+                self.rotation = 0
+                self.forward = pitch / 360 # needs tuning
+
             self.robot_drive.tankDrive(self.left, self.right, squaredInputs=False)
 
             if self.left > 0.2 or self.right > 0.2:
