@@ -120,6 +120,10 @@ class Drivetrain:
             v_left, v_right = self._scale_speeds(v_left, v_right)
             self.robot_drive.tankDrive(v_left, v_right, squaredInputs=False)
         else:
+            pitch = self.navx.getPitch()
+            if abs(pitch) > 20:
+                self.rotation = 0
+                self.forward = pitch / 360 # needs tuning
             self.robot_drive.arcadeDrive(self.forward, self.rotation, squaredInputs=False)
 
         self.rotation = 0
