@@ -13,8 +13,8 @@ class PIDCoefficients(NamedTuple):
     `d`: Derivative term coeffcient.
     """
     p: float
-    i: float
-    d: float
+    i: float = 0.0
+    d: float = 0.0
 
 
 class PIDParameters(NamedTuple):
@@ -92,8 +92,7 @@ class PIDController:
         current_error = self._get_continuous_error(setpoint - current_input)
 
         self._integral_term += self._coefs.i * (current_error * time_change)
-        self._integral_term = clamp(self._integral_term, self._output_min,
-                                    self._output_maxself._output_max)
+        self._integral_term = clamp(self._integral_term, self._output_min, self._output_max)
 
         # Protect againsts ZeroDivisionError caused
         #  by time resolution in RobotPy simulator

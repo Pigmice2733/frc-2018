@@ -7,11 +7,10 @@ from .utils import Point, RobotState
 
 
 class PathState(typing.NamedTuple):
-    center_of_rotation: Point
     curvature: float
     goal_point: Point
     path_position: Point
-    path_segment: int
+    goal_direction: int
     remaining_distance: float
 
 
@@ -97,20 +96,11 @@ class Path:
 
         remaining_distance = utils.distance_between(robot_state.position, self.end)
 
-        robot_to_field_rotation = robot_state.rotation - math.pi / 2
-        center_of_rotation = Point(None, None)
-        if curvature != 0.0:
-            radius = 1.0 / curvature
-            center_x = (robot_state.position.x + (radius * math.cos(robot_to_field_rotation)))
-            center_y = (robot_state.position.y + (radius * math.sin(robot_to_field_rotation)))
-            center_of_rotation = utils.Point(center_x, center_y)
-
         return PathState(
-            center_of_rotation=center_of_rotation,
             curvature=curvature,
             goal_point=absolute_goal,
             path_position=closest,
-            path_segment=closest_segment_index,
+            goal_direction=utils.signum(relative_goal.y, separate_zero=False),
             remaining_distance=remaining_distance)
 
     def _find_goal_point(self, robot_state: RobotState, lookahead: float) -> Point:
