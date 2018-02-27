@@ -1,9 +1,10 @@
 import math
 
-from magicbot.state_machine import AutonomousStateMachine, state
+from magicbot.state_machine import AutonomousStateMachine, state, timed_state
 
 from components.drivetrain import Drivetrain
 from components.intake import Intake
+from components.elevator import Elevator
 from motioncontrol.path import Path, PathTuning
 from motioncontrol.utils import Point, RobotState
 
@@ -12,16 +13,17 @@ from .path_selector import Selector
 
 class SwitchAutonomous(AutonomousStateMachine):
     MODE_NAME = 'Side Switch'
-    DEFAULT = False
+    DEFAULT = True
 
     drivetrain = Drivetrain
+    elevator = Elevator
     intake = Intake
 
     right_near_side_waypoints = [
         Point(8.23 - 0.76 - (2.62 / 3), 3.74 / 2.9),
-        Point(8.23 - 2.62 + 0.35, 3.74 / 2),
-        Point(8.23 - 2.62 + 0.2, 3.74 / 1.4),
-        Point(8.23 - 2.62 + 0.2, 3.74 - (0.84 / 2) - 0.05)
+        Point(8.23 - 2.62, 3.74 / 2),
+        Point(8.23 - 2.62 - 0.2, 3.74 / 1.4),
+        Point(8.23 - 2.62 - 0.2, 3.74 - (0.84 / 2) - 0.3)
     ]
 
     right_far_side_waypoints = [
@@ -82,14 +84,50 @@ class SwitchAutonomous(AutonomousStateMachine):
 
         self.drivetrain.set_path(max_speed, end_threshold, path)
 
-    @state(first=True)
+    @timed_state(duration=0.75, next_state='stop', first=True)
     def start(self, initial_call):
         if initial_call:
             self.initialize_path()
 
+        self.drivetrain.follow_path()
         self.intake.strong_hold()
 
+    @timed_state(duration=0.15, next_state='drive')
+    def stop(self):
+        self.drivetrain.forward_at(0)
+        self.intake.strong_hold()
+
+    @state
+    def drive(self):
         completion, remaining_distance = self.drivetrain.follow_path()
 
+        self.intake.strong_hold()
+
+        if remaining_distance < 1.2:
+            self.elevator.set_position(4)
+
         if completion.done:
-            self.done()
+            self.next_state('raise_elevator')
+
+    @state
+    def raise_elevator(self):
+        if self.elevator.get_position() > 3.8:
+            self.next_state('outtake')
+        else:
+            self.elevator.set_position(4.2)
+        self.intake.strong_hold()
+
+    @timed_state(duration=0.8, next_state='reverse')
+    def outtake(self):
+        self.intake.outtake()
+        self.elevator.set_position(4.2)
+
+    @timed_state(duration=1.4, next_state='lower')
+    def reverse(self):
+        self.elevator.set_position(3)
+        self.drivetrain.forward_at(-0.3)
+
+    @timed_state(duration=1)
+    def lower(self):
+        self.elevator.set_position(0)
+        self.drivetrain.forward_at(0)

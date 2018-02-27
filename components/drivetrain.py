@@ -86,12 +86,12 @@ class Drivetrain:
             lambda speed: self.forward_at(speed / self.robot_characteristics.speed_scaling),
             self.curve_at, path_state_output.execute)
 
-        self.path_tracking_sender.send(self.robot_state, "robot_state")
+        #self.path_tracking_sender.send(self.robot_state, "robot_state")
         path_points = []
         for segment in path.segments:
             path_points.append(segment.start)
         path_points.append(path.segments[-1].end)
-        self.path_tracking_sender.send(path_points, "path")
+        #self.path_tracking_sender.send(path_points, "path")
 
     def follow_path(self) -> (Completed, float):
         return self.path_tracker.update()
@@ -146,13 +146,7 @@ class Drivetrain:
                 self.forward *= scale
             v_left, v_right = tank_drive_wheel_velocities(self.robot_characteristics.wheel_base,
                                                           self.forward, self.curvature)
-            v_left, v_right = self._scale_speeds(v_left, v_right)
-            self.robot_drive.tankDrive(v_left, v_right, squaredInputs=False)
-
-            if v_left > 0.2 or v_right > 0.2:
-                self.compressor.stop()
-            else:
-                self.compressor.start()
+            self.left, self.right = self._scale_speeds(v_left, v_right)
 
         else:
             left_diff = self.previous_motor_voltages[0] - self.left
@@ -165,14 +159,13 @@ class Drivetrain:
             if abs(right_diff) > accel_limit and self.previous_motor_voltages[1] > 0.25:
                 self.right = self.previous_motor_voltages[1] - accel_limit * signum(right_diff)
             self.previous_motor_voltages = (self.left, self.right)
-            self.robot_drive.tankDrive(self.left, self.right, squaredInputs=False)
 
-            if self.left > 0.2 or self.right > 0.2:
-                self.compressor.stop()
-            else:
-                self.compressor.start()
+        self.robot_drive.tankDrive(self.left, self.right, squaredInputs=False)
 
-        print(self.compressor.getClosedLoopControl())
+        if self.left > 0.1 or self.right > 0.1:
+            self.compressor.stop()
+        else:
+            self.compressor.start()
 
         self.rotation = 0
         self.forward = 0

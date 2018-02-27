@@ -178,7 +178,7 @@ def circle_line_intersection(center: Point, radius: float, line: Line) -> typing
         return -1 if x < 0.0 else 1
 
     # No intersection
-    if discriminant < 0.0:
+    if discriminant < 1e-6:
         return ()
     else:
         x = (D * dy) / math.pow(dr, 2)

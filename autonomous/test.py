@@ -11,13 +11,13 @@ from motioncontrol.utils import Point, RobotState
 
 class TestAutonomous(AutonomousStateMachine):
     MODE_NAME = 'Test'
-    DEFAULT = True
+    DEFAULT = False
 
     drivetrain = Drivetrain
     elevator = Elevator
     intake = Intake
 
-    forward_waypoints = [Point(0, 2.9), Point(0, 3.55 - 1.01 / 2)]
+    forward_waypoints = [Point(0, 2.9), Point(0, 3.4 - 1.01 / 2)]
     position = RobotState(position=Point(0, 1.01 / 2), rotation=math.pi / 2)
     path_tuning = PathTuning(lookahead=1.0, lookahead_reduction_factor=1, curvature_scaling=1.2)
 
@@ -25,7 +25,7 @@ class TestAutonomous(AutonomousStateMachine):
 
     def initialize_path(self):
         path = Path(self.path_tuning, self.position, self.forward_waypoints)
-        self.drivetrain.set_path(2.4, 0.2, path)
+        self.drivetrain.set_path(2.0, 0.2, path)
 
     @timed_state(duration=0.75, next_state='stop', first=True)
     def start(self, initial_call):
@@ -33,14 +33,12 @@ class TestAutonomous(AutonomousStateMachine):
             self.initialize_path()
 
         self.drivetrain.follow_path()
-
-        self.intake.hold()
+        self.intake.strong_hold()
 
     @timed_state(duration=0.15, next_state='drive')
     def stop(self):
         self.drivetrain.forward_at(0)
-
-        self.intake.hold()
+        self.intake.strong_hold()
 
     @state
     def drive(self):
@@ -63,13 +61,18 @@ class TestAutonomous(AutonomousStateMachine):
         self.drivetrain.forward_at(0.2)
         self.intake.strong_hold()
 
-    @timed_state(duration=1, next_state='reverse')
+    @timed_state(duration=0.5, next_state='reverse')
     def outtake(self):
         self.intake.outtake()
         self.elevator.set_position(4.2)
         self.drivetrain.forward_at(0.1)
 
-    @timed_state(duration=3)
+    @timed_state(duration=2, next_state='lower')
     def reverse(self):
-        self.elevator.set_position(4.2)
+        self.elevator.set_position(3)
         self.drivetrain.forward_at(-0.4)
+
+    @timed_state(duration=1)
+    def lower(self):
+        self.elevator.set_position(0)
+        self.drivetrain.forward_at(0)
