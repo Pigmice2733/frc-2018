@@ -1,3 +1,4 @@
+import wpilib
 import math
 
 from magicbot.state_machine import AutonomousStateMachine, state, timed_state
@@ -6,9 +7,8 @@ from components.drivetrain import Drivetrain
 from components.intake import Intake
 from components.elevator import Elevator
 from motioncontrol.path import Path, PathTuning
+from networktables.networktable import NetworkTable
 from motioncontrol.utils import Point, RobotState
-
-from .path_selector import Selector
 
 
 class SwitchAutonomous(AutonomousStateMachine):
@@ -37,6 +37,8 @@ class SwitchAutonomous(AutonomousStateMachine):
         Point(2.16 - 1.01 / 2 - 0.25, 4.42 - 0.3)
     ]
 
+    path_selection_table = NetworkTable
+
     left_position = RobotState(position=Point(0.76 + 0.89 / 2, 1.01 / 2), rotation=math.pi / 2)
 
     right_position = RobotState(
@@ -49,24 +51,20 @@ class SwitchAutonomous(AutonomousStateMachine):
         lookahead=1.58, lookahead_reduction_factor=2.6, curvature_scaling=1.34)
 
     def __init__(self):
-        initial_states = [('left', self.left_position), ('right', self.right_position)]
+        self.initial_states = [('left', self.left_position), ('right', self.right_position)]
 
-        waypoints = {
-            'left': Selector.mirror_waypoints(self.right_near_side_waypoints, 8.23),
+        self.waypoints = {
+            'left': self.mirror_waypoints(self.right_near_side_waypoints, 8.23),
             'right': self.right_near_side_waypoints
         }
 
-        Selector.add_new_path(self.MODE_NAME, 'right', initial_states, waypoints)
-
     def initialize_path(self):
         try:
-            switch_side = 'left' if Selector.game_message()[0] == 'L' else 'right'
+            switch_side = 'left' if self.game_message()[0] == 'L' else 'right'
         except IndexError:
             switch_side = None
 
-        #robot_side = Selector.starting_position()
-
-        robot_side = "right"
+        robot_side = self.starting_position()
 
         self.same_side = robot_side == switch_side
 
@@ -77,7 +75,7 @@ class SwitchAutonomous(AutonomousStateMachine):
         end_threshold = 0.35
 
         if robot_side == 'left':
-            waypoints = Selector.mirror_waypoints(waypoints, 8.23)
+            waypoints = self.mirror_waypoints(waypoints, 8.23)
 
         if robot_side is None or switch_side is None:
             waypoints = [position.position, position.position]
@@ -136,3 +134,15 @@ class SwitchAutonomous(AutonomousStateMachine):
     def lower(self):
         self.elevator.set_position(0)
         self.drivetrain.forward_at(0)
+
+    def mirror_waypoints(self, waypoints, field_width: float):
+        def mirrored_point(point: Point) -> Point:
+            return Point(field_width - point.x, point.y)
+
+        return [mirrored_point(point) for point in waypoints]
+
+    def game_message(self) -> str:
+        return wpilib.DriverStation.getInstance().getGameSpecificMessage()
+
+    def starting_position(self) -> str:
+        return self.path_selection_table.getString("starting_position", None)

@@ -8,13 +8,10 @@ from networktables import NetworkTables
 from robotpy_ext.common_drivers.navx.ahrs import AHRS
 from robotpy_ext.control.button_debouncer import ButtonDebouncer
 
-from autonomous.path_selector import Selector
 from components.climber import Climber
 from components.drivetrain import Drivetrain
 from components.elevator import Elevator
 from components.intake import Intake
-from motioncontrol.utils import RobotState
-from utils import NetworkTablesSender
 
 
 class Robot(MagicRobot):
@@ -23,17 +20,6 @@ class Robot(MagicRobot):
     climber = Climber
     elevator = Elevator
     intake = Intake
-
-    def robotInit(self):
-        super().robotInit()
-
-        def selector_state_output(state: RobotState):
-            self.drivetrain.robot_state = state
-            self.drivetrain._set_orientation(state.rotation)
-
-        Selector.set_up(self.autonomous_chooser_table, self.path_tracking_table,
-                        self.path_selection_table, self.path_tracking_sender,
-                        self.path_selection_sender, selector_state_output, self.isDisabled)
 
     def createObjects(self):
         self.left_drive_motor = WPI_TalonSRX(0)
@@ -70,11 +56,7 @@ class Robot(MagicRobot):
 
         self.climber_motor = WPI_TalonSRX(7)
 
-        self.path_tracking_table = NetworkTables.getTable("path_tracking")
-        self.path_tracking_sender = NetworkTablesSender(self.path_tracking_table)
-        self.autonomous_chooser_table = NetworkTables.getTable("SmartDashboard/Autonomous Mode")
         self.path_selection_table = NetworkTables.getTable("path_selection")
-        self.path_selection_sender = NetworkTablesSender(self.path_selection_table)
 
     def teleopPeriodic(self):
         self.right = -self.right_drive_joystick.getRawAxis(1)
@@ -84,21 +66,21 @@ class Robot(MagicRobot):
 
         self.drivetrain.tank(self.right, self.left)
 
-        # if self.toggle_arm_button.get():
-        #     self.intake.toggle_arm()
+        if self.toggle_arm_button.get():
+            self.intake.toggle_arm()
 
-        # if self.operator_joystick.getRawButton(2):
-        #     self.intake.outtake()
-        # elif self.operator_joystick.getRawButton(3):
-        #     self.intake.intake()
-        # else:
-        #     self.intake.hold()
+        if self.operator_joystick.getRawButton(2):
+            self.intake.outtake()
+        elif self.operator_joystick.getRawButton(3):
+            self.intake.intake()
+        else:
+            self.intake.hold()
 
-        # elevator_speed = -self.operator_joystick.getY(0)
-        # if abs(elevator_speed) < 0.08:
-        #     self.elevator.hold()
-        # else:
-        #     self.elevator.set_speed(elevator_speed)
+        elevator_speed = -self.operator_joystick.getY(0)
+        if abs(elevator_speed) < 0.08:
+            self.elevator.hold()
+        else:
+            self.elevator.set_speed(elevator_speed)
 
         # if self.operator_joystick.getRawButton(
         #         6) and self.operator_joystick.getRawButton(5):

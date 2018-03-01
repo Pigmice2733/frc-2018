@@ -6,9 +6,8 @@ from wpilib import drive, Compressor
 
 from motioncontrol.execution import PathTracker
 from motioncontrol.path import Path
-from motioncontrol.utils import (Completed, RobotCharacteristics, RobotState, interpolate, signum,
+from motioncontrol.utils import (Completed, RobotCharacteristics, RobotState, interpolate,
                                  tank_drive_odometry, tank_drive_wheel_velocities)
-from utils import NetworkTablesSender, RateLimiter
 
 
 class Drivetrain:
@@ -34,25 +33,12 @@ class Drivetrain:
     right_drive_motor = WPI_TalonSRX
     navx = AHRS
 
-    nt_last_send_time = 0
-
     robot_state = RobotState()
-
-    path_tracking_sender = NetworkTablesSender
-
-    def setup(self):
-        self.robot_state_output = RateLimiter(
-            250, lambda args: self.path_tracking_sender.send(args[0], "robot_state"))
 
     def forward_at(self, speed):
         self.left = speed
         self.right = speed
         self.forward = speed
-
-    # def turn_at(self, speed, squaredInputs=False):
-    #     self.rotation = speed
-    #     if squaredInputs:
-    #         self.rotation = math.copysign(speed**2, speed)
 
     def curve_at(self, curvature):
         self.curvature = curvature
@@ -78,20 +64,17 @@ class Drivetrain:
             revolutions_to_distance=self.robot_characteristics.revolutions_to_distance,
             speed_scaling=self.robot_characteristics.speed_scaling)
 
-        path_state_output = RateLimiter(
-            250, lambda args: self.path_tracking_sender.send(args[0], "path_state"))
+        path_state_output = lambda _: 0
 
         self.path_tracker = PathTracker(
             path, robot_characteristics, 0.1, end_threshold, self.get_odometry,
             lambda speed: self.forward_at(speed / self.robot_characteristics.speed_scaling),
-            self.curve_at, path_state_output.execute)
+            self.curve_at, None)
 
-        self.path_tracking_sender.send(self.robot_state, "robot_state")
         path_points = []
         for segment in path.segments:
             path_points.append(segment.start)
         path_points.append(path.segments[-1].end)
-        self.path_tracking_sender.send(path_points, "path")
 
     def follow_path(self) -> (Completed, float):
         return self.path_tracker.update()
@@ -123,7 +106,6 @@ class Drivetrain:
                                                self.robot_state.position, velocity)
 
         self.wheel_distances = current_wheel_distances
-        self.robot_state_output.execute(self.robot_state)
 
     def _scale_speeds(self, vl: float, vr: float) -> (float, float):
         """Scales left and right motor speeds to a max of ±1.0 if either is
