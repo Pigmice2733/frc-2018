@@ -9,5 +9,6 @@ class Climber:
         self.speed = speed
 
     def execute(self):
+        return
         self.climber_motor.set(self.speed)
         self.speed = 0

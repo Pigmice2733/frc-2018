@@ -53,6 +53,7 @@ class Intake:
         self.arm_state = ArmState.closed
 
     def execute(self):
+        return
         self.l_intake_motor.set(self.left)
         self.r_intake_motor.set(self.right)
 

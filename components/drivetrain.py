@@ -42,7 +42,7 @@ class Drivetrain:
 
     def setup(self):
         self.robot_state_output = RateLimiter(
-            150, lambda args: self.path_tracking_sender.send(args[0], "robot_state"))
+            250, lambda args: self.path_tracking_sender.send(args[0], "robot_state"))
 
     def forward_at(self, speed):
         self.left = speed
@@ -79,19 +79,19 @@ class Drivetrain:
             speed_scaling=self.robot_characteristics.speed_scaling)
 
         path_state_output = RateLimiter(
-            150, lambda args: self.path_tracking_sender.send(args[0], "path_state"))
+            250, lambda args: self.path_tracking_sender.send(args[0], "path_state"))
 
         self.path_tracker = PathTracker(
             path, robot_characteristics, 0.1, end_threshold, self.get_odometry,
             lambda speed: self.forward_at(speed / self.robot_characteristics.speed_scaling),
             self.curve_at, path_state_output.execute)
 
-        #self.path_tracking_sender.send(self.robot_state, "robot_state")
+        self.path_tracking_sender.send(self.robot_state, "robot_state")
         path_points = []
         for segment in path.segments:
             path_points.append(segment.start)
         path_points.append(path.segments[-1].end)
-        #self.path_tracking_sender.send(path_points, "path")
+        self.path_tracking_sender.send(path_points, "path")
 
     def follow_path(self) -> (Completed, float):
         return self.path_tracker.update()
@@ -148,21 +148,9 @@ class Drivetrain:
                                                           self.forward, self.curvature)
             self.left, self.right = self._scale_speeds(v_left, v_right)
 
-        else:
-            left_diff = self.previous_motor_voltages[0] - self.left
-            right_diff = self.previous_motor_voltages[1] - self.right
-
-            accel_limit = 0.04
-
-            if abs(left_diff) > accel_limit and self.previous_motor_voltages[0] > 0.25:
-                self.left = self.previous_motor_voltages[0] - accel_limit * signum(left_diff)
-            if abs(right_diff) > accel_limit and self.previous_motor_voltages[1] > 0.25:
-                self.right = self.previous_motor_voltages[1] - accel_limit * signum(right_diff)
-            self.previous_motor_voltages = (self.left, self.right)
-
         self.robot_drive.tankDrive(self.left, self.right, squaredInputs=False)
 
-        if self.left > 0.1 or self.right > 0.1:
+        if self.left > 0.05 or self.right > 0.05:
             self.compressor.stop()
         else:
             self.compressor.start()

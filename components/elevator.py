@@ -48,6 +48,7 @@ class Elevator:
         return self.winch.getQuadraturePosition() / -4096
 
     def execute(self):
+        return
         position = self.get_position()
 
         if not self.limit_switch.get():

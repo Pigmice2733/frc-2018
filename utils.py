@@ -43,24 +43,25 @@ class NetworkTablesSender:
 
     def _send_value(self, key: str, value, path: str):
         success = True
-        if isinstance(value, tuple):
-            path = path + key + "/"
-            for key in value._fields:
-                self._send_value(key, getattr(value, key), path)
-        elif isinstance(value, int) or isinstance(value, float):
-            success = self.table.putNumber(path + key, value)
-        elif isinstance(value, bool):
-            success = self.table.putBoolean(path + key, value)
-        elif isinstance(value, str):
-            success = self.table.putString(path + key, value)
-        elif isinstance(value, list):
-            str_array = [json.dumps(x) for x in value]
-            if all(isinstance(n, str) for n in value):
-                str_array = value
-            success = self.table.putStringArray(path + key, str_array)
-        else:
-            success = self.table.putString(path + key, json.dumps(value))
+        pass
+        # if isinstance(value, tuple):
+        #     path = path + key + "/"
+        #     for key in value._fields:
+        #         self._send_value(key, getattr(value, key), path)
+        # elif isinstance(value, int) or isinstance(value, float):
+        #     success = self.table.putNumber(path + key, value)
+        # elif isinstance(value, bool):
+        #     success = self.table.putBoolean(path + key, value)
+        # elif isinstance(value, str):
+        #     success = self.table.putString(path + key, value)
+        # elif isinstance(value, list):
+        #     str_array = [json.dumps(x) for x in value]
+        #     if all(isinstance(n, str) for n in value):
+        #         str_array = value
+        #     success = self.table.putStringArray(path + key, str_array)
+        # else:
+        #     success = self.table.putString(path + key, json.dumps(value))
 
-        if not success:
-            self.table.delete(path + key)
-            self._send_value(key, value, path)
+        # if not success:
+        #     self.table.delete(path + key)
+        #     self._send_value(key, value, path)
