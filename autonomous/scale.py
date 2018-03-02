@@ -11,9 +11,9 @@ from networktables.networktable import NetworkTable
 from motioncontrol.utils import Point, RobotState
 
 
-class SwitchAutonomous(AutonomousStateMachine):
-    MODE_NAME = 'Side Switch'
-    DEFAULT = True
+class ScaleAutonomous(AutonomousStateMachine):
+    MODE_NAME = 'Scale'
+    DEFAULT = False
 
     drivetrain = Drivetrain
     elevator = Elevator
@@ -22,10 +22,9 @@ class SwitchAutonomous(AutonomousStateMachine):
     path_selection_table = NetworkTable
 
     right_near_side_waypoints = [
-        Point(8.23 - 0.76 - (2.62 / 3), 3.74 / 2.9),
-        Point(8.23 - 2.62, 3.74 / 2),
-        Point(8.23 - 2.62 - 0.2, 3.74 / 1.4),
-        Point(8.23 - 2.62 - 0.2, 3.74 - (0.84 / 2) - 0.1)
+        Point(8.23 - 0.76 - (2.62 / 3), 4),
+        Point(8.23 - 1.1, 8.20 + 0.5),
+        Point(8.23 - 2.35, 8.20),
     ]
 
     right_far_side_waypoints = [
@@ -88,7 +87,7 @@ class SwitchAutonomous(AutonomousStateMachine):
 
         self.drivetrain.set_path(max_speed, end_threshold, path)
 
-    @timed_state(duration=1, next_state='stop', first=True)
+    @timed_state(duration=0.9, next_state='stop', first=True)
     def start(self, initial_call):
         if initial_call:
             self.initialize_path()
@@ -120,18 +119,17 @@ class SwitchAutonomous(AutonomousStateMachine):
         else:
             self.elevator.set_position(3.35)
         self.intake.strong_hold()
-        self.drivetrain.forward_at(0.11)
 
     @timed_state(duration=0.8, next_state='reverse')
     def outtake(self):
-        self.intake.outtake()
+        self.intake.open_arm()
         self.elevator.set_position(3.25)
 
-    @timed_state(duration=1.2, next_state='lower')
+    @timed_state(duration=1.4, next_state='lower')
     def reverse(self):
         self.elevator.set_position(2.8)
         if self.same_side:
-            self.drivetrain.forward_at(-0.24)
+            self.drivetrain.forward_at(-0.3)
         else:
             self.drivetrain.forward_at(-0.12)
 

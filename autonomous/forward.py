@@ -25,7 +25,7 @@ class ForwardAutonomous(AutonomousStateMachine):
         path = Path(self.path_tuning, self.position, self.forward_waypoints)
         self.drivetrain.set_path(2.2, 0.2, path)
 
-    @timed_state(duration=0.75, next_state='stop', first=True)
+    @timed_state(duration=0.9, next_state='stop', first=True)
     def start(self, initial_call):
         if initial_call:
             self.initialize_path()
@@ -34,7 +34,7 @@ class ForwardAutonomous(AutonomousStateMachine):
 
         self.intake.hold()
 
-    @timed_state(duration=0.15, next_state='drive')
+    @timed_state(duration=0.2, next_state='drive')
     def stop(self):
         self.drivetrain.forward_at(0)
 

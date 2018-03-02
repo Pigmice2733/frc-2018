@@ -21,15 +21,16 @@ class CenterAutonomous(AutonomousStateMachine):
 
     path_selection_table = NetworkTable
 
-    center_starting_position = RobotState(position=Point(8.23 / 2, 1.01 / 2), rotation=math.pi / 2)
+    center_starting_position = RobotState(
+        position=Point(8.23 / 2 + 0.1, 1.01 / 2), rotation=math.pi / 2)
 
     center_path_tuning = PathTuning(
         lookahead=1.2, lookahead_reduction_factor=1.5, curvature_scaling=1.55)
 
     right_side_waypoints = [
-        Point(8.23 - 2.62 - 0.3, 3.74 / 3.5),
-        Point(8.23 - 2.62, 3.74 / 2),
-        Point(8.23 - 2.62, 3.74 - (0.84 / 2))
+        Point(8.23 - 2.62 - 0.35, 3.74 / 3.5),
+        Point(8.23 - 2.62 - 0.15, 3.74 / 2),
+        Point(8.23 - 2.62 - 0.15, 3.74 - (0.84 / 2) - 0.15)
     ]
 
     def initialize_path(self):
@@ -44,12 +45,12 @@ class CenterAutonomous(AutonomousStateMachine):
             ]
 
         path = Path(self.center_path_tuning, self.center_starting_position, waypoints)
-        max_speed = 2.0
+        max_speed = 2.4
         end_threshold = 0.25
 
         self.drivetrain.set_path(max_speed, end_threshold, path)
 
-    @timed_state(duration=0.75, next_state='stop', first=True)
+    @timed_state(duration=1.0, next_state='stop', first=True)
     def start(self, initial_call):
         if initial_call:
             self.initialize_path()
@@ -57,7 +58,7 @@ class CenterAutonomous(AutonomousStateMachine):
         self.drivetrain.follow_path()
         self.intake.strong_hold()
 
-    @timed_state(duration=0.15, next_state='drive')
+    @timed_state(duration=0.2, next_state='drive')
     def stop(self):
         self.drivetrain.forward_at(0)
         self.intake.strong_hold()
@@ -68,8 +69,8 @@ class CenterAutonomous(AutonomousStateMachine):
 
         self.intake.strong_hold()
 
-        if remaining_distance < 1.2:
-            self.elevator.set_position(3.8)
+        if remaining_distance < 2:
+            self.elevator.set_position(4)
 
         if completion.done:
             self.next_state('raise_elevator')
@@ -84,7 +85,7 @@ class CenterAutonomous(AutonomousStateMachine):
 
     @timed_state(duration=0.8, next_state='reverse')
     def outtake(self):
-        self.intake.open_arm()
+        self.intake.outtake()
         self.elevator.set_position(3.25)
 
     @timed_state(duration=1.4, next_state='lower')
