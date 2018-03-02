@@ -55,7 +55,7 @@ class Robot(MagicRobot):
         self.climber_motor = WPI_TalonSRX(7)
 
         self.path_selection_table = NetworkTables.getTable("path_selection")
-        self.path_selection_table.putString("Set 'starting_position'", "to either 'left' or 'right")
+        self.path_selection_table.putStringArray("starting_positions", ["left", "right", "center"])
         self.navx = AHRS.create_spi()
 
     def teleopPeriodic(self):
