@@ -53,14 +53,13 @@ class Intake:
         self.arm_state = ArmState.closed
 
     def execute(self):
-        return
         self.l_intake_motor.set(self.left)
         self.r_intake_motor.set(self.right)
 
         if self.arm_state == ArmState.opened:
-            self.solenoid.set(DoubleSolenoid.Value.kReverse)
-        elif self.arm_state == ArmState.closed:
             self.solenoid.set(DoubleSolenoid.Value.kForward)
+        elif self.arm_state == ArmState.closed:
+            self.solenoid.set(DoubleSolenoid.Value.kReverse)
 
         self.left = 0
         self.right = 0

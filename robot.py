@@ -26,6 +26,10 @@ class Robot(MagicRobot):
         self.right_drive_motor = WPI_TalonSRX(2)
         self.elevator_winch = WPI_TalonSRX(6)
 
+        self.right_drive_joystick = wpilib.Joystick(0)
+        self.left_drive_joystick = wpilib.Joystick(1)
+        self.operator_joystick = wpilib.Joystick(2)
+
         WPI_TalonSRX(1).set(WPI_TalonSRX.ControlMode.Follower, self.left_drive_motor.getDeviceID())
         WPI_TalonSRX(3).set(WPI_TalonSRX.ControlMode.Follower, self.right_drive_motor.getDeviceID())
 
@@ -40,12 +44,6 @@ class Robot(MagicRobot):
 
         self.climber_motor = WPI_TalonSRX(7)
 
-        self.navx = AHRS.create_spi()
-
-        self.right_drive_joystick = wpilib.Joystick(0)
-        self.left_drive_joystick = wpilib.Joystick(1)
-        self.operator_joystick = wpilib.Joystick(2)
-
         # Xbox 'A' button
         self.elevator_up = ButtonDebouncer(self.operator_joystick, 1)
         # Xbox 'Y' button
@@ -57,6 +55,8 @@ class Robot(MagicRobot):
         self.climber_motor = WPI_TalonSRX(7)
 
         self.path_selection_table = NetworkTables.getTable("path_selection")
+        self.path_selection_table.putString("Set 'starting_position'", "to either 'left' or 'right")
+        self.navx = AHRS.create_spi()
 
     def teleopPeriodic(self):
         self.right = -self.right_drive_joystick.getRawAxis(1)
@@ -82,9 +82,8 @@ class Robot(MagicRobot):
         else:
             self.elevator.set_speed(elevator_speed)
 
-        # if self.operator_joystick.getRawButton(
-        #         6) and self.operator_joystick.getRawButton(5):
-        #     self.climber.set_speed(-self.operator_joystick.getRawAxis(5))
+        if self.operator_joystick.getRawButton(6) and self.operator_joystick.getRawButton(5):
+            self.climber.set_speed(-self.operator_joystick.getRawAxis(5))
 
     def disabledPeriodic(self):
         self.drivetrain._update_odometry()
