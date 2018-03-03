@@ -22,20 +22,20 @@ class ScaleAutonomous(AutonomousStateMachine):
     path_selection_table = NetworkTable
 
     right_near_side_waypoints = [
-        Point(8.23 - 0.76 - (2.62 / 3), 4),
+        Point(8.23 - 1.1, 4),
         Point(8.23 - 1.1, 8.20 + 0.5),
-        Point(8.23 - 2.35, 8.20),
+        Point(8.23 - 1.8 - 1.01 / 2 - 0.2, 8.20),
     ]
 
     right_far_side_waypoints = [
-        Point(8.23 - 0.88, 5.20),
-        Point(8.23 - 1.9, 6.0),
+        Point(8.23 - 1.1, 6),
+        Point(8.23 - 2.62, 6.2),
         Point(2.16, 6.0),
         Point(1.44, 6.0),
-        Point(0.8, 5.50),
-        Point(0.6, 4.92 - 0.5),
-        Point(2.16 - 1.01 / 2 - 0.35, 4.42 - 0.3),
-        Point(2.16 - 1.01 / 2 - 0.25, 4.42 - 0.3)
+        Point(0.8, 6.6),
+        Point(0.6, 7.1),
+        Point(1.8 - 1.01 / 2 - 0.3, 8.2),
+        Point(1.8 - 1.01 / 2 - 0.2, 8.2)
     ]
 
     left_position = RobotState(position=Point(0.76 + 0.89 / 2, 1.01 / 2), rotation=math.pi / 2)
@@ -59,7 +59,7 @@ class ScaleAutonomous(AutonomousStateMachine):
 
     def initialize_path(self):
         try:
-            switch_side = 'left' if self.game_message()[0] == 'L' else 'right'
+            switch_side = 'left' if self.game_message()[1] == 'L' else 'right'
         except IndexError:
             switch_side = None
 
@@ -107,31 +107,28 @@ class ScaleAutonomous(AutonomousStateMachine):
         self.intake.strong_hold()
 
         if remaining_distance < 1.2:
-            self.elevator.set_position(3.8)
+            self.elevator.set_position(8.5)
 
         if completion.done:
             self.next_state('raise_elevator')
 
     @state
     def raise_elevator(self):
-        if self.elevator.get_position() > 3.25:
+        if self.elevator.get_position() > 8.5:
             self.next_state('outtake')
         else:
-            self.elevator.set_position(3.35)
+            self.elevator.set_position(9.0)
         self.intake.strong_hold()
 
     @timed_state(duration=0.8, next_state='reverse')
     def outtake(self):
         self.intake.open_arm()
-        self.elevator.set_position(3.25)
+        self.elevator.set_position(9.0)
 
     @timed_state(duration=1.4, next_state='lower')
     def reverse(self):
-        self.elevator.set_position(2.8)
-        if self.same_side:
-            self.drivetrain.forward_at(-0.3)
-        else:
-            self.drivetrain.forward_at(-0.12)
+        self.elevator.set_position(8.5)
+        self.drivetrain.forward_at(-0.175)
 
     @timed_state(duration=1)
     def lower(self):
