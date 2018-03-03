@@ -28,14 +28,12 @@ class ScaleAutonomous(AutonomousStateMachine):
     ]
 
     right_far_side_waypoints = [
-        Point(8.23 - 1.1, 6),
-        Point(8.23 - 2.62, 6.2),
-        Point(2.16, 6.0),
-        Point(1.44, 6.0),
-        Point(0.8, 6.4),
-        Point(0.6, 6.9),
-        Point(1.8 - 1.01 / 2 - 0.3, 7.25),
-        Point(1.8 - 1.01 / 2 - 0.2, 7.25)
+        Point(8.23 - 0.85, 5.4),
+        Point(8.23 - 1.1, 6.1),
+        Point(8.23 - 2.62, 6),
+        Point(2.65, 6.05),
+        Point(2.3, 6.5),
+        Point(2.3, 7.2)
     ]
 
     left_position = RobotState(position=Point(0.76 + 0.89 / 2, 1.01 / 2), rotation=math.pi / 2)
@@ -47,7 +45,7 @@ class ScaleAutonomous(AutonomousStateMachine):
         lookahead=1.25, lookahead_reduction_factor=0.8, curvature_scaling=1.38)
 
     far_path_tuning = PathTuning(
-        lookahead=1.58, lookahead_reduction_factor=2.6, curvature_scaling=1.34)
+        lookahead=1.62, lookahead_reduction_factor=2.6, curvature_scaling=1.45)
 
     def __init__(self):
         self.initial_states = [('left', self.left_position), ('right', self.right_position)]
@@ -69,7 +67,7 @@ class ScaleAutonomous(AutonomousStateMachine):
 
         tuning = self.near_path_tuning if self.same_side else self.far_path_tuning
         position = self.left_position if robot_side == 'left' else self.right_position
-        max_speed = 2 if self.same_side else 1.75
+        max_speed = 2 if self.same_side else 1.6
         end_threshold = 0.35
 
         if self.same_side:
@@ -114,26 +112,30 @@ class ScaleAutonomous(AutonomousStateMachine):
 
     @state
     def raise_elevator(self):
-        if self.elevator.get_position() > 11.2:
+        if self.elevator.get_position() > 11:
             self.next_state('outtake')
         else:
-            self.elevator.set_position(12)
+            self.elevator.set_position(12.5)
         self.intake.strong_hold()
 
-    @timed_state(duration=0.8, next_state='reverse')
+    @timed_state(duration=1.25, next_state='reverse')
     def outtake(self):
         self.intake.outtake()
-        self.elevator.set_position(11.5)
+        self.elevator.set_position(12.5)
 
-    @timed_state(duration=1.4, next_state='lower')
+    @timed_state(duration=1, next_state='lower')
     def reverse(self):
-        self.elevator.set_position(11)
-        self.drivetrain.forward_at(-0.175)
+        self.elevator.set_position(11.5)
+        self.drivetrain.forward_at(-0.2)
 
     @timed_state(duration=1)
     def lower(self):
         self.elevator.set_position(0)
         self.drivetrain.forward_at(0)
+
+    @timed_state(duration=3)
+    def straight_forward(self):
+        self.drivetrain.forward_at(0.3)
 
     def mirror_waypoints(self, waypoints, field_width: float):
         def mirrored_point(point: Point) -> Point:
