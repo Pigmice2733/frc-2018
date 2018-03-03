@@ -49,6 +49,7 @@ class Elevator:
 
     def on_enabled(self):
         self.winch.setQuadraturePosition(0, 0)
+        self.target_position = 0
 
     def execute(self):
         position = self.get_position()
