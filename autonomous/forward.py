@@ -1,6 +1,4 @@
-import math
-
-from magicbot.state_machine import AutonomousStateMachine, state, timed_state
+from magicbot.state_machine import AutonomousStateMachine, timed_state
 
 from components.drivetrain import Drivetrain
 from components.intake import Intake

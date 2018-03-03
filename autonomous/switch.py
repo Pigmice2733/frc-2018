@@ -1,13 +1,13 @@
-import wpilib
 import math
 
+import wpilib
 from magicbot.state_machine import AutonomousStateMachine, state, timed_state
+from networktables.networktable import NetworkTable
 
 from components.drivetrain import Drivetrain
-from components.intake import Intake
 from components.elevator import Elevator
+from components.intake import Intake
 from motioncontrol.path import Path, PathTuning
-from networktables.networktable import NetworkTable
 from motioncontrol.utils import Point, RobotState
 
 
@@ -21,12 +21,14 @@ class SwitchAutonomous(AutonomousStateMachine):
 
     path_selection_table = NetworkTable
 
-    right_near_side_waypoints = [
+    old_right_near_side_waypoints = [
         Point(8.23 - 0.76 - (2.62 / 3), 3.74 / 2.9),
         Point(8.23 - 2.62, 3.74 / 2),
         Point(8.23 - 2.62 - 0.2, 3.74 / 1.4),
         Point(8.23 - 2.62 - 0.2, 3.74 - (0.84 / 2) - 0.1)
     ]
+
+    right_near_side_waypoints = [Point(8.23 - 1.15, 4.9), Point(8.23 - 2.16 - 1.01 / 2 - 0.2, 4.75)]
 
     right_far_side_waypoints = [
         Point(8.23 - 0.88, 5.20),

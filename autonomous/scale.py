@@ -1,13 +1,13 @@
-import wpilib
 import math
 
+import wpilib
 from magicbot.state_machine import AutonomousStateMachine, state, timed_state
+from networktables.networktable import NetworkTable
 
 from components.drivetrain import Drivetrain
-from components.intake import Intake
 from components.elevator import Elevator
+from components.intake import Intake
 from motioncontrol.path import Path, PathTuning
-from networktables.networktable import NetworkTable
 from motioncontrol.utils import Point, RobotState
 
 

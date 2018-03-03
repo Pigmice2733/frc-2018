@@ -1,8 +1,8 @@
+import wpilib
 from ctre.wpi_talonsrx import WPI_TalonSRX
 
-import wpilib
-from motioncontrol.utils import interpolate, clamp
-from motioncontrol.pid import PIDCoefficients, PIDParameters, PIDController
+from motioncontrol.pid import PIDCoefficients, PIDController, PIDParameters
+from motioncontrol.utils import clamp, interpolate
 
 
 class Elevator:

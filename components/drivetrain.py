@@ -2,12 +2,13 @@ import math
 
 from ctre.wpi_talonsrx import WPI_TalonSRX
 from robotpy_ext.common_drivers.navx.ahrs import AHRS
-from wpilib import drive, Compressor
+from wpilib import Compressor, drive
 
 from motioncontrol.execution import PathTracker
 from motioncontrol.path import Path
-from motioncontrol.utils import (Completed, RobotCharacteristics, RobotState, interpolate,
-                                 tank_drive_odometry, tank_drive_wheel_velocities)
+from motioncontrol.utils import (Completed, RobotCharacteristics, RobotState,
+                                 interpolate, tank_drive_odometry,
+                                 tank_drive_wheel_velocities)
 
 
 class Drivetrain:
@@ -63,8 +64,6 @@ class Drivetrain:
             encoder_ticks=self.robot_characteristics.encoder_ticks,
             revolutions_to_distance=self.robot_characteristics.revolutions_to_distance,
             speed_scaling=self.robot_characteristics.speed_scaling)
-
-        path_state_output = lambda _: 0
 
         self.path_tracker = PathTracker(
             path, robot_characteristics, 0.1, end_threshold, self.get_odometry,
