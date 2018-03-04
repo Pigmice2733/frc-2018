@@ -177,11 +177,6 @@ def test_vehicle_coords():
 
 
 def test_circle_line_intersection():
-    center = utils.Point(-3.2, 5.6)
-    radius = 4.2
-    line = utils.Line(utils.Point(1, -10), utils.Point(1, 10))
-    assert utils.circle_line_intersection(center, radius, line) == (pytest.approx(
-        utils.Point(1, 5.6)), )
     center = utils.Point(0.0, 0.0)
     radius = 1.0
     line = utils.Line(utils.Point(-2, -2), utils.Point(2, 2))

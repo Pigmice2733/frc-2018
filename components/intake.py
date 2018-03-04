@@ -25,7 +25,7 @@ class Intake:
             self.arm_state = ArmState.closed
         else:
             self.arm_state = ArmState.opened
-    
+
     def open_arm(self):
         self.arm_state = ArmState.opened
 
@@ -40,8 +40,8 @@ class Intake:
         self.right = 0.4
 
     def outtake(self):
-        self.left = 0.45
-        self.right = -0.45
+        self.left = 0.6
+        self.right = -0.6
 
     def hold(self):
         self.left = -0.175
@@ -50,6 +50,7 @@ class Intake:
     def strong_hold(self):
         self.left = -0.25
         self.right = 0.25
+        self.arm_state = ArmState.closed
 
     def execute(self):
         self.l_intake_motor.set(self.left)

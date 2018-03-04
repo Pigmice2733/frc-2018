@@ -2,13 +2,14 @@ import math
 
 from ctre.wpi_talonsrx import WPI_TalonSRX
 from robotpy_ext.common_drivers.navx.ahrs import AHRS
-from wpilib import drive, Compressor
+from wpilib import Compressor, drive
 
 from motioncontrol.execution import PathTracker
 from motioncontrol.path import Path
-from motioncontrol.utils import (Completed, RobotCharacteristics, RobotState, interpolate, signum,
-                                 tank_drive_odometry, tank_drive_wheel_velocities)
-from utils import NetworkTablesSender, RateLimiter
+from motioncontrol.utils import (Completed, RobotCharacteristics, RobotState,
+                                 interpolate, tank_drive_odometry,
+                                 tank_drive_wheel_velocities)
+from utils import NetworkTablesSender
 
 
 class Drivetrain:
@@ -20,9 +21,9 @@ class Drivetrain:
     right = 0
     curvature = None
     robot_characteristics = RobotCharacteristics(
-        acceleration_time=0.4,
-        deceleration_time=2,
-        max_speed=3.0,
+        acceleration_time=0.3,
+        deceleration_time=1.8,
+        max_speed=3.7,
         wheel_base=0.6096,
         encoder_ticks=1024 * 4,
         revolutions_to_distance=6 * math.pi * 0.02540,
@@ -34,25 +35,14 @@ class Drivetrain:
     right_drive_motor = WPI_TalonSRX
     navx = AHRS
 
-    nt_last_send_time = 0
-
     robot_state = RobotState()
 
     path_tracking_sender = NetworkTablesSender
-
-    def setup(self):
-        self.robot_state_output = RateLimiter(
-            150, lambda args: self.path_tracking_sender.send(args[0], "robot_state"))
 
     def forward_at(self, speed):
         self.left = speed
         self.right = speed
         self.forward = speed
-
-    # def turn_at(self, speed, squaredInputs=False):
-    #     self.rotation = speed
-    #     if squaredInputs:
-    #         self.rotation = math.copysign(speed**2, speed)
 
     def curve_at(self, curvature):
         self.curvature = curvature
@@ -78,19 +68,16 @@ class Drivetrain:
             revolutions_to_distance=self.robot_characteristics.revolutions_to_distance,
             speed_scaling=self.robot_characteristics.speed_scaling)
 
-        path_state_output = RateLimiter(
-            150, lambda args: self.path_tracking_sender.send(args[0], "path_state"))
-
         self.path_tracker = PathTracker(
             path, robot_characteristics, 0.1, end_threshold, self.get_odometry,
             lambda speed: self.forward_at(speed / self.robot_characteristics.speed_scaling),
-            self.curve_at, path_state_output.execute)
+            self.curve_at, None)
 
-        self.path_tracking_sender.send(self.robot_state, "robot_state")
         path_points = []
         for segment in path.segments:
             path_points.append(segment.start)
         path_points.append(path.segments[-1].end)
+        self.path_tracking_sender.send(self.robot_state, "robot_state")
         self.path_tracking_sender.send(path_points, "path")
 
     def follow_path(self) -> (Completed, float):
@@ -99,7 +86,7 @@ class Drivetrain:
     def get_odometry(self) -> RobotState:
         return self.robot_state
 
-    def _get_orientation(self) -> float:
+    def get_orientation(self) -> float:
         return math.radians(-self.navx.getAngle())
 
     def _set_orientation(self, orientation) -> float:
@@ -119,11 +106,10 @@ class Drivetrain:
         velocity = 10 * enc_velocity / encoder_scaling
 
         self.robot_state = tank_drive_odometry(current_wheel_distances, self.wheel_distances,
-                                               self._get_orientation(), self.robot_state.rotation,
+                                               self.get_orientation(), self.robot_state.rotation,
                                                self.robot_state.position, velocity)
 
         self.wheel_distances = current_wheel_distances
-        self.robot_state_output.execute(self.robot_state)
 
     def _scale_speeds(self, vl: float, vr: float) -> (float, float):
         """Scales left and right motor speeds to a max of ±1.0 if either is
@@ -146,33 +132,14 @@ class Drivetrain:
                 self.forward *= scale
             v_left, v_right = tank_drive_wheel_velocities(self.robot_characteristics.wheel_base,
                                                           self.forward, self.curvature)
-            v_left, v_right = self._scale_speeds(v_left, v_right)
-            self.robot_drive.tankDrive(v_left, v_right, squaredInputs=False)
+            self.left, self.right = self._scale_speeds(v_left, v_right)
 
-            if v_left > 0.2 or v_right > 0.2:
-                self.compressor.stop()
-            else:
-                self.compressor.start()
+        self.robot_drive.tankDrive(self.left, self.right, squaredInputs=False)
 
+        if self.left > 0.05 or self.right > 0.05:
+            self.compressor.stop()
         else:
-            left_diff = self.previous_motor_voltages[0] - self.left
-            right_diff = self.previous_motor_voltages[1] - self.right
-
-            accel_limit = 0.04
-
-            if abs(left_diff) > accel_limit and self.previous_motor_voltages[0] > 0.25:
-                self.left = self.previous_motor_voltages[0] - accel_limit * signum(left_diff)
-            if abs(right_diff) > accel_limit and self.previous_motor_voltages[1] > 0.25:
-                self.right = self.previous_motor_voltages[1] - accel_limit * signum(right_diff)
-            self.previous_motor_voltages = (self.left, self.right)
-            self.robot_drive.tankDrive(self.left, self.right, squaredInputs=False)
-
-            if self.left > 0.2 or self.right > 0.2:
-                self.compressor.stop()
-            else:
-                self.compressor.start()
-
-        print(self.compressor.getClosedLoopControl())
+            self.compressor.start()
 
         self.rotation = 0
         self.forward = 0

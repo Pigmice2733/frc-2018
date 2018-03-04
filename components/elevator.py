@@ -1,8 +1,8 @@
+import wpilib
 from ctre.wpi_talonsrx import WPI_TalonSRX
 
-import wpilib
-from motioncontrol.utils import interpolate, clamp
-from motioncontrol.pid import PIDCoefficients, PIDParameters, PIDController
+from motioncontrol.pid import PIDCoefficients, PIDController, PIDParameters
+from motioncontrol.utils import clamp, interpolate
 
 
 class Elevator:
@@ -46,6 +46,10 @@ class Elevator:
 
     def get_position(self) -> float:
         return self.winch.getQuadraturePosition() / -4096
+
+    def on_enabled(self):
+        self.winch.setQuadraturePosition(0, 0)
+        self.target_position = 0
 
     def execute(self):
         position = self.get_position()

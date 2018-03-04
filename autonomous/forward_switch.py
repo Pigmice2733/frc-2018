@@ -9,9 +9,9 @@ from motioncontrol.path import Path, PathTuning
 from motioncontrol.utils import Point, RobotState
 
 
-class TestAutonomous(AutonomousStateMachine):
-    MODE_NAME = 'Test'
-    DEFAULT = True
+class ForwardAutonomous(AutonomousStateMachine):
+    MODE_NAME = 'Forward Switch'
+    DEFAULT = False
 
     drivetrain = Drivetrain
     elevator = Elevator
@@ -21,13 +21,11 @@ class TestAutonomous(AutonomousStateMachine):
     position = RobotState(position=Point(0, 1.01 / 2), rotation=math.pi / 2)
     path_tuning = PathTuning(lookahead=1.0, lookahead_reduction_factor=1, curvature_scaling=1.2)
 
-    reverse_waypoints = None
-
     def initialize_path(self):
         path = Path(self.path_tuning, self.position, self.forward_waypoints)
-        self.drivetrain.set_path(2.4, 0.2, path)
+        self.drivetrain.set_path(2.2, 0.2, path)
 
-    @timed_state(duration=0.75, next_state='stop', first=True)
+    @timed_state(duration=0.9, next_state='stop', first=True)
     def start(self, initial_call):
         if initial_call:
             self.initialize_path()
@@ -36,7 +34,7 @@ class TestAutonomous(AutonomousStateMachine):
 
         self.intake.hold()
 
-    @timed_state(duration=0.15, next_state='drive')
+    @timed_state(duration=0.2, next_state='drive')
     def stop(self):
         self.drivetrain.forward_at(0)
 

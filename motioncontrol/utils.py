@@ -173,12 +173,11 @@ def circle_line_intersection(center: Point, radius: float, line: Line) -> typing
 
     discriminant = (math.pow(radius, 2) * math.pow(dr, 2)) - math.pow(D, 2)
 
-    # Not signum, sgn(0) should be 1
     def sgn(x):
         return -1 if x < 0.0 else 1
 
     # No intersection
-    if discriminant < 0.0:
+    if discriminant < 1e-6:
         return ()
     else:
         x = (D * dy) / math.pow(dr, 2)
