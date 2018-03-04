@@ -12,7 +12,6 @@ from components.climber import Climber
 from components.drivetrain import Drivetrain
 from components.elevator import Elevator
 from components.intake import Intake
-
 from utils import NetworkTablesSender
 
 

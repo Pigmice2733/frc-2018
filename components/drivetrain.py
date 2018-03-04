@@ -6,9 +6,9 @@ from wpilib import Compressor, drive
 
 from motioncontrol.execution import PathTracker
 from motioncontrol.path import Path
-from motioncontrol.utils import (Completed, RobotCharacteristics, RobotState, interpolate,
-                                 tank_drive_odometry, tank_drive_wheel_velocities)
-
+from motioncontrol.utils import (Completed, RobotCharacteristics, RobotState,
+                                 interpolate, tank_drive_odometry,
+                                 tank_drive_wheel_velocities)
 from utils import NetworkTablesSender
 
 
