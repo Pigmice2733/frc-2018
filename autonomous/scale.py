@@ -29,14 +29,15 @@ class ScaleAutonomous(AutonomousStateMachine):
 
     right_far_side_waypoints = [
         Point(8.23 - 0.85, 5.4),
-        Point(8.23 - 1.1, 6.1),
-        Point(8.23 - 2.62, 6),
-        Point(2.65, 6.05),
-        Point(2.3, 6.5),
-        Point(2.3, 7.2)
+        Point(8.23 - 1.1, 6),
+        Point(8.23 - 2.62, 5.9),
+        Point(2.65, 5.9),
+        Point(2.55, 6.3),
+        Point(2.55, 7.57 - 1.01 / 2)
     ]
 
-    left_position = RobotState(position=Point(0.76 + 0.89 / 2, 1.01 / 2), rotation=math.pi / 2)
+    left_position = RobotState(
+        position=Point(0.76 + 0.89 / 2, 1.01 / 2), rotation=math.pi / 2)
 
     right_position = RobotState(
         position=Point(8.23 - 0.76 - 0.89 / 2, 1.01 / 2), rotation=math.pi / 2)
@@ -45,13 +46,15 @@ class ScaleAutonomous(AutonomousStateMachine):
         lookahead=1.25, lookahead_reduction_factor=0.8, curvature_scaling=1.38)
 
     far_path_tuning = PathTuning(
-        lookahead=1.62, lookahead_reduction_factor=2.6, curvature_scaling=1.45)
+        lookahead=1.62, lookahead_reduction_factor=4, curvature_scaling=1.55)
 
     def __init__(self):
-        self.initial_states = [('left', self.left_position), ('right', self.right_position)]
+        self.initial_states = [('left', self.left_position),
+                               ('right', self.right_position)]
 
         self.waypoints = {
-            'left': self.mirror_waypoints(self.right_near_side_waypoints, 8.23),
+            'left': self.mirror_waypoints(self.right_near_side_waypoints,
+                                          8.23),
             'right': self.right_near_side_waypoints
         }
 
@@ -68,7 +71,7 @@ class ScaleAutonomous(AutonomousStateMachine):
         tuning = self.near_path_tuning if self.same_side else self.far_path_tuning
         position = self.left_position if robot_side == 'left' else self.right_position
         max_speed = 2 if self.same_side else 1.6
-        end_threshold = 0.35
+        end_threshold = 0.35 if self.same_side else 0.775
 
         if self.same_side:
             waypoints = self.right_near_side_waypoints
@@ -108,6 +111,18 @@ class ScaleAutonomous(AutonomousStateMachine):
             self.elevator.set_position(12)
 
         if completion.done:
+            self.next_state('align')
+
+    @state
+    def align(self):
+        self.elevator.set_position(12)
+        self.intake.strong_hold()
+
+        err = self.drivetrain.get_orientation() - math.pi / 2
+        if abs(err) > 0.1:
+            sign = -1 if err < 0 else 1
+            self.drivetrain.tank(0.18 * sign, -0.18 * sign)
+        else:
             self.next_state('raise_elevator')
 
     @state
@@ -123,15 +138,17 @@ class ScaleAutonomous(AutonomousStateMachine):
         self.intake.outtake()
         self.elevator.set_position(12.5)
 
-    @timed_state(duration=1, next_state='lower')
+    @timed_state(duration=1.2, next_state='hold')
     def reverse(self):
         self.elevator.set_position(11.5)
-        self.drivetrain.forward_at(-0.2)
+        if self.same_side:
+            self.drivetrain.forward_at(-0.3)
+        else:
+            self.drivetrain.forward_at(-0.175)
 
-    @timed_state(duration=1)
-    def lower(self):
-        self.elevator.set_position(0)
-        self.drivetrain.forward_at(0)
+    @state
+    def hold(self):
+        self.elevator.set_position(11.5)
 
     @timed_state(duration=3)
     def straight_forward(self):

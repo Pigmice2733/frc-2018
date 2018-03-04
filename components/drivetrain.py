@@ -86,7 +86,7 @@ class Drivetrain:
     def get_odometry(self) -> RobotState:
         return self.robot_state
 
-    def _get_orientation(self) -> float:
+    def get_orientation(self) -> float:
         return math.radians(-self.navx.getAngle())
 
     def _set_orientation(self, orientation) -> float:
@@ -106,7 +106,7 @@ class Drivetrain:
         velocity = 10 * enc_velocity / encoder_scaling
 
         self.robot_state = tank_drive_odometry(current_wheel_distances, self.wheel_distances,
-                                               self._get_orientation(), self.robot_state.rotation,
+                                               self.get_orientation(), self.robot_state.rotation,
                                                self.robot_state.position, velocity)
 
         self.wheel_distances = current_wheel_distances
