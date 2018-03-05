@@ -58,7 +58,7 @@ class Elevator:
     def execute(self):
         position = self.get_position()
 
-        self.position_streamer.send(position)
+        self.position_streamer.send(round(position, 1))
 
         if not self.limit_switch.get():
             self.winch.setQuadraturePosition(0, 0)
