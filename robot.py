@@ -12,7 +12,7 @@ from components.climber import Climber
 from components.drivetrain import Drivetrain
 from components.elevator import Elevator
 from components.intake import Intake
-from utils import NetworkTablesSender
+from utils import NTStreamer
 
 
 class Robot(MagicRobot):
@@ -60,7 +60,7 @@ class Robot(MagicRobot):
         self.navx = AHRS.create_spi()
 
         self.path_tracking_table = NetworkTables.getTable("path_tracking")
-        self.path_tracking_sender = NetworkTablesSender(self.path_tracking_table)
+        self.path_tracking_sender = NTStreamer(None, "", "path_tracking")
 
     def teleopPeriodic(self):
         self.right = -self.right_drive_joystick.getRawAxis(1)

@@ -6,10 +6,9 @@ from wpilib import Compressor, drive
 
 from motioncontrol.execution import PathTracker
 from motioncontrol.path import Path
-from motioncontrol.utils import (Completed, RobotCharacteristics, RobotState,
-                                 interpolate, tank_drive_odometry,
-                                 tank_drive_wheel_velocities)
-from utils import NetworkTablesSender
+from motioncontrol.utils import (Completed, RobotCharacteristics, RobotState, interpolate,
+                                 tank_drive_odometry, tank_drive_wheel_velocities)
+from utils import NTStreamer
 
 
 class Drivetrain:
@@ -37,7 +36,7 @@ class Drivetrain:
 
     robot_state = RobotState()
 
-    path_tracking_sender = NetworkTablesSender
+    path_tracking_sender = None
 
     def forward_at(self, speed):
         self.left = speed
@@ -77,8 +76,8 @@ class Drivetrain:
         for segment in path.segments:
             path_points.append(segment.start)
         path_points.append(path.segments[-1].end)
-        self.path_tracking_sender.send(self.robot_state, "robot_state")
-        self.path_tracking_sender.send(path_points, "path")
+        #self.path_tracking_sender.send(self.robot_state, "robot_state")
+        #self.path_tracking_sender.send(path_points, "path")
 
     def follow_path(self) -> (Completed, float):
         return self.path_tracker.update()
