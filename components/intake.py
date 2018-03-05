@@ -7,9 +7,9 @@ from utils import NTStreamer
 
 
 class ArmState(Enum):
-    opened = 0
-    closed = 1
-    neutral = 2
+    opened = "opened"
+    closed = "closed"
+    neutral = "neutral"
 
 
 class WheelSpeed(Enum):

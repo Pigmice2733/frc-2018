@@ -23,6 +23,8 @@ class NTStreamer:
         self.key = key
         self.table = NetworkTables.getTable(table)
 
+        self._send(self.value, self.key)
+
     def send(self, value):
         """Send `value` into NetworkTables if it is a new value"""
         if value == self.value:
@@ -31,8 +33,6 @@ class NTStreamer:
         if isinstance(value, tuple):
             for key in value._fields:
                 self._send(getattr(value, key), key, self.key + "/")
-        elif isinstance(value, Enum):
-            self._send(value.value, self.key)
         else:
             self._send(value, self.key)
 
@@ -44,6 +44,8 @@ class NTStreamer:
                 self._send(getattr(value, key), key, path)
         elif isinstance(value, int) or isinstance(value, float):
             success = self.table.putNumber(path + key, value)
+        elif isinstance(value, Enum):
+            success = self.table.putString(path + key, value.value)
         elif isinstance(value, bool):
             success = self.table.putBoolean(path + key, value)
         elif isinstance(value, str):
