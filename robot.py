@@ -91,6 +91,7 @@ class Robot(MagicRobot):
 
     def disabledPeriodic(self):
         self.drivetrain._update_odometry()
+        self.elevator.reset_position()
 
 
 if __name__ == '__main__':
