@@ -6,9 +6,8 @@ from wpilib import Compressor, drive
 
 from motioncontrol.execution import PathTracker
 from motioncontrol.path import Path
-from motioncontrol.utils import (Completed, RobotCharacteristics, RobotState,
-                                 interpolate, tank_drive_odometry,
-                                 tank_drive_wheel_velocities)
+from motioncontrol.utils import (Completed, RobotCharacteristics, RobotState, interpolate,
+                                 tank_drive_odometry, tank_drive_wheel_velocities)
 from utils import NetworkTablesSender
 
 
@@ -52,13 +51,6 @@ class Drivetrain:
         self.right = right
 
     def set_path(self, max_speed: float, end_threshold: float, path: Path):
-        self.robot_state = path.initial_state
-        self._set_orientation(self.robot_state.rotation)
-
-        self.left_drive_motor.setQuadraturePosition(0, 0)
-        self.right_drive_motor.setQuadraturePosition(0, 0)
-        self.wheel_distances = (0, 0)
-
         robot_characteristics = RobotCharacteristics(
             acceleration_time=self.robot_characteristics.acceleration_time,
             deceleration_time=self.robot_characteristics.deceleration_time,
@@ -82,6 +74,14 @@ class Drivetrain:
 
     def follow_path(self) -> (Completed, float):
         return self.path_tracker.update()
+
+    def set_odometry(self, odometry: RobotState):
+        self.robot_state = odometry
+        self._set_orientation(odometry.rotation)
+
+        self.left_drive_motor.setQuadraturePosition(0, 0)
+        self.right_drive_motor.setQuadraturePosition(0, 0)
+        self.wheel_distances = (0, 0)
 
     def get_odometry(self) -> RobotState:
         return self.robot_state

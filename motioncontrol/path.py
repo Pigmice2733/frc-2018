@@ -14,17 +14,19 @@ class PathState(typing.NamedTuple):
     remaining_distance: float
 
 
+class Waypoint(typing.NamedTuple):
+    position: Point
+    lookahead: float
+    curvature_scaling: float
+
+
 class PathSegment(typing.NamedTuple):
     start: Point
     end: Point
     length: float
     angle: float
-
-
-class PathTuning(typing.NamedTuple):
-    lookahead: float
-    lookahead_reduction_factor: float = 1.0
-    curvature_scaling: float = 1.0
+    start_lookahead: float
+    start_curvature_scaling: float
 
 
 class Path:
@@ -33,51 +35,39 @@ class Path:
     Provides methods to calculate desired robot heading to follow path
     """
 
-    def __init__(
-            self,
-            tuning_parameters: PathTuning,
-            initial_robot_state: RobotState,
-            waypoints: typing.List[Point],
-    ):
-        """Path starting from `initial_robot_state` following between the `waypoints`
+    def __init__(self, waypoints: typing.List[Waypoint], end_angle: float):
+        """Create a `Path` following along between the `waypoints`
 
-        Tuning parameters:
+        `end_angle`: Desired ending angle. The robot may not end up facing this direction at all,
+        but will be biased to point this direction. The longer the lookahead of the last waypoint,
+        the more likely it is that the robot will end up oriented in the desired direction.
 
-        `lookahead` will be used to select a goal point, during the last segment of the path, it
-        will be linearly scaled from `lookahead` to `lookahead / lookahead_reduction_factor` across
-        that last segment.
-
-        `curvature_scaling` should be used to tune how responsive the robot is to turning - if the
-        robot fails to complete curves, increase it, if it turns too sharply decrease this value.
+        `waypoints` must contained at least two waypoints - a start and an end. Less than that will
+        result in undefined behavior.
         """
-        self.initial_state = initial_robot_state
-
-        self.lookahead = tuning_parameters.lookahead
-        self.lookahead_reduction = tuning_parameters.lookahead_reduction_factor
-        self.curvature_scaling = tuning_parameters.curvature_scaling
-
-        position = self.initial_state.position
         self.segments = []
-        for waypoint in waypoints:
-            length = utils.distance_between(position, waypoint)
-            angle = utils.angle_between(position, waypoint)
-            segment = PathSegment(start=position, end=waypoint, length=length, angle=angle)
+
+        for i, waypoint in enumerate(waypoints):
+            start = waypoint.position
+            try:
+                end = waypoints[i + 1].position
+            except IndexError:
+                last = waypoints[-1].position
+                end_length = (1 + 1e-6) * waypoints[-1].lookahead
+                end = Point(
+                    x=last.x + (math.cos(end_angle) * end_length),
+                    y=last.y + (math.sin(end_angle) * end_length))
+
+            length = utils.distance_between(start, end)
+            angle = utils.angle_between(start, end)
+            segment = PathSegment(
+                start=start,
+                end=end,
+                length=length,
+                angle=angle,
+                start_lookahead=waypoint.lookahead,
+                start_curvature_scaling=waypoint.curvature_scaling)
             self.segments.append(segment)
-            position = waypoint
-
-        self.end = self.segments[-1].end
-
-        end_stabilization_length = self.lookahead * 1.1
-        end_angle = self.segments[-1].angle
-        self.pseudo_end = Point(
-            x=self.end.x + (math.cos(end_angle) * end_stabilization_length),
-            y=self.end.y + (math.sin(end_angle) * end_stabilization_length))
-        self.segments.append(
-            PathSegment(
-                start=self.end,
-                end=self.pseudo_end,
-                length=end_stabilization_length,
-                angle=end_angle))
 
     def get_path_state(self, robot_state: RobotState) -> PathState:
         """Given the current pose of the robot and an optional lookahead
@@ -85,16 +75,16 @@ class Path:
         """
         closest, closest_segment_index = self._find_closest_point(robot_state.position)
         lookahead = self._compute_lookahead(closest, closest_segment_index)
+        curvature_scaling = self._compute_curvature_scaling(closest, closest_segment_index)
 
         absolute_goal = self._find_goal_point(robot_state, lookahead) or closest
         relative_goal = utils.vehicle_coords(robot_state, absolute_goal)
 
         D = utils.distance_between(Point(), relative_goal)
         x = relative_goal.x
+        curvature = curvature_scaling * ((2 * x) / (D * D))
 
-        curvature = self.curvature_scaling * ((2 * x) / (D * D))
-
-        remaining_distance = utils.distance_between(robot_state.position, self.end)
+        remaining_distance = utils.distance_between(robot_state.position, self.segments[-1].end)
 
         return PathState(
             curvature=curvature,
@@ -134,16 +124,29 @@ class Path:
     def _compute_lookahead(self, path_position: Point, segment_index: int) -> float:
         segment = self.segments[segment_index]
 
-        on_end_segment = segment_index == len(self.segments) - 2
-        on_pseudo_segment = segment_index == len(self.segments) - 1
+        start_lookahead = segment.start_lookahead
+        try:
+            end_lookahead = self.segments[segment_index + 1].start_lookahead
+        except IndexError:
+            end_lookahead = start_lookahead
 
-        if on_pseudo_segment:
-            return self.lookahead / self.lookahead_reduction
+        distance_to_end = utils.distance_between(path_position, segment.end)
+        lookahead = utils.interpolate(end_lookahead, start_lookahead, 0, segment.length,
+                                      distance_to_end)
 
-        if on_end_segment:
-            remaining_distance = utils.distance_between(path_position, self.end)
-            scale = ((segment.length + (self.lookahead_reduction - 1) * remaining_distance) /
-                     (self.lookahead_reduction * segment.length))
-            return self.lookahead * scale
+        return lookahead
 
-        return self.lookahead
+    def _compute_curvature_scaling(self, path_position: Point, segment_index: int) -> float:
+        segment = self.segments[segment_index]
+
+        start_curve_scaling = segment.start_curvature_scaling
+        try:
+            end_curve_scaling = self.segments[segment_index + 1].start_curvature_scaling
+        except IndexError:
+            end_curve_scaling = start_curve_scaling
+
+        distance_to_end = utils.distance_between(path_position, segment.end)
+        curvature_scaling = utils.interpolate(end_curve_scaling, start_curve_scaling, 0,
+                                              segment.length, distance_to_end)
+
+        return curvature_scaling

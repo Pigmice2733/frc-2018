@@ -7,7 +7,7 @@ from networktables.networktable import NetworkTable
 from components.drivetrain import Drivetrain
 from components.elevator import Elevator
 from components.intake import Intake
-from motioncontrol.path import Path, PathTuning
+from motioncontrol.path import Path, Waypoint
 from motioncontrol.utils import Point, RobotState
 
 
@@ -21,57 +21,37 @@ class SwitchAutonomous(AutonomousStateMachine):
 
     path_selection_table = NetworkTable
 
-    old_right_near_side_waypoints = [
-        Point(8.23 - 0.76 - (2.62 / 3), 3.74 / 2.9),
-        Point(8.23 - 2.62, 3.74 / 2),
-        Point(8.23 - 2.62 - 0.2, 3.74 / 1.4),
-        Point(8.23 - 2.62 - 0.2, 3.74 - (0.84 / 2) - 0.1)
+    right_near_side_waypoints = [
+        Waypoint(Point(8.23 - 0.76 - 0.89 / 2, 1.01 / 2), 1.8, 1.2),
+        Waypoint(Point(8.23 - 1.15, 4.9), 0.9, 1.45),
+        Waypoint(Point(8.23 - 2.16 - 1.01 / 2 - 0.2, 4.75), 1, 1.4)
     ]
-
-    right_near_side_waypoints = [Point(8.23 - 1.15, 4.9), Point(8.23 - 2.16 - 1.01 / 2 - 0.2, 4.75)]
 
     right_far_side_waypoints = [
-        Point(8.23 - 0.88, 5.20),
-        Point(8.23 - 1.9, 6.0),
-        Point(2.16, 6.0),
-        Point(1.44, 6.0),
-        Point(0.8, 5.50),
-        Point(0.6, 4.92 - 0.5),
-        Point(2.16 - 1.01 / 2 - 0.35, 4.42 - 0.3),
-        Point(2.16 - 1.01 / 2 - 0.25, 4.42 - 0.3)
+        Waypoint(Point(8.23 - 0.76 - 0.89 / 2, 1.01 / 2), 2, 1.2),
+        Waypoint(Point(8.23 - 0.88, 5.20), 1.8, 1.4),
+        Waypoint(Point(8.23 - 1.9, 6.0), 2.4, 1.2),
+        Waypoint(Point(2.16, 6.0), 2.4, 1.2),
+        Waypoint(Point(1.44, 6.0), 1.4, 1.35),
+        Waypoint(Point(0.8, 5.50), 1, 1.4),
+        Waypoint(Point(0.6, 4.92 - 0.5), 1, 1.35),
+        Waypoint(Point(2.16 - 1.01 / 2 - 0.35, 4.42 - 0.3), 0.8, 1.4),
+        Waypoint(Point(2.16 - 1.01 / 2 - 0.25, 4.42 - 0.3), 0.8, 1.4)
     ]
-
-    left_position = RobotState(position=Point(0.76 + 0.89 / 2, 1.01 / 2), rotation=math.pi / 2)
-
-    right_position = RobotState(
-        position=Point(8.23 - 0.76 - 0.89 / 2, 1.01 / 2), rotation=math.pi / 2)
-
-    near_path_tuning = PathTuning(
-        lookahead=0.9, lookahead_reduction_factor=0.8, curvature_scaling=1.38)
-
-    far_path_tuning = PathTuning(
-        lookahead=1.58, lookahead_reduction_factor=2.6, curvature_scaling=1.34)
-
-    def __init__(self):
-        self.initial_states = [('left', self.left_position), ('right', self.right_position)]
-
-        self.waypoints = {
-            'left': self.mirror_waypoints(self.right_near_side_waypoints, 8.23),
-            'right': self.right_near_side_waypoints
-        }
 
     def initialize_path(self):
         try:
             switch_side = 'left' if self.game_message()[0] == 'L' else 'right'
         except IndexError:
-            switch_side = None
+            self.done()
 
         robot_side = self.starting_position()
+        if robot_side is None:
+            self.done()
 
         self.same_side = robot_side == switch_side
 
-        tuning = self.near_path_tuning if self.same_side else self.far_path_tuning
-        position = self.left_position if robot_side == 'left' else self.right_position
+        end_angle = math.pi / 2 if self.same_side else math.pi
         max_speed = 1.4 if self.same_side else 1.75
         end_threshold = 0.35
 
@@ -83,12 +63,11 @@ class SwitchAutonomous(AutonomousStateMachine):
         if robot_side == 'left':
             waypoints = self.mirror_waypoints(waypoints, 8.23)
 
-        if robot_side is None or switch_side is None:
-            waypoints = [position.position, position.position]
-
-        path = Path(tuning, position, waypoints)
-
+        path = Path(waypoints, end_angle)
         self.drivetrain.set_path(max_speed, end_threshold, path)
+
+        initial_position = RobotState(position=waypoints[0].position)
+        self.drivetrain.set_odometry(initial_position)
 
     @timed_state(duration=1, next_state='stop', first=True)
     def start(self, initial_call):
@@ -143,10 +122,14 @@ class SwitchAutonomous(AutonomousStateMachine):
         self.drivetrain.forward_at(0)
 
     def mirror_waypoints(self, waypoints, field_width: float):
-        def mirrored_point(point: Point) -> Point:
-            return Point(field_width - point.x, point.y)
+        def mirrored_point(waypoint: Waypoint) -> Waypoint:
+            position = Point(field_width - waypoint.position.x, waypoint.position.y)
+            return Waypoint(
+                position=position,
+                lookahead=waypoint.lookahead,
+                curvature_scaling=waypoint.curvature_scaling)
 
-        return [mirrored_point(point) for point in waypoints]
+        return [mirrored_point(waypoint) for waypoint in waypoints]
 
     def game_message(self) -> str:
         return wpilib.DriverStation.getInstance().getGameSpecificMessage()

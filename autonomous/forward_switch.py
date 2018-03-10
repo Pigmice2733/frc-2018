@@ -5,7 +5,7 @@ from magicbot.state_machine import AutonomousStateMachine, state, timed_state
 from components.drivetrain import Drivetrain
 from components.elevator import Elevator
 from components.intake import Intake
-from motioncontrol.path import Path, PathTuning
+from motioncontrol.path import Path, Waypoint
 from motioncontrol.utils import Point, RobotState
 
 
@@ -17,12 +17,17 @@ class ForwardAutonomous(AutonomousStateMachine):
     elevator = Elevator
     intake = Intake
 
-    forward_waypoints = [Point(0, 2.9), Point(0, 3.55 - 1.01 / 2)]
-    position = RobotState(position=Point(0, 1.01 / 2), rotation=math.pi / 2)
-    path_tuning = PathTuning(lookahead=1.0, lookahead_reduction_factor=1, curvature_scaling=1.2)
+    forward_waypoints = [
+        Waypoint(Point(0, 1.01 / 2), 1, 1.2),
+        Waypoint(Point(0, 2.9), 1, 1.2),
+        Waypoint(Point(0, 3.55 - 1.01 / 2), 1, 1.2)
+    ]
+
+    initial_position = RobotState(position=Point(0, 1.01 / 2))
 
     def initialize_path(self):
-        path = Path(self.path_tuning, self.position, self.forward_waypoints)
+        path = Path(self.forward_waypoints, math.pi / 2)
+        self.drivetrain.set_odometry(self.initial_position)
         self.drivetrain.set_path(2.2, 0.2, path)
 
     @timed_state(duration=0.9, next_state='stop', first=True)
