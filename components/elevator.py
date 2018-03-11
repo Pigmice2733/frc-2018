@@ -29,7 +29,7 @@ class Elevator:
         position_pid_parameters = PIDParameters(position_pid_coefs, output_max=1, output_min=0)
         self.position_pid = PIDController(position_pid_parameters, wpilib.Timer.getFPGATimestamp)
 
-        self.position_streamer = NTStreamer(0.0, "elevator/position")
+        self.position_streamer = NTStreamer(0.0, "elevator/position", round_digits=2)
 
     def set_speed(self, speed: float):
         self.speed = speed
@@ -58,7 +58,7 @@ class Elevator:
     def execute(self):
         position = self.get_position()
 
-        self.position_streamer.send(round(position, 1))
+        self.position_streamer.send(position)
 
         if not self.limit_switch.get():
             self.winch.setQuadraturePosition(0, 0)

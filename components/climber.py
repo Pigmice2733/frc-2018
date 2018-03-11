@@ -8,7 +8,7 @@ class Climber:
     speed = 0
 
     def setup(self):
-        self.speed_streamer = NTStreamer(self.speed, "climber/speed")
+        self.speed_streamer = NTStreamer(self.speed, "climber/speed", round_digits=2)
 
     def set_speed(self, speed):
         self.speed = speed

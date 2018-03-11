@@ -36,7 +36,8 @@ class Drivetrain:
 
     robot_state = RobotState()
 
-    path_tracking_sender = None
+    def setup(self):
+        self.odometry_streamer = NTStreamer(self.robot_state, "drivetrain", round_digits=2)
 
     def forward_at(self, speed):
         self.left = speed
@@ -76,8 +77,6 @@ class Drivetrain:
         for segment in path.segments:
             path_points.append(segment.start)
         path_points.append(path.segments[-1].end)
-        #self.path_tracking_sender.send(self.robot_state, "robot_state")
-        #self.path_tracking_sender.send(path_points, "path")
 
     def follow_path(self) -> (Completed, float):
         return self.path_tracker.update()
@@ -122,6 +121,8 @@ class Drivetrain:
 
     def execute(self):
         self._update_odometry()
+
+        self.odometry_streamer.send(self.robot_state)
 
         if self.curvature is not None:
             if self.curvature > 1e-4:

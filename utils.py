@@ -18,10 +18,12 @@ class NTStreamer:
     connection.
     """
 
-    def __init__(self, initial_value, key: str, table: str = 'components'):
+    def __init__(self, initial_value, key: str, table: str = 'components',
+                 round_digits: int = None):
         self.value = initial_value
         self.key = key
         self.table = NetworkTables.getTable(table)
+        self.rounding = round_digits
 
         self._send(self.value, self.key)
 
@@ -43,6 +45,7 @@ class NTStreamer:
             for key in value._fields:
                 self._send(getattr(value, key), key, path)
         elif isinstance(value, int) or isinstance(value, float):
+            value = round(value, self.rounding) if self.rounding is not None else value
             success = self.table.putNumber(path + key, value)
         elif isinstance(value, Enum):
             success = self.table.putString(path + key, value.value)
