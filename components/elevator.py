@@ -3,7 +3,6 @@ from ctre.wpi_talonsrx import WPI_TalonSRX
 
 from motioncontrol.pid import PIDCoefficients, PIDController, PIDParameters
 from motioncontrol.utils import clamp, interpolate
-
 from utils import NTStreamer
 
 

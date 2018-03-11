@@ -2,7 +2,6 @@ import math
 
 import wpilib
 from magicbot.state_machine import AutonomousStateMachine, state, timed_state
-from networktables.networktable import NetworkTable
 
 from components.drivetrain import Drivetrain
 from components.elevator import Elevator
@@ -18,8 +17,6 @@ class CenterAutonomous(AutonomousStateMachine):
     drivetrain = Drivetrain
     elevator = Elevator
     intake = Intake
-
-    path_selection_table = NetworkTable
 
     center_starting_position = RobotState(
         position=Point(8.23 / 2 + 0.1, 1.01 / 2), rotation=math.pi / 2)
@@ -106,6 +103,3 @@ class CenterAutonomous(AutonomousStateMachine):
 
     def game_message(self) -> str:
         return wpilib.DriverStation.getInstance().getGameSpecificMessage()
-
-    def starting_position(self) -> str:
-        return self.path_selection_table.getString("starting_position", None)
