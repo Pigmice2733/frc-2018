@@ -22,6 +22,8 @@ class Robot(MagicRobot):
     intake = Intake
 
     def createObjects(self):
+        wpilib.LiveWindow.disableAllTelemetry()
+
         self.left_drive_motor = WPI_TalonSRX(0)
         self.right_drive_motor = WPI_TalonSRX(2)
         self.elevator_winch = WPI_TalonSRX(6)
