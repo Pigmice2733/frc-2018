@@ -3,6 +3,7 @@ from ctre.wpi_talonsrx import WPI_TalonSRX
 
 from motioncontrol.pid import PIDCoefficients, PIDController, PIDParameters
 from motioncontrol.utils import clamp, interpolate
+from utils import NTStreamer
 
 
 class Elevator:
@@ -27,6 +28,8 @@ class Elevator:
         position_pid_parameters = PIDParameters(position_pid_coefs, output_max=1, output_min=0)
         self.position_pid = PIDController(position_pid_parameters, wpilib.Timer.getFPGATimestamp)
 
+        self.position_streamer = NTStreamer(0.0, "elevator/position", round_digits=2)
+
     def set_speed(self, speed: float):
         self.speed = speed
         self.holding_position = None
@@ -47,12 +50,14 @@ class Elevator:
     def get_position(self) -> float:
         return self.winch.getQuadraturePosition() / -4096
 
-    def on_enabled(self):
+    def reset_position(self):
         self.winch.setQuadraturePosition(0, 0)
         self.target_position = 0
 
     def execute(self):
         position = self.get_position()
+
+        self.position_streamer.send(position)
 
         if not self.limit_switch.get():
             self.winch.setQuadraturePosition(0, 0)

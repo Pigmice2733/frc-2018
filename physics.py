@@ -18,7 +18,10 @@ class PhysicsEngine:
         left_distance = left_speed * (3 * tm_diff) * self.srxMagTicks
         right_distance = right_speed * (3 * tm_diff) * self.srxMagTicks
 
-        elevator_winch_distance = hal_data['CAN'][6]['value'] * (3 * tm_diff) * self.srxMagTicks
+        # Simulate gravity by negatively biasing elevator speed
+        elevator_speed = hal_data['CAN'][6]['value'] - 0.3
+
+        elevator_winch_distance = elevator_speed * (6 * tm_diff) * self.srxMagTicks
 
         hal_data['CAN'][0]['quad_position'] -= int(left_distance)
         hal_data['CAN'][2]['quad_position'] -= int(right_distance)

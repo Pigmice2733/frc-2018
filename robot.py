@@ -12,7 +12,6 @@ from components.climber import Climber
 from components.drivetrain import Drivetrain
 from components.elevator import Elevator
 from components.intake import Intake
-from utils import NetworkTablesSender
 
 
 class Robot(MagicRobot):
@@ -23,6 +22,8 @@ class Robot(MagicRobot):
     intake = Intake
 
     def createObjects(self):
+        wpilib.LiveWindow.disableAllTelemetry()
+
         self.left_drive_motor = WPI_TalonSRX(0)
         self.right_drive_motor = WPI_TalonSRX(2)
         self.elevator_winch = WPI_TalonSRX(6)
@@ -55,12 +56,9 @@ class Robot(MagicRobot):
 
         self.climber_motor = WPI_TalonSRX(7)
 
-        self.path_selection_table = NetworkTables.getTable("path_selection")
-        self.path_selection_table.putStringArray("starting_positions", ["left", "right", "center"])
         self.navx = AHRS.create_spi()
 
         self.path_tracking_table = NetworkTables.getTable("path_tracking")
-        self.path_tracking_sender = NetworkTablesSender(self.path_tracking_table)
 
     def teleopPeriodic(self):
         self.right = -self.right_drive_joystick.getRawAxis(1)
@@ -91,6 +89,7 @@ class Robot(MagicRobot):
 
     def disabledPeriodic(self):
         self.drivetrain._update_odometry()
+        self.elevator.reset_position()
 
 
 if __name__ == '__main__':
