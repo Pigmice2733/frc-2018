@@ -2,7 +2,7 @@ import math
 
 import wpilib
 from magicbot.state_machine import AutonomousStateMachine, state, timed_state
-from networktables.networktable import NetworkTable
+from networktables import NetworkTables
 
 from components.drivetrain import Drivetrain
 from components.elevator import Elevator
@@ -18,8 +18,6 @@ class SwitchAutonomous(AutonomousStateMachine):
     drivetrain = Drivetrain
     elevator = Elevator
     intake = Intake
-
-    path_selection_table = NetworkTable
 
     old_right_near_side_waypoints = [
         Point(8.23 - 0.76 - (2.62 / 3), 3.74 / 2.9),
@@ -53,12 +51,7 @@ class SwitchAutonomous(AutonomousStateMachine):
         lookahead=1.58, lookahead_reduction_factor=2.6, curvature_scaling=1.34)
 
     def __init__(self):
-        self.initial_states = [('left', self.left_position), ('right', self.right_position)]
-
-        self.waypoints = {
-            'left': self.mirror_waypoints(self.right_near_side_waypoints, 8.23),
-            'right': self.right_near_side_waypoints
-        }
+        self.set_starting_positions(["left", "right"])
 
     def initialize_path(self):
         try:
@@ -151,5 +144,10 @@ class SwitchAutonomous(AutonomousStateMachine):
     def game_message(self) -> str:
         return wpilib.DriverStation.getInstance().getGameSpecificMessage()
 
+    def set_starting_positions(self, positions):
+        table = NetworkTables.getTable("autonomous/" + self.MODE_NAME + "/starting_position")
+        return table.putStringArray("options", positions)
+
     def starting_position(self) -> str:
-        return self.path_selection_table.getString("starting_position", None)
+        table = NetworkTables.getTable("autonomous/" + self.MODE_NAME + "/starting_position")
+        return table.getString("selected", None)

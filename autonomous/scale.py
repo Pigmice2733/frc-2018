@@ -2,7 +2,7 @@ import math
 
 import wpilib
 from magicbot.state_machine import AutonomousStateMachine, state, timed_state
-from networktables.networktable import NetworkTable
+from networktables import NetworkTables
 
 from components.drivetrain import Drivetrain
 from components.elevator import Elevator
@@ -19,8 +19,6 @@ class ScaleAutonomous(AutonomousStateMachine):
     elevator = Elevator
     intake = Intake
 
-    path_selection_table = NetworkTable
-
     right_near_side_waypoints = [
         Point(8.23 - 1.2, 4),
         Point(8.23 - 1.25, 6.5),
@@ -36,8 +34,7 @@ class ScaleAutonomous(AutonomousStateMachine):
         Point(2.55, 7.57 - 1.01 / 2)
     ]
 
-    left_position = RobotState(
-        position=Point(0.76 + 0.89 / 2, 1.01 / 2), rotation=math.pi / 2)
+    left_position = RobotState(position=Point(0.76 + 0.89 / 2, 1.01 / 2), rotation=math.pi / 2)
 
     right_position = RobotState(
         position=Point(8.23 - 0.76 - 0.89 / 2, 1.01 / 2), rotation=math.pi / 2)
@@ -49,14 +46,7 @@ class ScaleAutonomous(AutonomousStateMachine):
         lookahead=1.62, lookahead_reduction_factor=4, curvature_scaling=1.55)
 
     def __init__(self):
-        self.initial_states = [('left', self.left_position),
-                               ('right', self.right_position)]
-
-        self.waypoints = {
-            'left': self.mirror_waypoints(self.right_near_side_waypoints,
-                                          8.23),
-            'right': self.right_near_side_waypoints
-        }
+        self.set_starting_positions(["left", "right"])
 
     def initialize_path(self):
         try:
@@ -163,5 +153,10 @@ class ScaleAutonomous(AutonomousStateMachine):
     def game_message(self) -> str:
         return wpilib.DriverStation.getInstance().getGameSpecificMessage()
 
+    def set_starting_positions(self, positions):
+        table = NetworkTables.getTable("autonomous/" + self.MODE_NAME + "/starting_position")
+        return table.putStringArray("options", positions)
+
     def starting_position(self) -> str:
-        return self.path_selection_table.getString("starting_position", None)
+        table = NetworkTables.getTable("autonomous/" + self.MODE_NAME + "/starting_position")
+        return table.getString("selected", None)
