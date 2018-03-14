@@ -36,22 +36,24 @@ class CenterAutonomous(AutonomousStateMachine):
         except IndexError:
             self.done()
 
-        waypoints[0] = self.shift_waypoint(waypoints[0], 0.1, 0)
-        waypoints[1] = self.shift_waypoint(waypoints[1], 0.1, 0)
+        #waypoints[0] = self.shift_waypoint(waypoints[0], 0.1, 0)
+        #waypoints[1] = self.shift_waypoint(waypoints[1], 0.1, 0)
 
         path = Path(waypoints, math.pi / 2)
-        max_speed = 2.4
+        max_speed = 1.4
         end_threshold = 0.25
 
         self.drivetrain.set_odometry(self.initial_state)
         self.drivetrain.set_path(max_speed, end_threshold, path)
+        print("Hey")
+        print(self.drivetrain.get_orientation())
 
     @timed_state(duration=1.0, next_state='stop', first=True)
     def start(self, initial_call):
         if initial_call:
             self.initialize_path()
 
-        self.drivetrain.follow_path()
+        self.drivetrain.forward_at(0.8)
         self.intake.strong_hold()
 
     @timed_state(duration=0.2, next_state='drive')

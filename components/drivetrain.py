@@ -6,10 +6,14 @@ from wpilib import Compressor, drive
 
 from motioncontrol.execution import PathTracker
 from motioncontrol.path import Path
-from motioncontrol.utils import (Completed, RobotCharacteristics, RobotState,
-                                 interpolate, tank_drive_odometry,
-                                 tank_drive_wheel_velocities)
+
+from motioncontrol.motionprofiling import PositionProfile
+from motioncontrol.execution import PositionProfileExecutor
+from motioncontrol.pid import PIDCoefficients, PIDController, PIDParameters
+from motioncontrol.utils import (Completed, RobotCharacteristics, RobotState, interpolate,
+                                 tank_drive_odometry, tank_drive_wheel_velocities)
 from utils import NTStreamer
+from wpilib.timer import Timer
 
 
 class Drivetrain:
@@ -20,6 +24,10 @@ class Drivetrain:
     left = 0
     right = 0
     curvature = None
+
+    rotation_setpoint = None
+    profile_executor = None
+
     robot_characteristics = RobotCharacteristics(
         acceleration_time=0.3,
         deceleration_time=1.8,
@@ -39,6 +47,7 @@ class Drivetrain:
 
     def setup(self):
         self.odometry_streamer = NTStreamer(self.robot_state, "drivetrain", round_digits=2)
+        self.path_streamer = NTStreamer([], "path", table="path_tracking")
 
     def forward_at(self, speed):
         self.left = speed
@@ -51,6 +60,31 @@ class Drivetrain:
     def tank(self, left, right):
         self.left = left
         self.right = right
+
+    def rotate(self, degrees=0):
+        radians = degrees * (math.pi / 180)
+
+        if radians == self.rotation_setpoint:
+            return self._update_executor()
+
+        self.rotation_setpoint = radians
+
+        motion_profile = PositionProfile(self.robot_characteristics, target_distance=radians)
+
+        orientation = self.get_orientation() % (2 * math.pi)
+        self._set_orientation(orientation)
+
+        coefs = PIDCoefficients(p=0.85, i=0.3, d=0.08)
+        params = PIDParameters(coefs, input_max=2 * math.pi, input_min=0, continuous=False)
+        self.profile_executor = PositionProfileExecutor(
+            params, motion_profile, Timer.getFPGATimestamp, self.get_orientation,
+            lambda output: self.tank(output, -output), 0.01)
+
+        return Completed(done=False)
+
+    def reset_motion_profile(self):
+        self.profile_executor = None
+        self.rotation_setpoint = None
 
     def set_path(self, max_speed: float, end_threshold: float, path: Path):
         robot_characteristics = RobotCharacteristics(
@@ -71,6 +105,7 @@ class Drivetrain:
         for segment in path.segments:
             path_points.append(segment.start)
         path_points.append(path.segments[-1].end)
+        self.path_streamer.send(path_points)
 
     def follow_path(self) -> (Completed, float):
         return self.path_tracker.update()
@@ -120,6 +155,12 @@ class Drivetrain:
         if abs(vr) >= abs(vl) and abs(vr) > 1.0:
             return math.copysign(vl / vr, vl), math.copysign(1.0, vr)
         return vl, vr
+
+    def _update_executor(self):
+        completed = self.profile_executor.update()
+        if completed.done:
+            self.reset_motion_profile()
+        return completed
 
     def execute(self):
         self._update_odometry()

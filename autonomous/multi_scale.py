@@ -11,8 +11,8 @@ from motioncontrol.path import Path, Waypoint
 from motioncontrol.utils import Point, RobotState
 
 
-class ScaleAutonomous(AutonomousStateMachine):
-    MODE_NAME = 'Scale'
+class MultiScaleAutonomous(AutonomousStateMachine):
+    MODE_NAME = 'Multi Scale'
     DEFAULT = False
 
     drivetrain = Drivetrain
@@ -70,12 +70,12 @@ class ScaleAutonomous(AutonomousStateMachine):
         initial_position = RobotState(position=waypoints[0].position)
         self.drivetrain.set_odometry(initial_position)
 
-    @timed_state(duration=1.0, next_state='stop', first=True)
+    @timed_state(duration=1.25, next_state='stop', first=True)
     def start(self, initial_call):
         if initial_call:
             self.initialize_path()
 
-        self.drivetrain.forward_at(0.8)
+        self.drivetrain.follow_path()
         self.intake.strong_hold()
 
     @timed_state(duration=0.25, next_state='drive')
