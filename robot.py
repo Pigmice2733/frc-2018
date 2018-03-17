@@ -40,14 +40,14 @@ class Robot(MagicRobot):
 
         self.r_intake_motor = WPI_VictorSPX(4)
         self.l_intake_motor = WPI_VictorSPX(5)
-        self.intake_solenoid = wpilib.DoubleSolenoid(2, 3)
+        self.intake_solenoid = wpilib.DoubleSolenoid(1, 3)
 
         self.compressor = wpilib.Compressor()
 
         self.climber_motor = WPI_TalonSRX(7)
 
         # Xbox 'A' button
-        self.elevator_up = ButtonDebouncer(self.operator_joystick, 1)
+        #self.elevator_up = ButtonDebouncer(self.operator_joystick, 1)
         # Xbox 'Y' button
         self.elevator_down = ButtonDebouncer(self.operator_joystick, 4)
         self.elevator_limit_switch = wpilib.DigitalInput(0)

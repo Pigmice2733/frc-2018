@@ -56,7 +56,6 @@ class Intake:
 
     def hold(self):
         self.wheel_speed = WheelSpeed.hold
-        self.arm_state = ArmState.closed
 
     def strong_hold(self):
         self.wheel_speed = WheelSpeed.strong_hold
