@@ -12,7 +12,7 @@ class ArmState(Enum):
     neutral = "neutral"
 
 
-class WheelSpeed(Enum):
+class WheelSpeed:
     stopped = 0.0
     hold = -0.175
     strong_hold = -0.25
@@ -57,16 +57,20 @@ class Intake:
     def hold(self):
         self.wheel_speed = WheelSpeed.hold
 
+    def set_speed(self, speed):
+        self.wheel_speed = speed
+
     def strong_hold(self):
         self.wheel_speed = WheelSpeed.strong_hold
         self.arm_state = ArmState.closed
 
     def execute(self):
+        print(self.wheel_speed)
         self.wheel_speed_streamer.send(self.wheel_speed)
         self.arm_state_streamer.send(self.arm_state)
 
-        self.l_intake_motor.set(self.wheel_speed.value)
-        self.r_intake_motor.set(-self.wheel_speed.value)
+        self.l_intake_motor.set(self.wheel_speed)
+        self.r_intake_motor.set(-self.wheel_speed)
 
         if self.arm_state == ArmState.opened:
             self.solenoid.set(DoubleSolenoid.Value.kForward)
