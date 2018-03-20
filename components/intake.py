@@ -5,6 +5,17 @@ from wpilib import DoubleSolenoid, Timer
 
 from utils import NTStreamer
 
+class Oscillator:
+    def __init__(self, period: float):
+        self.period = period
+        self.low = True
+        self.time = Timer.getFPGATimestamp()
+
+    def __call__(self):
+        if (Timer.getFPGATimestamp() - self.time) > (self.period / 2):
+            self.low = not self.low
+            self.time = Timer.getFPGATimestamp()
+        return self.low
 
 class ArmState(Enum):
     opened = "opened"
@@ -29,6 +40,7 @@ class Intake:
     wheel_speed = WheelSpeed.stopped
     arm_state = ArmState.closed
     oscillating = False
+    oscillator = Oscillator(0.3)
 
     def setup(self):
         self.arm_state_streamer = NTStreamer(self.arm_state, "intake/arm_state")
@@ -67,14 +79,13 @@ class Intake:
         self.arm_state = ArmState.closed
 
     def execute(self):
-        print(self.wheel_speed)
         self.wheel_speed_streamer.send(self.wheel_speed)
         self.arm_state_streamer.send(self.arm_state)
 
         if self.oscillating:
-            offset = Timer.getFPGATimestamp() % 1 > .5
-            self.l_intake_motor.set(self.wheel_speed + (0 if offset else -0.2))
-            self.r_intake_motor.set(-self.wheel_speed + (-0.2 if offset else 0))
+            offset = self.oscillator()
+            self.l_intake_motor.set(self.wheel_speed + (0 if offset else -0.1))
+            self.r_intake_motor.set(-self.wheel_speed + (-0.1 if offset else 0))
         else:
             self.l_intake_motor.set(self.wheel_speed)
             self.r_intake_motor.set(-self.wheel_speed)
