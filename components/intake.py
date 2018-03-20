@@ -27,7 +27,7 @@ class WheelSpeed:
     stopped = 0.0
     hold = -0.175
     strong_hold = -0.25
-    intake = -0.4
+    intake = -0.6
     outake = 0.6
 
 
