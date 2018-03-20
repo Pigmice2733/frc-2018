@@ -1,7 +1,7 @@
 from enum import Enum
 
 from ctre.wpi_victorspx import WPI_VictorSPX
-from wpilib import DoubleSolenoid
+from wpilib import DoubleSolenoid, Timer
 
 from utils import NTStreamer
 
@@ -28,6 +28,7 @@ class Intake:
 
     wheel_speed = WheelSpeed.stopped
     arm_state = ArmState.closed
+    oscillating = False
 
     def setup(self):
         self.arm_state_streamer = NTStreamer(self.arm_state, "intake/arm_state")
@@ -50,6 +51,7 @@ class Intake:
 
     def intake(self):
         self.wheel_speed = WheelSpeed.intake
+        self.oscillating = True
 
     def outtake(self):
         self.wheel_speed = WheelSpeed.outake
@@ -69,8 +71,13 @@ class Intake:
         self.wheel_speed_streamer.send(self.wheel_speed)
         self.arm_state_streamer.send(self.arm_state)
 
-        self.l_intake_motor.set(self.wheel_speed)
-        self.r_intake_motor.set(-self.wheel_speed)
+        if self.oscillating:
+            offset = Timer.getFPGATimestamp() % 1 > .5
+            self.l_intake_motor.set(self.wheel_speed + (0 if offset else -0.2))
+            self.r_intake_motor.set(-self.wheel_speed + (-0.2 if offset else 0))
+        else:
+            self.l_intake_motor.set(self.wheel_speed)
+            self.r_intake_motor.set(-self.wheel_speed)
 
         if self.arm_state == ArmState.opened:
             self.solenoid.set(DoubleSolenoid.Value.kForward)
@@ -78,3 +85,4 @@ class Intake:
             self.solenoid.set(DoubleSolenoid.Value.kReverse)
 
         self.wheel_speed = WheelSpeed.stopped
+        self.oscillating = False
