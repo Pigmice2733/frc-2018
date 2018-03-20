@@ -1,10 +1,21 @@
 from enum import Enum
 
 from ctre.wpi_victorspx import WPI_VictorSPX
-from wpilib import DoubleSolenoid
+from wpilib import DoubleSolenoid, Timer
 
 from utils import NTStreamer
 
+class Oscillator:
+    def __init__(self, period: float):
+        self.period = period
+        self.low = True
+        self.time = Timer.getFPGATimestamp()
+
+    def __call__(self):
+        if (Timer.getFPGATimestamp() - self.time) > (self.period / 2):
+            self.low = not self.low
+            self.time = Timer.getFPGATimestamp()
+        return self.low
 
 class ArmState(Enum):
     opened = "opened"
@@ -12,11 +23,11 @@ class ArmState(Enum):
     neutral = "neutral"
 
 
-class WheelSpeed(Enum):
+class WheelSpeed:
     stopped = 0.0
     hold = -0.175
     strong_hold = -0.25
-    intake = -0.4
+    intake = -0.6
     outake = 0.6
 
 
@@ -28,6 +39,8 @@ class Intake:
 
     wheel_speed = WheelSpeed.stopped
     arm_state = ArmState.closed
+    oscillating = False
+    oscillator = Oscillator(0.3)
 
     def setup(self):
         self.arm_state_streamer = NTStreamer(self.arm_state, "intake/arm_state")
@@ -50,12 +63,16 @@ class Intake:
 
     def intake(self):
         self.wheel_speed = WheelSpeed.intake
+        self.oscillating = True
 
     def outtake(self):
         self.wheel_speed = WheelSpeed.outake
 
     def hold(self):
         self.wheel_speed = WheelSpeed.hold
+
+    def set_speed(self, speed):
+        self.wheel_speed = speed
 
     def strong_hold(self):
         self.wheel_speed = WheelSpeed.strong_hold
@@ -65,8 +82,13 @@ class Intake:
         self.wheel_speed_streamer.send(self.wheel_speed)
         self.arm_state_streamer.send(self.arm_state)
 
-        self.l_intake_motor.set(self.wheel_speed.value)
-        self.r_intake_motor.set(-self.wheel_speed.value)
+        if self.oscillating:
+            offset = 0.1 if self.oscillator() else -0.1
+            self.l_intake_motor.set(self.wheel_speed + offset)
+            self.r_intake_motor.set(-self.wheel_speed + offset)
+        else:
+            self.l_intake_motor.set(self.wheel_speed)
+            self.r_intake_motor.set(-self.wheel_speed)
 
         if self.arm_state == ArmState.opened:
             self.solenoid.set(DoubleSolenoid.Value.kForward)
@@ -74,3 +96,4 @@ class Intake:
             self.solenoid.set(DoubleSolenoid.Value.kReverse)
 
         self.wheel_speed = WheelSpeed.stopped
+        self.oscillating = False

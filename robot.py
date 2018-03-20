@@ -71,8 +71,8 @@ class Robot(MagicRobot):
         if self.toggle_arm_button.get():
             self.intake.toggle_arm()
 
-        if self.operator_joystick.getRawButton(2):
-            self.intake.outtake()
+        if self.operator_joystick.getRawAxis(3) > 0.1:
+            self.intake.set_speed(self.operator_joystick.getRawAxis(3))
         elif self.operator_joystick.getRawButton(3):
             self.intake.intake()
         else:
