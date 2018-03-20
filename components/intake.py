@@ -83,9 +83,9 @@ class Intake:
         self.arm_state_streamer.send(self.arm_state)
 
         if self.oscillating:
-            offset = self.oscillator()
-            self.l_intake_motor.set(self.wheel_speed + (0 if offset else -0.1))
-            self.r_intake_motor.set(-self.wheel_speed + (-0.1 if offset else 0))
+            offset = 0.1 if self.oscillator() else -0.1
+            self.l_intake_motor.set(self.wheel_speed + offset)
+            self.r_intake_motor.set(-self.wheel_speed + offset)
         else:
             self.l_intake_motor.set(self.wheel_speed)
             self.r_intake_motor.set(-self.wheel_speed)
