@@ -81,6 +81,7 @@ class SwitchAutonomous(AutonomousStateMachine):
 
         path = Path(tuning, position, waypoints)
 
+        self.drivetrain.set_odometry(position)
         self.drivetrain.set_path(max_speed, end_threshold, path)
 
     @timed_state(duration=1, next_state='stop', first=True)

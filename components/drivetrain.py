@@ -2,13 +2,14 @@ import math
 
 from ctre.wpi_talonsrx import WPI_TalonSRX
 from robotpy_ext.common_drivers.navx.ahrs import AHRS
-from wpilib import Compressor, drive
+from wpilib import Compressor, drive, Timer
 
-from motioncontrol.execution import PathTracker
-from motioncontrol.path import Path
-from motioncontrol.utils import (Completed, RobotCharacteristics, RobotState,
-                                 interpolate, tank_drive_odometry,
-                                 tank_drive_wheel_velocities)
+from motioncontrol.execution import PathTracker, PositionProfileExecutor
+from motioncontrol.path import Path, Point, PathTuning
+from motioncontrol.motionprofiling import PositionProfile
+from motioncontrol.pid import PIDCoefficients, PIDParameters, PIDType
+from motioncontrol.utils import (Completed, RobotCharacteristics, RobotState, interpolate,
+                                 tank_drive_odometry, tank_drive_wheel_velocities)
 from utils import NTStreamer
 
 
@@ -35,10 +36,14 @@ class Drivetrain:
     right_drive_motor = WPI_TalonSRX
     navx = AHRS
 
+    profile_setpoint = None
+    profile_executor = None
+
     robot_state = RobotState()
 
     def setup(self):
         self.odometry_streamer = NTStreamer(self.robot_state, "drivetrain", round_digits=2)
+        self.path_streamer = NTStreamer([], "path", table="path_tracking", round_digits=2)
 
     def forward_at(self, speed):
         self.left = speed
@@ -52,14 +57,71 @@ class Drivetrain:
         self.left = left
         self.right = right
 
-    def set_path(self, max_speed: float, end_threshold: float, path: Path):
-        self.robot_state = path.initial_state
-        self._set_orientation(self.robot_state.rotation)
+    def rotate(self, degrees=0):
+        radians = math.radians(degrees)
 
+        if radians == self.profile_setpoint:
+            return self._update_executor()
+
+        self.profile_setpoint = radians
+
+        orientation = self.get_orientation() % (2 * math.pi)
+        self._set_orientation(orientation)
+
+        robot = RobotCharacteristics(
+            acceleration_time=1.8,
+            deceleration_time=1.5,
+            max_speed=2 * math.pi,
+            wheel_base=0,
+            encoder_ticks=0,
+            revolutions_to_distance=0,
+            speed_scaling=0)
+
+        motion_profile = PositionProfile(robot, target_distance=(radians - orientation))
+
+        coefs = PIDCoefficients(p=0.8, i=0.04, d=0)
+        params = PIDParameters(coefs, input_max=2 * math.pi, input_min=0, continuous=False)
+        self.profile_executor = PositionProfileExecutor(
+            params, motion_profile, Timer.getFPGATimestamp, self.get_orientation,
+            lambda output: self.tank(-output, output), 0.04)
+
+        return Completed(done=False)
+
+    def straight(self, feet=0):
+        meters = feet * 0.305
+
+        if meters == self.profile_setpoint:
+            return self.follow_path()[0]
+
+        self.profile_setpoint = meters
+
+        orientation = self.get_orientation() % (2 * math.pi)
+        self._set_orientation(orientation)
+
+        target = Point(
+            x=self.robot_state.position.x + meters * math.cos(orientation),
+            y=self.robot_state.position.y + meters * math.sin(orientation))
+
+        partial_target = Point(
+            x=self.robot_state.position.x + 0.5 * meters * math.cos(orientation),
+            y=self.robot_state.position.y + 0.5 * meters * math.sin(orientation))
+
+        path_tuning = PathTuning(lookahead=2.5)
+        path = Path(path_tuning, self.robot_state, [partial_target, target])
+
+        self.set_path(1.5, 0.5, path)
+
+        return self.follow_path()[0]
+
+    def set_odometry(self, odometry: RobotState):
+        self.robot_state = odometry
+        self._set_orientation(odometry.rotation)
+
+        self.wheel_distances = (0, 0)
         self.left_drive_motor.setQuadraturePosition(0, 0)
         self.right_drive_motor.setQuadraturePosition(0, 0)
-        self.wheel_distances = (0, 0)
 
+    def set_path(self, max_speed: float, end_threshold: float, path: Path):
         robot_characteristics = RobotCharacteristics(
             acceleration_time=self.robot_characteristics.acceleration_time,
             deceleration_time=self.robot_characteristics.deceleration_time,
@@ -69,8 +131,13 @@ class Drivetrain:
             revolutions_to_distance=self.robot_characteristics.revolutions_to_distance,
             speed_scaling=self.robot_characteristics.speed_scaling)
 
+        velocity_pid_coefs = PIDCoefficients(p=0.6, i=0.04, d=0.0, f=1.0)
+        velocity_pid_params = PIDParameters(
+            velocity_pid_coefs, output_max=4.0, output_min=-4.0, pid_type=PIDType.Rate)
+
         self.path_tracker = PathTracker(
-            path, robot_characteristics, 0.1, end_threshold, self.get_odometry,
+            path, robot_characteristics, velocity_pid_params, Timer.getFPGATimestamp, 0.1,
+            end_threshold, self.get_odometry,
             lambda speed: self.forward_at(speed / self.robot_characteristics.speed_scaling),
             self.curve_at, None)
 
@@ -78,6 +145,7 @@ class Drivetrain:
         for segment in path.segments:
             path_points.append(segment.start)
         path_points.append(path.segments[-1].end)
+        self.path_streamer.send(path_points)
 
     def follow_path(self) -> (Completed, float):
         return self.path_tracker.update()
@@ -120,6 +188,16 @@ class Drivetrain:
             return math.copysign(vl / vr, vl), math.copysign(1.0, vr)
         return vl, vr
 
+    def _update_executor(self):
+        completed = self.profile_executor.update()
+        if completed.done:
+            self.reset_motion_profile()
+        return completed
+
+    def reset_motion_profile(self):
+        self.profile_executor = None
+        self.rotation_setpoint = None
+
     def execute(self):
         self._update_odometry()
 
@@ -134,6 +212,9 @@ class Drivetrain:
             v_left, v_right = tank_drive_wheel_velocities(self.robot_characteristics.wheel_base,
                                                           self.forward, self.curvature)
             self.left, self.right = self._scale_speeds(v_left, v_right)
+        else:
+            self.left = math.copysign(self.left * self.left, self.left)
+            self.right = math.copysign(self.right * self.right, self.right)
 
         self.robot_drive.tankDrive(self.left, self.right, squaredInputs=False)
 

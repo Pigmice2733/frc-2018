@@ -52,9 +52,11 @@ class ScaleAutonomous(AutonomousStateMachine):
         try:
             switch_side = 'left' if self.game_message()[1] == 'L' else 'right'
         except IndexError:
-            switch_side = None
+            self.done()
 
         robot_side = self.starting_position()
+        if robot_side is None:
+            self.done()
 
         self.same_side = robot_side == switch_side
 
@@ -76,6 +78,7 @@ class ScaleAutonomous(AutonomousStateMachine):
 
         path = Path(tuning, position, waypoints)
 
+        self.drivetrain.set_odometry(position)
         self.drivetrain.set_path(max_speed, end_threshold, path)
 
     @timed_state(duration=1.25, next_state='stop', first=True)
@@ -108,11 +111,10 @@ class ScaleAutonomous(AutonomousStateMachine):
         self.elevator.set_position(12)
         self.intake.strong_hold()
 
-        err = self.drivetrain.get_orientation() - math.pi / 2
-        if abs(err) > 0.1:
-            sign = -1 if err < 0 else 1
-            self.drivetrain.tank(0.18 * sign, -0.18 * sign)
-        else:
+        angle = 120 if self.same_side else 90
+
+        completion = self.drivetrain.rotate(angle)
+        if completion.done:
             self.next_state('raise_elevator')
 
     @state

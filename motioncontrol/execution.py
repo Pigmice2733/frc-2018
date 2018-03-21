@@ -7,8 +7,7 @@ from typing import Callable
 from .motionprofiling import DistanceProfile, PositionProfile
 from .path import Path, PathState
 from .pid import PIDController, PIDParameters
-from .utils import (Completed, RobotCharacteristics, RobotState, clamp,
-                    distance_between)
+from .utils import (Completed, RobotCharacteristics, RobotState, clamp, distance_between)
 
 
 class PathTracker:
@@ -20,6 +19,8 @@ class PathTracker:
             self,
             path: Path,
             robot_characteristics: RobotCharacteristics,
+            velocity_control_params: PIDParameters,
+            time_source: Callable[[], float],
             time_resolution: float,
             absolute_error: float,
             input_source: Callable[[], RobotState],
@@ -44,13 +45,15 @@ class PathTracker:
         self.curvature_output = curvature_output
         self.data_output = data_output
 
+        self.velocity_pid = PIDController(velocity_control_params, time_source)
+
         distance_profile = DistanceProfile(robot_characteristics)
         self.profile_executor = DistanceProfileExecutor(
             distance_profile,
             time_resolution,
             (lambda: distance_between(self.input_source().position, self.path.end)),
             (lambda: self.input_source().velocity),
-            velocity_output,
+            self.velocity_control,
             absolute_error,
         )
 
@@ -67,6 +70,11 @@ class PathTracker:
         if self.data_output is not None:
             self.data_output(path_state)
         return Completed(done=done), path_state.remaining_distance
+
+    def velocity_control(self, velocity):
+        current_input = self.input_source().velocity
+        output = self.velocity_pid.get_output(current_input, velocity)
+        self.velocity_output(output)
 
 
 class PositionProfileExecutor:
