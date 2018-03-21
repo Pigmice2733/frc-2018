@@ -18,24 +18,24 @@ class ForwardAutonomous(AutonomousStateMachine):
     intake = Intake
 
     forward_waypoints = [
-        Waypoint(Point(0, 1.01 / 2), 1, 1.2),
-        Waypoint(Point(0, 2.9), 1, 1.2),
-        Waypoint(Point(0, 3.55 - 1.01 / 2), 1, 1.2)
+        Waypoint(Point(0, 0), 1, 1.2),
+        Waypoint(Point(0, 9), 1, 1.2),
+        Waypoint(Point(0, 10), 1, 1.2)
     ]
 
-    initial_position = RobotState(position=Point(0, 1.01 / 2))
+    initial_position = RobotState(position=Point(0, 0))
 
     def initialize_path(self):
         path = Path(self.forward_waypoints, math.pi / 2)
         self.drivetrain.set_odometry(self.initial_position)
-        self.drivetrain.set_path(2.2, 0.2, path)
+        self.drivetrain.set_path(2.4, 0.2, path)
 
-    @timed_state(duration=0.9, next_state='stop', first=True)
+    @timed_state(duration=0.2, next_state='stop', first=True)
     def start(self, initial_call):
         if initial_call:
             self.initialize_path()
 
-        self.drivetrain.forward_at(0.8)
+        self.drivetrain.forward_at(0.6)
         self.intake.strong_hold()
 
     @timed_state(duration=0.2, next_state='drive')

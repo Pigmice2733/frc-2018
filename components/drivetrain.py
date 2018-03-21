@@ -4,12 +4,11 @@ from ctre.wpi_talonsrx import WPI_TalonSRX
 from robotpy_ext.common_drivers.navx.ahrs import AHRS
 from wpilib import Compressor, drive
 
-from motioncontrol.execution import PathTracker
+from motioncontrol.execution import PathTracker, PositionProfileExecutor
 from motioncontrol.path import Path
 
 from motioncontrol.motionprofiling import PositionProfile
-from motioncontrol.execution import PositionProfileExecutor
-from motioncontrol.pid import PIDCoefficients, PIDController, PIDParameters
+from motioncontrol.pid import PIDCoefficients, PIDParameters, PIDType
 from motioncontrol.utils import (Completed, RobotCharacteristics, RobotState, interpolate,
                                  tank_drive_odometry, tank_drive_wheel_velocities)
 from utils import NTStreamer
@@ -29,8 +28,8 @@ class Drivetrain:
     profile_executor = None
 
     robot_characteristics = RobotCharacteristics(
-        acceleration_time=0.3,
-        deceleration_time=1.8,
+        acceleration_time=0.4,
+        deceleration_time=3,
         max_speed=3.7,
         wheel_base=0.6096,
         encoder_ticks=1024 * 4,
@@ -62,23 +61,24 @@ class Drivetrain:
         self.right = right
 
     def rotate(self, degrees=0):
-        radians = degrees * (math.pi / 180)
+        radians = math.radians(degrees)
 
         if radians == self.rotation_setpoint:
             return self._update_executor()
 
         self.rotation_setpoint = radians
 
-        motion_profile = PositionProfile(self.robot_characteristics, target_distance=radians)
-
         orientation = self.get_orientation() % (2 * math.pi)
         self._set_orientation(orientation)
 
-        coefs = PIDCoefficients(p=0.85, i=0.3, d=0.08)
+        motion_profile = PositionProfile(
+            self.robot_characteristics, target_distance=(radians - orientation))
+
+        coefs = PIDCoefficients(p=0.38, i=0.02, d=0)
         params = PIDParameters(coefs, input_max=2 * math.pi, input_min=0, continuous=False)
         self.profile_executor = PositionProfileExecutor(
             params, motion_profile, Timer.getFPGATimestamp, self.get_orientation,
-            lambda output: self.tank(output, -output), 0.01)
+            lambda output: self.tank(-output, output), 0.04)
 
         return Completed(done=False)
 
@@ -96,8 +96,13 @@ class Drivetrain:
             revolutions_to_distance=self.robot_characteristics.revolutions_to_distance,
             speed_scaling=self.robot_characteristics.speed_scaling)
 
+        velocity_pid_coefs = PIDCoefficients(p=0.4, i=0.05, d=0.0, f=1.0)
+        velocity_pid_params = PIDParameters(
+            velocity_pid_coefs, output_max=4.0, output_min=-4.0, pid_type=PIDType.Rate)
+
         self.path_tracker = PathTracker(
-            path, robot_characteristics, 0.1, end_threshold, self.get_odometry,
+            path, robot_characteristics, velocity_pid_params, Timer.getFPGATimestamp, 0.1,
+            end_threshold, self.get_odometry,
             lambda speed: self.forward_at(speed / self.robot_characteristics.speed_scaling),
             self.curve_at, None)
 
@@ -170,12 +175,15 @@ class Drivetrain:
         if self.curvature is not None:
             if self.curvature > 1e-4:
                 radius = abs(1 / self.curvature)
-                scale = interpolate(0.35, 1, 0, 0.9, radius)
+                scale = interpolate(0.4, 1, 0, 1.25, radius)
                 scale = min(scale, 1.0)
                 self.forward *= scale
             v_left, v_right = tank_drive_wheel_velocities(self.robot_characteristics.wheel_base,
                                                           self.forward, self.curvature)
             self.left, self.right = self._scale_speeds(v_left, v_right)
+        else:
+            self.left = math.copysign(math.pow(self.left, 2), self.left)
+            self.right = math.copysign(math.pow(self.right, 2), self.right)
 
         self.robot_drive.tankDrive(self.left, self.right, squaredInputs=False)
 

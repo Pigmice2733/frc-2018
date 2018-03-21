@@ -20,9 +20,9 @@ class SwitchAutonomous(AutonomousStateMachine):
     intake = Intake
 
     right_near_side_waypoints = [
-        Waypoint(Point(8.23 - 0.76 - 0.89 / 2, 1.01 / 2), 1.8, 1.2),
-        Waypoint(Point(8.23 - 1.15, 4.9), 0.9, 1.45),
-        Waypoint(Point(8.23 - 2.16 - 1.01 / 2 - 0.2, 4.75), 1, 1.4)
+        Waypoint(Point(8.23 - 0.76 - 0.89 / 2, 1.01 / 2), 1.2, 1.2),
+        Waypoint(Point(8.23 - 1.2, 3.85), 0.8, 1.5),
+        Waypoint(Point(8.23 - 2.16 + 1.01 / 2 - 0.225, 4.1), 0.9, 1.3)
     ]
 
     right_far_side_waypoints = [
@@ -52,8 +52,8 @@ class SwitchAutonomous(AutonomousStateMachine):
 
         self.same_side = robot_side == switch_side
 
-        end_angle = math.pi / 2 if self.same_side else math.pi
-        max_speed = 1.4 if self.same_side else 1.75
+        end_angle = math.pi if self.same_side else 0
+        max_speed = 1.3 if self.same_side else 1.75
         end_threshold = 0.35
 
         if self.same_side:
@@ -70,7 +70,7 @@ class SwitchAutonomous(AutonomousStateMachine):
         initial_position = RobotState(position=waypoints[0].position)
         self.drivetrain.set_odometry(initial_position)
 
-    @timed_state(duration=1.0, next_state='stop', first=True)
+    @timed_state(duration=0.4, next_state='stop', first=True)
     def start(self, initial_call):
         if initial_call:
             self.initialize_path()

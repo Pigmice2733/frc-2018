@@ -26,8 +26,8 @@ class PhysicsEngine:
         hal_data['CAN'][0]['quad_position'] -= int(left_distance)
         hal_data['CAN'][2]['quad_position'] -= int(right_distance)
 
-        hal_data['CAN'][0]['quad_velocity'] = -int(left_distance / tm_diff)
-        hal_data['CAN'][2]['quad_velocity'] = -int(right_distance / tm_diff)
+        hal_data['CAN'][0]['quad_velocity'] = -int(left_distance / (tm_diff * 3.86))
+        hal_data['CAN'][2]['quad_velocity'] = -int(right_distance / (tm_diff * 3.86))
 
         hal_data['CAN'][6]['quad_position'] -= int(elevator_winch_distance)
 

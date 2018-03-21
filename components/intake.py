@@ -14,8 +14,8 @@ class ArmState(Enum):
 
 class WheelSpeed(Enum):
     stopped = 0.0
-    hold = -0.175
-    strong_hold = -0.25
+    hold = -0.25
+    strong_hold = -0.35
     intake = -0.4
     outake = 0.6
 
@@ -56,7 +56,6 @@ class Intake:
 
     def hold(self):
         self.wheel_speed = WheelSpeed.hold
-        self.arm_state = ArmState.closed
 
     def strong_hold(self):
         self.wheel_speed = WheelSpeed.strong_hold

@@ -19,10 +19,10 @@ class CenterAutonomous(AutonomousStateMachine):
     intake = Intake
 
     centered_right_waypoints = [
-        Waypoint(Point(8.23 / 2, 1.01 / 2), 1.25, 1.3),
-        Waypoint(Point(8.23 - 2.62 - 0.35, 3.74 / 3.5), 1, 1.5),
-        Waypoint(Point(8.23 - 2.62 - 0.15, 3.74 / 2), 1.2, 1.6),
-        Waypoint(Point(8.23 - 2.62 - 0.15, 3.74 - (0.84 / 2) - 0.15), 1, 1.5)
+        Waypoint(Point(8.23 / 2, 1.01 / 2), 1.25, 1.4),
+        Waypoint(Point(8.23 - 2.62 - 0.6, 3.74 / 2.6), 1.425, 1.75),
+        Waypoint(Point(8.23 - 2.62 - 0.275, 3.54 / 1.6), 1.25, 1.65),
+        Waypoint(Point(8.23 - 2.62 - 0.25, 3.48 - (0.84 / 2)), 1.2, 1.4)
     ]
 
     initial_state = RobotState(position=Point(8.23 / 2, 1.01 / 2))
@@ -36,24 +36,19 @@ class CenterAutonomous(AutonomousStateMachine):
         except IndexError:
             self.done()
 
-        #waypoints[0] = self.shift_waypoint(waypoints[0], 0.1, 0)
-        #waypoints[1] = self.shift_waypoint(waypoints[1], 0.1, 0)
-
         path = Path(waypoints, math.pi / 2)
-        max_speed = 1.4
-        end_threshold = 0.25
+        max_speed = 1.35
+        end_threshold = 0.325
 
         self.drivetrain.set_odometry(self.initial_state)
         self.drivetrain.set_path(max_speed, end_threshold, path)
-        print("Hey")
-        print(self.drivetrain.get_orientation())
 
-    @timed_state(duration=1.0, next_state='stop', first=True)
+    @timed_state(duration=0.2, next_state='stop', first=True)
     def start(self, initial_call):
         if initial_call:
             self.initialize_path()
 
-        self.drivetrain.forward_at(0.8)
+        self.drivetrain.forward_at(0.6)
         self.intake.strong_hold()
 
     @timed_state(duration=0.2, next_state='drive')

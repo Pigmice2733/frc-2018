@@ -13,6 +13,8 @@ from components.drivetrain import Drivetrain
 from components.elevator import Elevator
 from components.intake import Intake
 
+from motioncontrol.utils import interpolate, signum
+
 
 class Robot(MagicRobot):
 
@@ -40,7 +42,7 @@ class Robot(MagicRobot):
 
         self.r_intake_motor = WPI_VictorSPX(4)
         self.l_intake_motor = WPI_VictorSPX(5)
-        self.intake_solenoid = wpilib.DoubleSolenoid(2, 3)
+        self.intake_solenoid = wpilib.DoubleSolenoid(1, 3)
 
         self.compressor = wpilib.Compressor()
 
@@ -63,8 +65,16 @@ class Robot(MagicRobot):
     def teleopPeriodic(self):
         self.right = -self.right_drive_joystick.getRawAxis(1)
         self.left = -self.left_drive_joystick.getRawAxis(1)
-        self.right = 0 if abs(self.right) < 0.1 else self.right
-        self.left = 0 if abs(self.left) < 0.1 else self.left
+
+        if abs(self.right) < 0.15:
+            self.right = 0.0
+        else:
+            self.right = self.right
+
+        if abs(self.left) < 0.15:
+            self.left = 0.0
+        else:
+            self.left = self.left
 
         self.drivetrain.tank(self.right, self.left)
 

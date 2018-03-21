@@ -20,7 +20,7 @@ class ScaleAutonomous(AutonomousStateMachine):
     intake = Intake
 
     right_near_side_waypoints = [
-        Waypoint(Point(Point(8.23 - 0.76 - 0.89 / 2, 1.01 / 2)), 2.4, 0.8),
+        Waypoint(Point(8.23 - 0.76 - 0.89 / 2, 1.01 / 2), 2.4, 0.8),
         Waypoint(Point(8.23 - 1.2, 4), 1.6, 1),
         Waypoint(Point(8.23 - 1.25, 6.5), 1.25, 1.4),
         Waypoint(Point(8.23 - 1.8 - 1.01 / 2 + 0.6, 6.7), 1, 1.5)
@@ -28,12 +28,12 @@ class ScaleAutonomous(AutonomousStateMachine):
 
     right_far_side_waypoints = [
         Waypoint(Point(8.23 - 0.76 - 0.89 / 2, 1.01 / 2), 2, 1.2),
-        Waypoint(Point(8.23 - 0.85, 5.4), 1.2, 1.6),
-        Waypoint(Point(8.23 - 1.1, 6), 1.6, 1.6),
-        Waypoint(Point(8.23 - 2.62, 5.9), 1.8, 1.2),
-        Waypoint(Point(2.65, 5.9), 1, 1.7),
-        Waypoint(Point(2.55, 6.3), 1, 1.7),
-        Waypoint(Point(2.55, 7.57 - 1.01 / 2), 1, 1.7)
+        Waypoint(Point(8.23 - 0.85, 5.45), 1.2, 1.6),
+        Waypoint(Point(8.23 - 1.1, 6.15), 1.4, 1.7),
+        Waypoint(Point(8.23 - 2.62, 6.2), 1.8, 1.2),
+        Waypoint(Point(2.475, 6.225), 1, 1.7),
+        Waypoint(Point(2.35, 6.3), 1, 1.7),
+        Waypoint(Point(2.35, 7.57 - 1.01 / 2), 1, 1.7)
     ]
 
     def __init__(self):
@@ -53,7 +53,7 @@ class ScaleAutonomous(AutonomousStateMachine):
         self.same_side = robot_side == switch_side
 
         end_angle = 3 * math.pi / 4 if self.same_side else math.pi / 2
-        max_speed = 2 if self.same_side else 1.6
+        max_speed = 2 if self.same_side else 2
         end_threshold = 0.35 if self.same_side else 0.775
 
         if self.same_side:
@@ -70,12 +70,12 @@ class ScaleAutonomous(AutonomousStateMachine):
         initial_position = RobotState(position=waypoints[0].position)
         self.drivetrain.set_odometry(initial_position)
 
-    @timed_state(duration=1.0, next_state='stop', first=True)
+    @timed_state(duration=0.2, next_state='stop', first=True)
     def start(self, initial_call):
         if initial_call:
             self.initialize_path()
 
-        self.drivetrain.forward_at(0.8)
+        self.drivetrain.forward_at(0.4)
         self.intake.strong_hold()
 
     @timed_state(duration=0.25, next_state='drive')
@@ -93,10 +93,13 @@ class ScaleAutonomous(AutonomousStateMachine):
             self.elevator.set_position(12)
 
         if completion.done:
-            self.next_state('align')
+            if not self.same_side:
+                self.next_state('align_far')
+            else:
+                self.next_state('align_close')
 
     @state
-    def align(self):
+    def align_far(self):
         self.elevator.set_position(12)
         self.intake.strong_hold()
 
@@ -105,6 +108,15 @@ class ScaleAutonomous(AutonomousStateMachine):
             sign = -1 if err < 0 else 1
             self.drivetrain.tank(0.18 * sign, -0.18 * sign)
         else:
+            self.next_state('raise_elevator')
+
+    @state
+    def align_close(self):
+        self.elevator.set_position(12)
+        self.intake.strong_hold()
+
+        completed = self.drivetrain.rotate(120)
+        if completed.done:
             self.next_state('raise_elevator')
 
     @state

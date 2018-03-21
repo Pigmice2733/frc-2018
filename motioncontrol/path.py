@@ -84,7 +84,7 @@ class Path:
         x = relative_goal.x
         curvature = curvature_scaling * ((2 * x) / (D * D))
 
-        remaining_distance = utils.distance_between(robot_state.position, self.segments[-1].end)
+        remaining_distance = utils.distance_between(robot_state.position, self.segments[-1].start)
 
         return PathState(
             curvature=curvature,

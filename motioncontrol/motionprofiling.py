@@ -151,5 +151,4 @@ class DistanceProfile:
                 acceleration = self.deceleration * signum(deceleration_distance)
             else:
                 acceleration = self.acceleration * signum(deceleration_distance)
-
         return current_velocity, acceleration
