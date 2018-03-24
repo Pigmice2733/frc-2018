@@ -26,11 +26,6 @@ class Robot(MagicRobot):
 
         self.left_drive_motor = WPI_TalonSRX(0)
         self.right_drive_motor = WPI_TalonSRX(2)
-        self.elevator_winch = WPI_TalonSRX(6)
-
-        self.right_drive_joystick = wpilib.Joystick(0)
-        self.left_drive_joystick = wpilib.Joystick(1)
-        self.operator_joystick = wpilib.Joystick(2)
 
         WPI_TalonSRX(1).set(WPI_TalonSRX.ControlMode.Follower, self.left_drive_motor.getDeviceID())
         WPI_TalonSRX(3).set(WPI_TalonSRX.ControlMode.Follower, self.right_drive_motor.getDeviceID())
@@ -40,11 +35,19 @@ class Robot(MagicRobot):
 
         self.r_intake_motor = WPI_VictorSPX(4)
         self.l_intake_motor = WPI_VictorSPX(5)
-        self.intake_solenoid = wpilib.DoubleSolenoid(1, 3)
 
-        self.compressor = wpilib.Compressor()
+        self.elevator_winch = WPI_TalonSRX(6)
 
         self.climber_motor = WPI_TalonSRX(7)
+        self.wrist_motor = WPI_TalonSRX(8)
+
+        self.intake_solenoid = wpilib.DoubleSolenoid(1, 3)
+
+        self.right_drive_joystick = wpilib.Joystick(0)
+        self.left_drive_joystick = wpilib.Joystick(1)
+        self.operator_joystick = wpilib.Joystick(2)
+
+        self.compressor = wpilib.Compressor()
 
         # Xbox 'A' button
         #self.elevator_up = ButtonDebouncer(self.operator_joystick, 1)
