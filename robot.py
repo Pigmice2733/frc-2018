@@ -41,6 +41,8 @@ class Robot(MagicRobot):
         self.climber_motor = WPI_TalonSRX(7)
         self.wrist_motor = WPI_TalonSRX(8)
 
+        self.intake_ir = wpilib.AnalogInput(0)
+
         self.intake_solenoid = wpilib.DoubleSolenoid(1, 3)
 
         self.right_drive_joystick = wpilib.Joystick(0)
@@ -71,8 +73,10 @@ class Robot(MagicRobot):
 
         self.drivetrain.tank(self.right, self.left)
 
-        if self.toggle_arm_button.get():
-            self.intake.toggle_arm()
+        if self.intake.cube_is_in_range():
+            self.intake.close_arm()
+        else:
+            self.intake.open_arm()
 
         if self.operator_joystick.getRawAxis(3) > 0.1:
             self.intake.set_speed(self.operator_joystick.getRawAxis(3))
