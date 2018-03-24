@@ -1,7 +1,7 @@
 from enum import Enum
 
 from ctre.wpi_victorspx import WPI_VictorSPX
-from wpilib import DoubleSolenoid, Timer
+from wpilib import DoubleSolenoid, Timer, AnalogInput
 
 from utils import NTStreamer
 
@@ -37,10 +37,14 @@ class Intake:
 
     solenoid = DoubleSolenoid
 
+    ir = AnalogInput
+
     wheel_speed = WheelSpeed.stopped
     arm_state = ArmState.closed
     oscillating = False
     oscillator = Oscillator(0.3)
+
+    ir_stack = []
 
     def setup(self):
         self.arm_state_streamer = NTStreamer(self.arm_state, "intake/arm_state")
@@ -78,9 +82,26 @@ class Intake:
         self.wheel_speed = WheelSpeed.strong_hold
         self.arm_state = ArmState.closed
 
+    def slide_average(self):
+        if len(self.ir_stack) > 25:
+            self.ir_stack.pop(0)
+        self.ir_stack.append(self.ir.getValue())
+
+    def get_raw_ir_value(self):
+        return self.ir.getValue()
+
+    def get_ir_value(self):
+        if len(self.ir_stack) == 0:
+            return self.ir.getValue()
+        return sum(self.ir_stack) / len(self.ir_stack)
+
+    def cube_is_in_range(self):
+        return self.get_ir_value() > 410 or self.get_raw_ir_value() > 500
+
     def execute(self):
         self.wheel_speed_streamer.send(self.wheel_speed)
         self.arm_state_streamer.send(self.arm_state)
+        self.slide_average()
 
         if self.oscillating:
             offset = 0.1 if self.oscillator() else -0.1
