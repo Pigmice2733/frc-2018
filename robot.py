@@ -26,13 +26,12 @@ class Robot(MagicRobot):
         wpilib.LiveWindow.disableAllTelemetry()
 
         self.left_drive_motor = WPI_TalonSRX(0)
+        WPI_VictorSPX(1).follow(self.left_drive_motor)
         self.right_drive_motor = WPI_TalonSRX(2)
+        WPI_VictorSPX(3).follow(self.right_drive_motor)
 
-        WPI_TalonSRX(1).set(WPI_TalonSRX.ControlMode.Follower, self.left_drive_motor.getDeviceID())
-        WPI_TalonSRX(3).set(WPI_TalonSRX.ControlMode.Follower, self.right_drive_motor.getDeviceID())
-
-        self.robot_drive = wpilib.drive.DifferentialDrive(self.left_drive_motor,
-                                                          self.right_drive_motor)
+        self.robot_drive = wpilib.drive.DifferentialDrive(
+            self.left_drive_motor, self.right_drive_motor)
 
         self.r_intake_motor = WPI_VictorSPX(4)
         self.l_intake_motor = WPI_VictorSPX(5)
