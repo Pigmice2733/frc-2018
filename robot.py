@@ -91,12 +91,19 @@ class Robot(MagicRobot):
         else:
             self.elevator.set_speed(elevator_speed)
 
-        if self.operator_joystick.getRawButton(6) and self.operator_joystick.getRawButton(5):
+        if self.operator_joystick.getRawButton(
+                6) and self.operator_joystick.getRawButton(5):
             self.climber.set_speed(-self.operator_joystick.getRawAxis(5))
+
+        if self.operator_joystick.getRawButton(2):
+            self.intake.wrist_up()
+        else:
+            self.intake.wrist_down()
 
     def disabledPeriodic(self):
         self.drivetrain._update_odometry()
         self.elevator.reset_position()
+        self.intake.reset_wrist()
 
 
 if __name__ == '__main__':
