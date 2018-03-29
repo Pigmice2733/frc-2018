@@ -3,8 +3,8 @@ from enum import Enum
 from ctre.wpi_victorspx import WPI_VictorSPX
 from ctre.wpi_talonsrx import WPI_TalonSRX
 from wpilib import DoubleSolenoid, Timer, AnalogInput
-
 from utils import NTStreamer
+from motioncontrol.pid import PIDController, PIDCoefficients, PIDParameters
 
 
 class Oscillator:
@@ -22,7 +22,7 @@ class Oscillator:
 
 class WristPosition:
     down = 2
-    up = 1147
+    up = 1300
 
 
 class ArmState(Enum):
@@ -35,7 +35,7 @@ class WheelSpeed:
     stopped = 0.0
     hold = -0.175
     strong_hold = -0.25
-    intake = -0.6
+    intake = -0.4
     outake = 0.6
 
 
@@ -54,6 +54,9 @@ class Intake:
     oscillating = False
     oscillator = Oscillator(0.3)
     wrist_position = WristPosition.down
+    wrist_pid = PIDController(
+        PIDParameters(PIDCoefficients(p=.0002, i=.0000001, d=0)),
+        Timer.getFPGATimestamp)
 
     ir_stack = []
 
@@ -109,7 +112,10 @@ class Intake:
         return sum(self.ir_stack) / len(self.ir_stack)
 
     def cube_is_in_range(self):
-        return self.get_ir_value() > 430 or self.get_raw_ir_value() > 500
+        return self.get_ir_value() > 490 or self.get_raw_ir_value() > 500
+
+    def has_cube(self):
+        return self.get_ir_value() > 500
 
     def reset_wrist(self):
         self.wrist_motor.setQuadraturePosition(0, 0)
@@ -121,19 +127,19 @@ class Intake:
         self.wrist_position = WristPosition.up
 
     def execute(self):
-        print(self.wrist_motor.getQuadraturePosition())
-
         self.wheel_speed_streamer.send(self.wheel_speed)
         self.arm_state_streamer.send(self.arm_state)
         self.slide_average()
 
+        print(self.get_ir_value())
+
         if self.oscillating:
-            offset = 0.1 if self.oscillator() else -0.1
-            self.l_intake_motor.set(self.wheel_speed + offset)
-            self.r_intake_motor.set(-self.wheel_speed + offset)
+            offset = 0.2 if self.oscillator() else -0.2
+            self.l_intake_motor.set(-self.wheel_speed + offset)
+            self.r_intake_motor.set(self.wheel_speed + offset)
         else:
-            self.l_intake_motor.set(self.wheel_speed)
-            self.r_intake_motor.set(-self.wheel_speed)
+            self.l_intake_motor.set(-self.wheel_speed)
+            self.r_intake_motor.set(self.wheel_speed)
 
         if self.arm_state == ArmState.opened:
             self.solenoid.set(DoubleSolenoid.Value.kForward)
@@ -143,10 +149,16 @@ class Intake:
         current_wrist_position = self.wrist_motor.getQuadraturePosition()
         wrist_error = self.wrist_position - current_wrist_position
 
-        if wrist_error < 0:
-            wrist_error /= 4
+        output = self.wrist_pid.get_output(current_wrist_position,
+                                           self.wrist_position)
 
-        self.wrist_motor.set(wrist_error * .0005)
+        print('output:', output, 'current:', current_wrist_position, 'goal:',
+              self.wrist_position)
+
+        if wrist_error < 0:
+            output *= 1
+
+        self.wrist_motor.set(-output)
 
         self.wheel_speed = WheelSpeed.stopped
         self.oscillating = False

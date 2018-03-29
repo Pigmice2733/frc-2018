@@ -10,7 +10,7 @@ class Elevator:
     winch = WPI_TalonSRX
     limit_switch = wpilib.DigitalInput
     speed = 0
-    target_position = None
+    target_position = 0
     holding_position = None
     using_position_control = False
 
@@ -25,14 +25,16 @@ class Elevator:
         self.winch.setInverted(True)
 
         position_pid_coefs = PIDCoefficients(0.36, 0.0006)
-        position_pid_parameters = PIDParameters(position_pid_coefs, output_max=1, output_min=0)
-        self.position_pid = PIDController(position_pid_parameters, wpilib.Timer.getFPGATimestamp)
+        position_pid_parameters = PIDParameters(
+            position_pid_coefs, output_max=1, output_min=0)
+        self.position_pid = PIDController(position_pid_parameters,
+                                          wpilib.Timer.getFPGATimestamp)
 
-        self.position_streamer = NTStreamer(0.0, "elevator/position", round_digits=2)
+        self.position_streamer = NTStreamer(
+            0.0, "elevator/position", round_digits=2)
 
-    def set_speed(self, speed: float):
-        self.speed = speed
-        self.holding_position = None
+    def move_setpoint(self, speed: float):
+        self.target_position += speed / 50
 
     def hold(self):
         if self.holding_position is None:
@@ -67,7 +69,8 @@ class Elevator:
             if not self.using_position_control:
                 self.position_pid.reset()
             self.using_position_control = True
-            self.speed = self.position_pid.get_output(position, self.target_position)
+            self.speed = self.position_pid.get_output(position,
+                                                      self.target_position)
 
         else:
             if position < 2.3 and self.speed < 0:
