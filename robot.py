@@ -147,13 +147,13 @@ class Robot(MagicRobot):
 
         elif self.mode == RobotMode.scale:
             if self.step == 0:
-                if not self.has_cube():
+                if not self.intake.has_cube():
                     self.elevator.set_position(0)
                     if self.right_bumper_button.get():
                         self.intake.wrist_down()
                         self.intake.intake()
                     else:
-                        self.wrist_up()
+                        self.intake.wrist_up()
                 else:
                     if self.right_bumper_button.get():
                         self.rumbling = True
