@@ -23,6 +23,7 @@ class Oscillator:
 class WristPosition:
     down = 2
     up = 1300
+    straight_up = 2400
 
 
 class ArmState(Enum):
@@ -55,8 +56,10 @@ class Intake:
     oscillator = Oscillator(0.3)
     wrist_position = WristPosition.down
     wrist_pid = PIDController(
-        PIDParameters(PIDCoefficients(p=.0002, i=.0000001, d=0)),
+        PIDParameters(PIDCoefficients(p=.0004, i=.0000005, d=0)),
         Timer.getFPGATimestamp)
+    cube_in = True
+    overriding = False
 
     ir_stack = []
 
@@ -114,11 +117,22 @@ class Intake:
     def cube_is_in_range(self):
         return self.get_ir_value() > 490 or self.get_raw_ir_value() > 500
 
+    def toggle_has_cube(self):
+        self.cube_in = not self.cube_in
+        self.overriding = True
+
     def has_cube(self):
-        return self.get_ir_value() > 500
+        if self.overriding:
+            return self.cube_in
+        if self.get_ir_value() < 500:
+            self.cube_in = False
+            return False
+        if self.get_ir_value() > 900:
+            self.cube_in = True
+        return self.cube_in
 
     def reset_wrist(self):
-        self.wrist_motor.setQuadraturePosition(0, 0)
+        self.wrist_motor.setQuadraturePosition(WristPosition.straight_up, 0)
 
     def wrist_down(self):
         self.wrist_position = WristPosition.down
@@ -130,8 +144,6 @@ class Intake:
         self.wheel_speed_streamer.send(self.wheel_speed)
         self.arm_state_streamer.send(self.arm_state)
         self.slide_average()
-
-        print(self.get_ir_value())
 
         if self.oscillating:
             offset = 0.2 if self.oscillator() else -0.2
@@ -151,9 +163,6 @@ class Intake:
 
         output = self.wrist_pid.get_output(current_wrist_position,
                                            self.wrist_position)
-
-        print('output:', output, 'current:', current_wrist_position, 'goal:',
-              self.wrist_position)
 
         if wrist_error < 0:
             output *= 1

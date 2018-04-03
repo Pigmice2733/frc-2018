@@ -31,7 +31,6 @@ class Robot(MagicRobot):
     intake = Intake
     mode = RobotMode.switch
     rumbling = False
-    step = 0
 
     def createObjects(self):
         wpilib.CameraServer.launch()
@@ -74,17 +73,16 @@ class Robot(MagicRobot):
         self.down_button = ButtonDebouncer(self.operator_joystick, 1)
         self.right_button = ButtonDebouncer(self.operator_joystick, 2)
         self.left_button = ButtonDebouncer(self.operator_joystick, 3)
+        self.has_cube_button = ButtonDebouncer(self.operator_joystick, 5)
         self.up_button = ButtonDebouncer(self.operator_joystick, 4)
         self.left_bumper_button = JoystickButton(self.operator_joystick, 5)
         self.right_bumper_button = JoystickButton(self.operator_joystick, 6)
 
     def up_mode(self):
         self.mode += 1
-        self.step = 0
 
     def down_mode(self):
         self.mode -= 1
-        self.step = 0
 
     def teleopPeriodic(self):
         self.right = -self.right_drive_joystick.getRawAxis(1)
@@ -93,11 +91,6 @@ class Robot(MagicRobot):
         self.left = 0 if abs(self.left) < 0.1 else self.left
 
         self.drivetrain.tank(self.right, self.left)
-
-        if self.intake.cube_is_in_range():
-            self.intake.close_arm()
-        else:
-            self.intake.open_arm()
 
         # outtake
         if self.operator_joystick.getRawAxis(3) > 0.1:
@@ -114,74 +107,26 @@ class Robot(MagicRobot):
         elif self.up_button.get():
             self.up_mode()
 
-        print('mode', self.mode)
-
-        if self.mode == RobotMode.switch:
-            if not self.intake.has_cube():
-                self.elevator.set_position(0)
-                if self.right_bumper_button.get():
-                    self.intake.wrist_down()
-                    self.intake.intake()
-                else:
-                    self.intake.wrist_up()
-            else:
-                self.intake.wrist_up()
-                self.elevator.set_position(1)
-                if self.right_bumper_button.get():
-                    self.rumbling = True
-                if self.operator_joystick.getRawAxis(3) > 0.1:
-                    self.intake.wrist_down()
-
-        elif self.mode == RobotMode.exchange:
-            self.elevator.set_position(0)
+        joystick_val = -self.operator_joystick.getRawAxis(1)
+        if joystick_val > 0.1:
+            joystick_val -= 0.1
+        elif joystick_val < -0.1:
+            joystick_val += 0.1
+        else:
+            joystick_val = 0.0
+        self.elevator.move_setpoint(joystick_val / 50.0 * 11)
+        if self.right_bumper_button.get():
+            self.intake.wrist_down()
+            self.intake.intake()
+            self.intake.close_arm()
             if self.intake.has_cube():
-                self.intake.wrist_down()
-                if self.right_bumper_button.get():
-                    self.rumbling = True
-            else:
-                if self.right_bumper_button.get():
-                    self.intake.wrist_down()
-                    self.intake.intake()
-                else:
-                    self.intake.wrist_up()
+                self.rumbling = True
+        else:
+            self.intake.open_arm()
+            self.intake.wrist_up()
 
-        elif self.mode == RobotMode.scale:
-            if self.step == 0:
-                if not self.intake.has_cube():
-                    self.elevator.set_position(0)
-                    if self.right_bumper_button.get():
-                        self.intake.wrist_down()
-                        self.intake.intake()
-                    else:
-                        self.intake.wrist_up()
-                else:
-                    if self.right_bumper_button.get():
-                        self.rumbling = True
-                    self.step += 1
-            elif self.step == 1:
-                self.elevator.set_position(1)
-                self.intake.wrist_up()
-                if self.right_button.get():
-                    self.step += 1
-            elif self.step == 2:
-                self.elevator.set_position(8)
-                self.intake.wrist_up()
-                if self.right_button.get():
-                    self.step += 1
-            elif self.step == 3:
-                self.elevator.set_position(8)
-                self.intake.wrist_up()
-                if self.right_button.get():
-                    self.step += 1
-            elif self.step == 4 or self.step == 5:
-                self.elevator.move_setpoint(
-                    self.operator_joystick.getRawAxis(0))
-                if self.step == 4:
-                    self.intake.wrist_up()
-                else:
-                    self.intake.wrist_down()
-                if self.right_button.get():
-                    self.step = 0
+        if self.has_cube_button.get():
+            self.intake.toggle_has_cube()
 
         self.operator_joystick.setRumble(
             wpilib.Joystick.RumbleType.kRightRumble, 1 if self.rumbling else 0)
@@ -195,6 +140,12 @@ class Robot(MagicRobot):
         self.elevator.reset_position()
         self.intake.reset_wrist()
 
+    def testPeriodic(self):
+        self.wrist_motor.set(self.operator_joystick.getRawAxis(5) * 0.6)
+        self.elevator_winch.set(self.operator_joystick.getRawAxis(1))
+        self.intake_solenoid.set(wpilib.DoubleSolenoid.Value.kReverse)
+        self.left_drive_motor.set(0)
+        self.right_drive_motor.set(0)
 
 if __name__ == '__main__':
     wpilib.run(Robot)

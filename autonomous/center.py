@@ -43,7 +43,7 @@ class CenterAutonomous(AutonomousStateMachine):
 
         path = Path(self.center_path_tuning, self.center_starting_position, waypoints)
         max_speed = 2.4
-        end_threshold = 0.25
+        end_threshold = 0.45
 
         self.drivetrain.set_path(max_speed, end_threshold, path)
 
@@ -54,6 +54,7 @@ class CenterAutonomous(AutonomousStateMachine):
 
         self.drivetrain.follow_path()
         self.intake.strong_hold()
+        self.intake.wrist_down()
 
     @timed_state(duration=0.2, next_state='drive')
     def stop(self):
@@ -74,16 +75,16 @@ class CenterAutonomous(AutonomousStateMachine):
 
     @state
     def raise_elevator(self):
-        if self.elevator.get_position() > 3.25:
+        if self.elevator.get_position() > 3.65:
             self.next_state('outtake')
         else:
-            self.elevator.set_position(3.35)
+            self.elevator.set_position(4)
         self.intake.strong_hold()
 
     @timed_state(duration=0.8, next_state='reverse')
     def outtake(self):
         self.intake.outtake()
-        self.elevator.set_position(3.25)
+        self.elevator.set_position(3.65)
 
     @timed_state(duration=1.4, next_state='lower')
     def reverse(self):

@@ -24,7 +24,7 @@ class Elevator:
 
         self.winch.setInverted(True)
 
-        position_pid_coefs = PIDCoefficients(0.36, 0.0006)
+        position_pid_coefs = PIDCoefficients(p=0.75, i=0.0007, d=0)
         position_pid_parameters = PIDParameters(
             position_pid_coefs, output_max=1, output_min=0)
         self.position_pid = PIDController(position_pid_parameters,
@@ -34,7 +34,7 @@ class Elevator:
             0.0, "elevator/position", round_digits=2)
 
     def move_setpoint(self, speed: float):
-        self.target_position += speed / 50
+        self.target_position += speed
 
     def hold(self):
         if self.holding_position is None:
@@ -64,6 +64,11 @@ class Elevator:
         if not self.limit_switch.get():
             self.winch.setQuadraturePosition(0, 0)
             position = 0
+            if self.target_position < 0:
+                self.target_position = 0
+
+        if self.target_position > 13.4:
+            self.target_position = 13.4
 
         if self.target_position is not None:
             if not self.using_position_control:
@@ -78,7 +83,7 @@ class Elevator:
                 self.speed *= scale
 
         if self.speed < 0:
-            self.speed *= 0.2
+            self.speed *= 0.4
         else:
             self.speed *= 1.4
 
@@ -87,11 +92,7 @@ class Elevator:
 
         self.speed = clamp(self.speed, -1, 1)
 
+        print('target', self.target_position, 'current', position, 'speed', self.speed)
+
         self.winch.set(self.speed)
         self.speed = 0
-
-        if self.target_position is None:
-            self.using_position_control = False
-            self.target_position = None
-        else:
-            self.target_position = None
