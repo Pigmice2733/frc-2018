@@ -109,7 +109,7 @@ class Drivetrain:
         path_tuning = PathTuning(lookahead=2.5)
         path = Path(path_tuning, self.robot_state, [partial_target, target])
 
-        self.set_path(1.5, 0.5, path)
+        self.set_path(1.5, 1.0, path)
 
         return self.follow_path()[0]
 

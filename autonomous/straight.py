@@ -15,6 +15,6 @@ class StraightAutonomous(AutonomousStateMachine):
         if initial_call:
             self.drivetrain.set_odometry(RobotState())
 
-        completion = self.drivetrain.straight(20)
+        completion = self.drivetrain.straight(5)
         if completion.done:
             self.done()
