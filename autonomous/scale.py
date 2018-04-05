@@ -21,8 +21,8 @@ class ScaleAutonomous(AutonomousStateMachine):
 
     right_near_side_waypoints = [
         Point(8.23 - 1.2, 4),
-        Point(8.23 - 1.25, 6.5),
-        Point(8.23 - 1.8 - 1.01 / 2 + 0.6, 6.7),
+        Point(8.23 - 1.25, 6.55),
+        Point(8.23 - 1.8 - 1.01 / 2 + 0.6, 6.75),
     ]
 
     right_far_side_waypoints = [
@@ -86,8 +86,17 @@ class ScaleAutonomous(AutonomousStateMachine):
         if initial_call:
             self.initialize_path()
 
+            if not self.same_side:
+                self.next_state('just_forward')
+
         self.drivetrain.follow_path()
         self.intake.strong_hold()
+        self.intake.wrist_down()
+        self.intake.close_arm()
+
+    @timed_state(duration=3)
+    def just_forward(self, initial_call):
+        self.drivetrain.forward_at(0.3)
 
     @timed_state(duration=0.25, next_state='drive')
     def stop(self):
@@ -100,7 +109,7 @@ class ScaleAutonomous(AutonomousStateMachine):
 
         self.intake.strong_hold()
 
-        if remaining_distance < 2.2:
+        if remaining_distance < 2.8:
             self.elevator.set_position(12)
 
         if completion.done:
@@ -161,4 +170,4 @@ class ScaleAutonomous(AutonomousStateMachine):
 
     def starting_position(self) -> str:
         table = NetworkTables.getTable("autonomous/" + self.MODE_NAME + "/starting_position")
-        return table.getString("selected", None)
+        return table.getString("selected", 'left')

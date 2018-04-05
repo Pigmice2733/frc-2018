@@ -10,7 +10,7 @@ class Elevator:
     winch = WPI_TalonSRX
     limit_switch = wpilib.DigitalInput
     speed = 0
-    target_position = None
+    target_position = 0
     holding_position = None
     using_position_control = False
 
@@ -24,15 +24,17 @@ class Elevator:
 
         self.winch.setInverted(True)
 
-        position_pid_coefs = PIDCoefficients(0.36, 0.0006)
-        position_pid_parameters = PIDParameters(position_pid_coefs, output_max=1, output_min=0)
-        self.position_pid = PIDController(position_pid_parameters, wpilib.Timer.getFPGATimestamp)
+        position_pid_coefs = PIDCoefficients(p=0.75, i=0.0007, d=0)
+        position_pid_parameters = PIDParameters(
+            position_pid_coefs, output_max=1, output_min=0)
+        self.position_pid = PIDController(position_pid_parameters,
+                                          wpilib.Timer.getFPGATimestamp)
 
-        self.position_streamer = NTStreamer(0.0, "elevator/position", round_digits=2)
+        self.position_streamer = NTStreamer(
+            0.0, "elevator/position", round_digits=2)
 
-    def set_speed(self, speed: float):
-        self.speed = speed
-        self.holding_position = None
+    def move_setpoint(self, speed: float):
+        self.target_position += speed
 
     def hold(self):
         if self.holding_position is None:
@@ -62,12 +64,18 @@ class Elevator:
         if not self.limit_switch.get():
             self.winch.setQuadraturePosition(0, 0)
             position = 0
+            if self.target_position < 0:
+                self.target_position = 0
+
+        if self.target_position > 13.4:
+            self.target_position = 13.4
 
         if self.target_position is not None:
             if not self.using_position_control:
                 self.position_pid.reset()
             self.using_position_control = True
-            self.speed = self.position_pid.get_output(position, self.target_position)
+            self.speed = self.position_pid.get_output(position,
+                                                      self.target_position)
 
         else:
             if position < 2.3 and self.speed < 0:
@@ -75,7 +83,7 @@ class Elevator:
                 self.speed *= scale
 
         if self.speed < 0:
-            self.speed *= 0.2
+            self.speed *= 0.4
         else:
             self.speed *= 1.4
 
@@ -84,11 +92,7 @@ class Elevator:
 
         self.speed = clamp(self.speed, -1, 1)
 
+        print('target', self.target_position, 'current', position, 'speed', self.speed)
+
         self.winch.set(self.speed)
         self.speed = 0
-
-        if self.target_position is None:
-            self.using_position_control = False
-            self.target_position = None
-        else:
-            self.target_position = None

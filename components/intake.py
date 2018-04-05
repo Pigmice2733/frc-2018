@@ -1,9 +1,11 @@
 from enum import Enum
 
 from ctre.wpi_victorspx import WPI_VictorSPX
-from wpilib import DoubleSolenoid, Timer
-
+from ctre.wpi_talonsrx import WPI_TalonSRX
+from wpilib import DoubleSolenoid, Timer, AnalogInput
 from utils import NTStreamer
+from motioncontrol.pid import PIDController, PIDCoefficients, PIDParameters
+
 
 class Oscillator:
     def __init__(self, period: float):
@@ -17,6 +19,13 @@ class Oscillator:
             self.time = Timer.getFPGATimestamp()
         return self.low
 
+
+class WristPosition:
+    down = 2
+    up = 1300
+    straight_up = 2400
+
+
 class ArmState(Enum):
     opened = "opened"
     closed = "closed"
@@ -27,7 +36,7 @@ class WheelSpeed:
     stopped = 0.0
     hold = -0.175
     strong_hold = -0.25
-    intake = -0.6
+    intake = -0.4
     outake = 0.6
 
 
@@ -37,14 +46,28 @@ class Intake:
 
     solenoid = DoubleSolenoid
 
+    ir = AnalogInput
+
+    wrist_motor = WPI_TalonSRX
+
     wheel_speed = WheelSpeed.stopped
     arm_state = ArmState.closed
     oscillating = False
     oscillator = Oscillator(0.3)
+    wrist_position = WristPosition.down
+    wrist_pid = PIDController(
+        PIDParameters(PIDCoefficients(p=.0004, i=.0000005, d=0)),
+        Timer.getFPGATimestamp)
+    cube_in = True
+    overriding = False
+
+    ir_stack = []
 
     def setup(self):
-        self.arm_state_streamer = NTStreamer(self.arm_state, "intake/arm_state")
-        self.wheel_speed_streamer = NTStreamer(self.wheel_speed, "intake/wheel_speed")
+        self.arm_state_streamer = NTStreamer(self.arm_state,
+                                             "intake/arm_state")
+        self.wheel_speed_streamer = NTStreamer(self.wheel_speed,
+                                               "intake/wheel_speed")
 
     def toggle_arm(self):
         if self.arm_state == ArmState.opened or self.arm_state == ArmState.neutral:
@@ -78,22 +101,73 @@ class Intake:
         self.wheel_speed = WheelSpeed.strong_hold
         self.arm_state = ArmState.closed
 
+    def slide_average(self):
+        if len(self.ir_stack) > 25:
+            self.ir_stack.pop(0)
+        self.ir_stack.append(self.ir.getValue())
+
+    def get_raw_ir_value(self):
+        return self.ir.getValue()
+
+    def get_ir_value(self):
+        if len(self.ir_stack) == 0:
+            return self.ir.getValue()
+        return sum(self.ir_stack) / len(self.ir_stack)
+
+    def cube_is_in_range(self):
+        return self.get_ir_value() > 490 or self.get_raw_ir_value() > 500
+
+    def toggle_has_cube(self):
+        self.cube_in = not self.cube_in
+        self.overriding = True
+
+    def has_cube(self):
+        if self.overriding:
+            return self.cube_in
+        if self.get_ir_value() < 500:
+            self.cube_in = False
+            return False
+        if self.get_ir_value() > 900:
+            self.cube_in = True
+        return self.cube_in
+
+    def reset_wrist(self):
+        self.wrist_motor.setQuadraturePosition(WristPosition.straight_up, 0)
+
+    def wrist_down(self):
+        self.wrist_position = WristPosition.down
+
+    def wrist_up(self):
+        self.wrist_position = WristPosition.up
+
     def execute(self):
         self.wheel_speed_streamer.send(self.wheel_speed)
         self.arm_state_streamer.send(self.arm_state)
+        self.slide_average()
 
         if self.oscillating:
-            offset = 0.1 if self.oscillator() else -0.1
-            self.l_intake_motor.set(self.wheel_speed + offset)
-            self.r_intake_motor.set(-self.wheel_speed + offset)
+            offset = 0.2 if self.oscillator() else -0.2
+            self.l_intake_motor.set(-self.wheel_speed + offset)
+            self.r_intake_motor.set(self.wheel_speed + offset)
         else:
-            self.l_intake_motor.set(self.wheel_speed)
-            self.r_intake_motor.set(-self.wheel_speed)
+            self.l_intake_motor.set(-self.wheel_speed)
+            self.r_intake_motor.set(self.wheel_speed)
 
         if self.arm_state == ArmState.opened:
             self.solenoid.set(DoubleSolenoid.Value.kForward)
         elif self.arm_state == ArmState.closed:
             self.solenoid.set(DoubleSolenoid.Value.kReverse)
+
+        current_wrist_position = self.wrist_motor.getQuadraturePosition()
+        wrist_error = self.wrist_position - current_wrist_position
+
+        output = self.wrist_pid.get_output(current_wrist_position,
+                                           self.wrist_position)
+
+        if wrist_error < 0:
+            output *= 1
+
+        self.wrist_motor.set(-output)
 
         self.wheel_speed = WheelSpeed.stopped
         self.oscillating = False
