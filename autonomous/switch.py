@@ -61,6 +61,8 @@ class SwitchAutonomous(AutonomousStateMachine):
             switch_side = None
 
         robot_side = self.starting_position()
+        if robot_side is None:
+            self.done()
 
         self.same_side = robot_side == switch_side
 

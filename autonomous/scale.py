@@ -54,12 +54,10 @@ class ScaleAutonomous(AutonomousStateMachine):
         except IndexError:
             self.done()
             switch_side = None
-            return
 
         robot_side = self.starting_position()
         if robot_side is None:
             self.done()
-            return
 
         self.same_side = robot_side == switch_side
 
