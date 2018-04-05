@@ -45,6 +45,7 @@ class CenterAutonomous(AutonomousStateMachine):
         max_speed = 2.4
         end_threshold = 0.45
 
+        self.drivetrain.set_odometry(self.center_starting_position)
         self.drivetrain.set_path(max_speed, end_threshold, path)
 
     @timed_state(duration=1.0, next_state='stop', first=True)

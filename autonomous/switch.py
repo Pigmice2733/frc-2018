@@ -57,9 +57,12 @@ class SwitchAutonomous(AutonomousStateMachine):
         try:
             switch_side = 'left' if self.game_message()[0] == 'L' else 'right'
         except IndexError:
+            self.done()
             switch_side = None
 
         robot_side = self.starting_position()
+        if robot_side is None:
+            self.done()
 
         self.same_side = robot_side == switch_side
 
@@ -81,6 +84,7 @@ class SwitchAutonomous(AutonomousStateMachine):
 
         path = Path(tuning, position, waypoints)
 
+        self.drivetrain.set_odometry(position)
         self.drivetrain.set_path(max_speed, end_threshold, path)
 
     @timed_state(duration=1, next_state='stop', first=True)

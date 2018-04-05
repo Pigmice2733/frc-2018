@@ -4,6 +4,13 @@ from typing import Callable, NamedTuple
 
 from .utils import clamp
 
+from enum import Enum
+
+
+class PIDType(Enum):
+    Rate = 0
+    Position = 1
+
 
 class PIDCoefficients(NamedTuple):
     """Coefficients for PID controller
@@ -15,6 +22,7 @@ class PIDCoefficients(NamedTuple):
     p: float
     i: float = 0.0
     d: float = 0.0
+    f: float = 0.0
 
 
 class PIDParameters(NamedTuple):
@@ -33,6 +41,7 @@ class PIDParameters(NamedTuple):
     input_max: float = None
     input_min: float = None
     continuous: bool = False
+    pid_type: PIDType = PIDType.Position
 
 
 class PIDController:
@@ -55,6 +64,7 @@ class PIDController:
 
         # PID control coefficients
         self._coefs = parameters.coefs
+        self.type = parameters.pid_type
 
         # Internal variables used in the control alogorithm
         self._integral_term = 0.0
@@ -73,6 +83,9 @@ class PIDController:
         self._output_min = parameters.output_min
 
         self.time_source = time_source
+
+        if parameters.pid_type == PIDType.Position:
+            self._previous_setpoint = 0.0
 
     def get_output(self, current_input: float, setpoint: float) -> float:
         """Get PID output for process
@@ -101,11 +114,14 @@ class PIDController:
 
         derivative = (current_input - self._previous_input) / time_change
 
+        feed_forward = self.feed_forward(setpoint)
+
         self._previous_input = current_input
         self._previous_time = current_time
+        self._previous_setpoint = setpoint
 
         output = ((self._coefs.p * current_error) + self._integral_term +
-                  (self._coefs.d * derivative))
+                  (self._coefs.d * derivative) + feed_forward)
         return clamp(output, self._output_min, self._output_max)
 
     def reset(self):
@@ -117,6 +133,14 @@ class PIDController:
         self._previous_input = 0.0
         self._integral_term = 0.0
         self._previous_time = 0.0
+
+    def feed_forward(self, setpoint: float):
+        """Calculate feedforward term"""
+        if self.type == PIDType.Rate:
+            return self._coefs.f * setpoint
+
+        delta_setpoint = setpoint - self._previous_setpoint
+        return self._coefs.f * delta_setpoint
 
     def _get_continuous_error(self, error):
         if self._continuous:

@@ -23,6 +23,7 @@ class ForwardAutonomous(AutonomousStateMachine):
 
     def initialize_path(self):
         path = Path(self.path_tuning, self.position, self.forward_waypoints)
+        self.drivetrain.set_odometry(self.position)
         self.drivetrain.set_path(2.2, 0.2, path)
 
     @timed_state(duration=0.9, next_state='stop', first=True)
