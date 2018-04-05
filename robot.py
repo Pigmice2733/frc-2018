@@ -123,7 +123,8 @@ class Robot(MagicRobot):
                 self.rumbling = True
         else:
             self.intake.open_arm()
-            self.intake.wrist_up()
+
+        self.intake.move_wrist_setpoint(self.operator_joystick.getRawAxis(5))
 
         if self.has_cube_button.get():
             self.intake.toggle_has_cube()

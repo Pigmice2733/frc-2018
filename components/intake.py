@@ -140,6 +140,9 @@ class Intake:
     def wrist_up(self):
         self.wrist_position = WristPosition.up
 
+    def move_wrist_setpoint(self, amount):
+        self.wrist_position += amount / 50
+
     def execute(self):
         self.wheel_speed_streamer.send(self.wheel_speed)
         self.arm_state_streamer.send(self.arm_state)
@@ -160,6 +163,12 @@ class Intake:
 
         current_wrist_position = self.wrist_motor.getQuadraturePosition()
         wrist_error = self.wrist_position - current_wrist_position
+
+        if self.wrist_position > WristPosition.up:
+            self.wrist_position = WristPosition.up
+        
+        if self.wrist_position < WristPosition.down:
+            self.wrist_position = WristPosition.down
 
         output = self.wrist_pid.get_output(current_wrist_position,
                                            self.wrist_position)
