@@ -58,7 +58,7 @@ class SwitchAutonomous(AutonomousStateMachine):
             switch_side = 'left' if self.game_message()[0] == 'L' else 'right'
         except IndexError:
             self.done()
-            return
+            switch_side = None
 
         robot_side = self.starting_position()
 

@@ -53,6 +53,7 @@ class ScaleAutonomous(AutonomousStateMachine):
             switch_side = 'left' if self.game_message()[1] == 'L' else 'right'
         except IndexError:
             self.done()
+            switch_side = None
             return
 
         robot_side = self.starting_position()
