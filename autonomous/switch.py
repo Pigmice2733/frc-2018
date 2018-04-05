@@ -90,6 +90,7 @@ class SwitchAutonomous(AutonomousStateMachine):
 
         self.drivetrain.follow_path()
         self.intake.strong_hold()
+        self.intake.wrist_down()
 
     @timed_state(duration=0.2, next_state='drive')
     def stop(self):

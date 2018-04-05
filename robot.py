@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 import wpilib
+from wpilib.buttons import JoystickButton
+
 from ctre.wpi_talonsrx import WPI_TalonSRX
 from ctre.wpi_victorspx import WPI_VictorSPX
 from magicbot import MagicRobot
@@ -14,21 +16,30 @@ from components.elevator import Elevator
 from components.intake import Intake
 
 
+class RobotMode:
+    climb = 3
+    scale = 2
+    switch = 1
+    exchange = 0
+
+
 class Robot(MagicRobot):
 
     drivetrain = Drivetrain
     climber = Climber
     elevator = Elevator
     intake = Intake
+    mode = RobotMode.switch
+    rumbling = False
 
     def createObjects(self):
         wpilib.CameraServer.launch()
         wpilib.LiveWindow.disableAllTelemetry()
 
         self.left_drive_motor = WPI_TalonSRX(0)
-        WPI_VictorSPX(1).follow(self.left_drive_motor)
+        WPI_TalonSRX(1).follow(self.left_drive_motor)
         self.right_drive_motor = WPI_TalonSRX(2)
-        WPI_VictorSPX(3).follow(self.right_drive_motor)
+        WPI_TalonSRX(3).follow(self.right_drive_motor)
 
         self.robot_drive = wpilib.drive.DifferentialDrive(
             self.left_drive_motor, self.right_drive_motor)
@@ -43,7 +54,7 @@ class Robot(MagicRobot):
 
         self.intake_ir = wpilib.AnalogInput(0)
 
-        self.intake_solenoid = wpilib.DoubleSolenoid(1, 3)
+        self.intake_solenoid = wpilib.DoubleSolenoid(2, 3)
 
         self.right_drive_joystick = wpilib.Joystick(0)
         self.left_drive_joystick = wpilib.Joystick(1)
@@ -51,19 +62,27 @@ class Robot(MagicRobot):
 
         self.compressor = wpilib.Compressor()
 
-        # Xbox 'A' button
-        #self.elevator_up = ButtonDebouncer(self.operator_joystick, 1)
-        # Xbox 'Y' button
-        self.elevator_down = ButtonDebouncer(self.operator_joystick, 4)
         self.elevator_limit_switch = wpilib.DigitalInput(0)
-
-        self.toggle_arm_button = ButtonDebouncer(self.operator_joystick, 1)
 
         self.climber_motor = WPI_TalonSRX(7)
 
         self.navx = AHRS.create_spi()
 
         self.path_tracking_table = NetworkTables.getTable("path_tracking")
+
+        self.down_button = ButtonDebouncer(self.operator_joystick, 1)
+        self.right_button = ButtonDebouncer(self.operator_joystick, 2)
+        self.left_button = ButtonDebouncer(self.operator_joystick, 3)
+        self.has_cube_button = ButtonDebouncer(self.operator_joystick, 5)
+        self.up_button = ButtonDebouncer(self.operator_joystick, 4)
+        self.left_bumper_button = JoystickButton(self.operator_joystick, 5)
+        self.right_bumper_button = JoystickButton(self.operator_joystick, 6)
+
+    def up_mode(self):
+        self.mode += 1
+
+    def down_mode(self):
+        self.mode -= 1
 
     def teleopPeriodic(self):
         self.right = -self.right_drive_joystick.getRawAxis(1)
@@ -73,11 +92,7 @@ class Robot(MagicRobot):
 
         self.drivetrain.tank(self.right, self.left)
 
-        if self.intake.cube_is_in_range():
-            self.intake.close_arm()
-        else:
-            self.intake.open_arm()
-
+        # outtake
         if self.operator_joystick.getRawAxis(3) > 0.1:
             self.intake.set_speed(self.operator_joystick.getRawAxis(3))
         elif self.operator_joystick.getRawButton(3):
@@ -86,18 +101,51 @@ class Robot(MagicRobot):
             self.intake.hold()
 
         elevator_speed = -self.operator_joystick.getY(0)
-        if abs(elevator_speed) < 0.08:
-            self.elevator.hold()
-        else:
-            self.elevator.set_speed(elevator_speed)
 
-        if self.operator_joystick.getRawButton(6) and self.operator_joystick.getRawButton(5):
-            self.climber.set_speed(-self.operator_joystick.getRawAxis(5))
+        if self.down_button.get():
+            self.down_mode()
+        elif self.up_button.get():
+            self.up_mode()
+
+        joystick_val = -self.operator_joystick.getRawAxis(1)
+        if joystick_val > 0.1:
+            joystick_val -= 0.1
+        elif joystick_val < -0.1:
+            joystick_val += 0.1
+        else:
+            joystick_val = 0.0
+        self.elevator.move_setpoint(joystick_val / 50.0 * 11)
+        if self.right_bumper_button.get():
+            self.intake.wrist_down()
+            self.intake.intake()
+            self.intake.close_arm()
+            if self.intake.has_cube():
+                self.rumbling = True
+        else:
+            self.intake.open_arm()
+            self.intake.wrist_up()
+
+        if self.has_cube_button.get():
+            self.intake.toggle_has_cube()
+
+        self.operator_joystick.setRumble(
+            wpilib.Joystick.RumbleType.kRightRumble, 1 if self.rumbling else 0)
+        self.operator_joystick.setRumble(
+            wpilib.Joystick.RumbleType.kLeftRumble, 1 if self.rumbling else 0)
+
+        self.rumbling = False
 
     def disabledPeriodic(self):
         self.drivetrain._update_odometry()
         self.elevator.reset_position()
+        self.intake.reset_wrist()
 
+    def testPeriodic(self):
+        self.wrist_motor.set(self.operator_joystick.getRawAxis(5) * 0.6)
+        self.elevator_winch.set(self.operator_joystick.getRawAxis(1))
+        self.intake_solenoid.set(wpilib.DoubleSolenoid.Value.kReverse)
+        self.left_drive_motor.set(0)
+        self.right_drive_motor.set(0)
 
 if __name__ == '__main__':
     wpilib.run(Robot)
