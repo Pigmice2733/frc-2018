@@ -47,48 +47,38 @@ class CenterAutonomous(AutonomousStateMachine):
 
         self.drivetrain.set_path(max_speed, end_threshold, path)
 
-    @timed_state(duration=1.0, next_state='stop', first=True)
-    def start(self, initial_call):
+    @state(first=True)
+    def drive(self, initial_call):
         if initial_call:
             self.initialize_path()
 
-        self.drivetrain.follow_path()
-        self.intake.strong_hold()
-        self.intake.wrist_down()
-
-    @timed_state(duration=0.2, next_state='drive')
-    def stop(self):
-        self.drivetrain.forward_at(0)
-        self.intake.strong_hold()
-
-    @state
-    def drive(self):
         completion, remaining_distance = self.drivetrain.follow_path()
 
         self.intake.strong_hold()
+        self.intake.wrist_down()
 
-        if remaining_distance < 2:
-            self.elevator.set_position(4)
+        if remaining_distance < 3:
+            self.elevator.set_position(6.2)
 
         if completion.done:
             self.next_state('raise_elevator')
 
     @state
     def raise_elevator(self):
-        if self.elevator.get_position() > 3.65:
+        if self.elevator.get_position() > 4.5:
             self.next_state('outtake')
         else:
-            self.elevator.set_position(4)
+            self.elevator.set_position(6.2)
         self.intake.strong_hold()
 
     @timed_state(duration=0.8, next_state='reverse')
     def outtake(self):
         self.intake.outtake()
-        self.elevator.set_position(3.65)
+        self.elevator.set_position(4.6)
 
     @timed_state(duration=1.4, next_state='lower')
     def reverse(self):
-        self.elevator.set_position(2.8)
+        self.elevator.set_position(3)
         self.drivetrain.forward_at(-0.3)
 
     @timed_state(duration=1)

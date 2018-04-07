@@ -22,8 +22,8 @@ class Oscillator:
 
 class WristPosition:
     down = 2
-    up = 1300
-    straight_up = 2400
+    up = 1400
+    straight_up = 2860
 
 
 class ArmState(Enum):
@@ -56,7 +56,7 @@ class Intake:
     oscillator = Oscillator(0.3)
     wrist_position = WristPosition.down
     wrist_pid = PIDController(
-        PIDParameters(PIDCoefficients(p=.0004, i=.0000005, d=0)),
+        PIDParameters(PIDCoefficients(p=.001, i=0, d=0)),
         Timer.getFPGATimestamp)
     cube_in = True
     overriding = False
@@ -134,6 +134,9 @@ class Intake:
     def reset_wrist(self):
         self.wrist_motor.setQuadraturePosition(WristPosition.straight_up, 0)
 
+    def reset_wrist_up(self):
+        self.wrist_motor.setQuadraturePosition(WristPosition.down, 0)
+
     def wrist_down(self):
         self.wrist_position = WristPosition.down
 
@@ -141,7 +144,7 @@ class Intake:
         self.wrist_position = WristPosition.up
 
     def move_wrist_setpoint(self, amount):
-        self.wrist_position += amount / 50
+        self.wrist_position -= amount * 50
 
     def execute(self):
         self.wheel_speed_streamer.send(self.wheel_speed)
@@ -174,7 +177,7 @@ class Intake:
                                            self.wrist_position)
 
         if wrist_error < 0:
-            output *= 1
+            output *= 0.25
 
         self.wrist_motor.set(-output)
 

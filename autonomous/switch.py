@@ -83,45 +83,35 @@ class SwitchAutonomous(AutonomousStateMachine):
 
         self.drivetrain.set_path(max_speed, end_threshold, path)
 
-    @timed_state(duration=1, next_state='stop', first=True)
-    def start(self, initial_call):
+    @state(first=True)
+    def drive(self, initial_call):
         if initial_call:
             self.initialize_path()
 
-        self.drivetrain.follow_path()
-        self.intake.strong_hold()
-        self.intake.wrist_down()
-
-    @timed_state(duration=0.2, next_state='drive')
-    def stop(self):
-        self.drivetrain.forward_at(0)
-        self.intake.strong_hold()
-
-    @state
-    def drive(self):
         completion, remaining_distance = self.drivetrain.follow_path()
 
         self.intake.strong_hold()
+        self.intake.wrist_down()
 
-        if remaining_distance < 1.2:
-            self.elevator.set_position(3.8)
+        if remaining_distance < 1.5:
+            self.elevator.set_position(4)
 
         if completion.done:
             self.next_state('raise_elevator')
 
     @state
     def raise_elevator(self):
-        if self.elevator.get_position() > 3.25:
+        if self.elevator.get_position() > 3.8:
             self.next_state('outtake')
         else:
-            self.elevator.set_position(3.35)
+            self.elevator.set_position(4)
         self.intake.strong_hold()
         self.drivetrain.forward_at(0.11)
 
     @timed_state(duration=0.8, next_state='reverse')
     def outtake(self):
         self.intake.outtake()
-        self.elevator.set_position(3.25)
+        self.elevator.set_position(4)
 
     @timed_state(duration=1.2, next_state='lower')
     def reverse(self):

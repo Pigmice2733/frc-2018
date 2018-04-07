@@ -24,8 +24,8 @@ class Elevator:
 
         self.winch.setInverted(True)
 
-        position_pid_coefs = PIDCoefficients(p=0.75, i=0.0007, d=0)
-        position_pid_parameters = PIDParameters(position_pid_coefs, output_max=1, output_min=0)
+        position_pid_coefs = PIDCoefficients(p=0.4, i=0.007, d=0)
+        position_pid_parameters = PIDParameters(position_pid_coefs, output_max=1, output_min=-1)
         self.position_pid = PIDController(position_pid_parameters, wpilib.Timer.getFPGATimestamp)
 
         self.position_streamer = NTStreamer(0.0, "elevator/position", round_digits=2)
@@ -64,8 +64,8 @@ class Elevator:
             if self.target_position < 0:
                 self.target_position = 0
 
-        if self.target_position > 13.4:
-            self.target_position = 13.4
+        if self.target_position > 13:
+            self.target_position = 13
 
         if self.target_position is not None:
             if not self.using_position_control:
@@ -73,13 +73,14 @@ class Elevator:
             self.using_position_control = True
             self.speed = self.position_pid.get_output(position, self.target_position)
 
-        else:
-            if position < 2.3 and self.speed < 0:
-                scale = interpolate(0.05, 1, 0, 2.3, position)
-                self.speed *= scale
+            if position < 1 and self.speed < 0:
+                self.speed = 0.1
+
+            elif position < 3.5 and self.speed < 0:
+                self.speed = 0
 
         if self.speed < 0:
-            self.speed *= 0.8
+            self.speed *= 0.1
         else:
             self.speed *= 1.4
 
@@ -87,8 +88,6 @@ class Elevator:
             self.speed += 0.12
 
         self.speed = clamp(self.speed, -1, 1)
-
-        print('target', self.target_position, 'current', position, 'speed', self.speed)
 
         self.winch.set(self.speed)
         self.speed = 0
