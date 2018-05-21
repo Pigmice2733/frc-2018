@@ -5,16 +5,16 @@
         },
         "host-environment-markers": {
             "implementation_name": "cpython",
-            "implementation_version": "3.6.4",
-            "os_name": "posix",
-            "platform_machine": "x86_64",
+            "implementation_version": "3.6.3",
+            "os_name": "nt",
+            "platform_machine": "AMD64",
             "platform_python_implementation": "CPython",
-            "platform_release": "4.14.14-1-ARCH",
-            "platform_system": "Linux",
-            "platform_version": "#1 SMP PREEMPT Fri Jan 19 18:42:04 UTC 2018",
-            "python_full_version": "3.6.4",
+            "platform_release": "10",
+            "platform_system": "Windows",
+            "platform_version": "10.0.16299",
+            "python_full_version": "3.6.3",
             "python_version": "3.6",
-            "sys_platform": "linux"
+            "sys_platform": "win32"
         },
         "pipfile-spec": 6,
         "requires": {},
@@ -29,29 +29,53 @@
     "default": {
         "attrs": {
             "hashes": [
-                "sha256:a17a9573a6f475c99b551c0e0a812707ddda1ec9653bed04c13841404ed6f450",
-                "sha256:1c7960ccfd6a005cd9f7ba884e6316b5e430a3f1a6c37c5f87d8b43f83b54ec9"
+                "sha256:4b90b09eeeb9b88c35bc642cbac057e45a5fd85367b985bd2809c62b7b939265",
+                "sha256:e0d0eb91441a3b53dab4d9b743eafc1ac44476296a2053b6ca3af0b139faf87b"
             ],
-            "version": "==17.4.0"
+            "version": "==18.1.0"
+        },
+        "colorama": {
+            "hashes": [
+                "sha256:463f8483208e921368c9f306094eb6f725c6ca42b0f97e313cb5d5512459feda",
+                "sha256:48eb22f4f8461b1df5734a074b57042430fb06e1d61bd1e11b078c0fe6d7a1f1"
+            ],
+            "markers": "sys_platform == 'win32'",
+            "version": "==0.3.9"
+        },
+        "more-itertools": {
+            "hashes": [
+                "sha256:11a625025954c20145b37ff6309cd54e39ca94f72f6bb9576d1195db6fa2442e",
+                "sha256:0dd8f72eeab0d2c3bd489025bb2f6a1b8342f9b198f6fc37b52d15cfa4531fea",
+                "sha256:c9ce7eccdcb901a2c75d326ea134e0886abfbea5f93e91cc95de9507c0816c44"
+            ],
+            "version": "==4.1.0"
+        },
+        "pint": {
+            "hashes": [
+                "sha256:afcf31443a478c32bbac4b00337ee9026a13d0e2ac83d30c79151462513bb0d4"
+            ],
+            "version": "==0.8.1"
         },
         "pluggy": {
             "hashes": [
+                "sha256:d345c8fe681115900d6da8d048ba67c25df42973bda370783cd58826442dcd7c",
+                "sha256:e160a7fcf25762bb60efc7e171d4497ff1d8d2d75a3d0df7a21b76821ecbf5c5",
                 "sha256:7f8ae7f5bdf75671a718d2daf0a64b7885f74510bcd98b1a0bb420eb9a9d0cff"
             ],
             "version": "==0.6.0"
         },
         "py": {
             "hashes": [
-                "sha256:8cca5c229d225f8c1e3085be4fcf306090b00850fefad892f9d96c7b6e2f310f",
-                "sha256:ca18943e28235417756316bfada6cd96b23ce60dd532642690dcfdaba988a76d"
+                "sha256:983f77f3331356039fdd792e9220b7b8ee1aa6bd2b25f567a963ff1de5a64f6a",
+                "sha256:29c9fab495d7528e80ba1e343b958684f4ace687327e6f789a94bf3d1915f881"
             ],
-            "version": "==1.5.2"
+            "version": "==1.5.3"
         },
         "pyfrc": {
             "hashes": [
-                "sha256:4cb17a3588f18975b27695991e0d2278931508a03517a0f32d6d880b3a9d73ba"
+                "sha256:1ea609b7ffe71b23d81035ce9c3cc70daeeda541ee8216754c16a4595164e0b9"
             ],
-            "version": "==2018.0.4"
+            "version": "==2018.4.2"
         },
         "pygame": {
             "hashes": [
@@ -79,52 +103,52 @@
         },
         "pynetconsole": {
             "hashes": [
-                "sha256:b619b9d90857094e7221b39dafc4f14ade58b339a288437143a41c25386ccf6d"
+                "sha256:0b442dcb66905452935ec93a1a48efab9b95df2151580895bc0040196948fbb0"
             ],
-            "version": "==2.0.0"
+            "version": "==2.0.2"
         },
         "pynetworktables": {
             "hashes": [
-                "sha256:54f455b971ea509cebb4e5a05a55e7210f4ff1ad33e51d057c1889619d90e5f7"
+                "sha256:d6b5207b3f6b415dd0d63312d9e5738702a5ebbdc4fd6bf90f2d0ec1fda95d08"
             ],
-            "version": "==2018.0.1"
+            "version": "==2018.1.2"
         },
         "pytest": {
             "hashes": [
-                "sha256:b84878865558194630c6147f44bdaef27222a9f153bbd4a08908b16bf285e0b1",
-                "sha256:53548280ede7818f4dc2ad96608b9f08ae2cc2ca3874f2ceb6f97e3583f25bc4"
+                "sha256:829230122facf05a5f81a6d4dfe6454a04978ea3746853b2b84567ecf8e5c526",
+                "sha256:54713b26c97538db6ff0703a12b19aeaeb60b5e599de542e7fca0ec83b9038e8"
             ],
-            "version": "==3.3.2"
+            "version": "==3.5.1"
         },
         "robotpy-ctre": {
             "hashes": [
-                "sha256:65e9fd4142b29894938cb7779af24c8992ab18af2c94e46d39c8da42b118b3a6"
+                "sha256:47212a8265cabb8353a4c9e9ff0aa4f858aac8d68cf6bca25e74b4f9fadaee2f"
             ],
-            "version": "==2018.1.3"
+            "version": "==2018.3.1"
         },
         "robotpy-hal-base": {
             "hashes": [
-                "sha256:6fd9a102dfa5457b122b43298cb4328255fcf5b1716cca2472ed1d08fda53c52"
+                "sha256:3dda776866a63f249a3203b2380cccdadf06ac9a65ea270fa4f1e3d23dba8ad1"
             ],
-            "version": "==2018.0.10"
+            "version": "==2018.1.6"
         },
         "robotpy-hal-sim": {
             "hashes": [
-                "sha256:1d1d67b6615bd2e326aa9731ede5f2d715ee66c89a725be86c53be9bb2abf011"
+                "sha256:10c17c1ded903842e17b76b00614d0178c6abaf73663f026a84cdce84dee7cc7"
             ],
-            "version": "==2018.0.10"
+            "version": "==2018.1.6"
         },
         "robotpy-installer": {
             "hashes": [
-                "sha256:8833aeb506495f142f884efee9db95b9ceb615ee5096264102855acf2ca3d45c"
+                "sha256:d1f5fe80afcd604754b9ad6b793adeb6263bc63f81b65e43aea8d1620440b850"
             ],
-            "version": "==2018.0.0"
+            "version": "==2018.0.5"
         },
         "robotpy-wpilib-utilities": {
             "hashes": [
-                "sha256:0e6facee7fa5f444c1cba4d032cde35f1011356f06f68c89042f9533b70cc36f"
+                "sha256:9daef3effc37503c2259d9c29a6b28e02015f4e05c3757fc46fa3ec49b2f9487"
             ],
-            "version": "==2018.0.1"
+            "version": "==2018.1.4"
         },
         "six": {
             "hashes": [
@@ -135,9 +159,9 @@
         },
         "wpilib": {
             "hashes": [
-                "sha256:81430c4bc6cbd07ea7d89b0de24deebd2d2b78525fbd84c68f7554c89cdf6fee"
+                "sha256:d4aa1a9c3c4cc914c1bf675d99cd11c05fb28dee5034aeafee3fec9929d9bd40"
             ],
-            "version": "==2018.0.10"
+            "version": "==2018.1.6"
         }
     },
     "develop": {}
