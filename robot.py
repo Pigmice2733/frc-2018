@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import wpilib
+import math
 from wpilib.buttons import JoystickButton
 
 from ctre.wpi_talonsrx import WPI_TalonSRX
@@ -37,9 +38,9 @@ class Robot(MagicRobot):
         wpilib.LiveWindow.disableAllTelemetry()
 
         self.left_drive_motor = WPI_TalonSRX(0)
-        WPI_TalonSRX(1).follow(self.left_drive_motor)
+        WPI_TalonSRX(1).set(WPI_TalonSRX.ControlMode.Follower, self.left_drive_motor.getDeviceID())
         self.right_drive_motor = WPI_TalonSRX(2)
-        WPI_TalonSRX(3).follow(self.right_drive_motor)
+        WPI_TalonSRX(3).set(WPI_TalonSRX.ControlMode.Follower, self.right_drive_motor.getDeviceID())
 
         self.robot_drive = wpilib.drive.DifferentialDrive(
             self.left_drive_motor, self.right_drive_motor)
@@ -84,17 +85,24 @@ class Robot(MagicRobot):
     def down_mode(self):
         self.mode -= 1
 
+    def autonomous(self):
+        self.intake.reset_wrist()
+        super().autonomous()
+
+    def teleopInit(self):
+        self.intake.reset_wrist_up()
+
     def teleopPeriodic(self):
         self.right = -self.right_drive_joystick.getRawAxis(1)
         self.left = -self.left_drive_joystick.getRawAxis(1)
         self.right = 0 if abs(self.right) < 0.1 else self.right
         self.left = 0 if abs(self.left) < 0.1 else self.left
 
-        self.drivetrain.tank(self.right, self.left)
+        self.drivetrain.tank(math.copysign(self.right ** 2, self.right), math.copysign(self.left ** 2, self.left))
 
         # outtake
-        if self.operator_joystick.getRawAxis(3) > 0.1:
-            self.intake.set_speed(self.operator_joystick.getRawAxis(3))
+        if self.operator_joystick.getRawAxis(3) > 0.01:
+            self.intake.set_speed(self.operator_joystick.getRawAxis(3) * 0.8 + 0.2)
         elif self.operator_joystick.getRawButton(3):
             self.intake.intake()
         else:
@@ -108,22 +116,28 @@ class Robot(MagicRobot):
             self.up_mode()
 
         joystick_val = -self.operator_joystick.getRawAxis(1)
-        if joystick_val > 0.1:
-            joystick_val -= 0.1
-        elif joystick_val < -0.1:
-            joystick_val += 0.1
+        if joystick_val > 0.2:
+            joystick_val -= 0.2
+        elif joystick_val < -0.2:
+            joystick_val += 0.2
         else:
             joystick_val = 0.0
-        self.elevator.move_setpoint(joystick_val / 50.0 * 11)
+        self.elevator.move_setpoint(joystick_val / 50.0 * 20)
         if self.right_bumper_button.get():
             self.intake.wrist_down()
             self.intake.intake()
-            self.intake.close_arm()
+            self.intake.open_arm()
             if self.intake.has_cube():
                 self.rumbling = True
         else:
-            self.intake.open_arm()
-            self.intake.wrist_up()
+            self.intake.close_arm()
+
+        if self.left_bumper_button.get():
+            self.climber.set_speed(-self.operator_joystick.getRawAxis(5))
+        else:
+            wrist_speed = self.operator_joystick.getRawAxis(5)
+            wrist_speed = 0 if abs(wrist_speed) < 0.2 else wrist_speed
+            self.intake.move_wrist_setpoint(wrist_speed)
 
         if self.has_cube_button.get():
             self.intake.toggle_has_cube()
@@ -138,7 +152,6 @@ class Robot(MagicRobot):
     def disabledPeriodic(self):
         self.drivetrain._update_odometry()
         self.elevator.reset_position()
-        self.intake.reset_wrist()
 
     def testPeriodic(self):
         self.wrist_motor.set(self.operator_joystick.getRawAxis(5) * 0.6)

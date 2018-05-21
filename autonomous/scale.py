@@ -28,10 +28,10 @@ class ScaleAutonomous(AutonomousStateMachine):
     right_far_side_waypoints = [
         Point(8.23 - 0.85, 5.4),
         Point(8.23 - 1.1, 6),
-        Point(8.23 - 2.62, 5.9),
-        Point(2.65, 5.9),
-        Point(2.55, 6.3),
-        Point(2.55, 7.57 - 1.01 / 2)
+        Point(8.23 - 2.62, 6),
+        Point(3.1, 6.2),
+        Point(2, 6.4),
+        Point(2, 7.3 - 1.01 / 2)
     ]
 
     left_position = RobotState(position=Point(0.76 + 0.89 / 2, 1.01 / 2), rotation=math.pi / 2)
@@ -76,55 +76,49 @@ class ScaleAutonomous(AutonomousStateMachine):
 
         path = Path(tuning, position, waypoints)
 
+        self.switch_side = switch_side
+
         self.drivetrain.set_path(max_speed, end_threshold, path)
 
-    @timed_state(duration=1.25, next_state='stop', first=True)
-    def start(self, initial_call):
+    @state(first=True)
+    def drive(self, initial_call):
         if initial_call:
             self.initialize_path()
 
-            if not self.same_side:
-                self.next_state('just_forward')
+        if not self.same_side:
+            self.next_state('just_forward')
+            return
 
-        self.drivetrain.follow_path()
-        self.intake.strong_hold()
-        self.intake.wrist_down()
-        self.intake.close_arm()
-
-    
-    @timed_state(duration=3)
-    def just_forward(self, initial_call):
-        self.drivetrain.forward_at(0.3)
-
-
-    @timed_state(duration=0.25, next_state='drive')
-    def stop(self):
-        self.drivetrain.forward_at(0)
-        self.intake.strong_hold()
-
-    @state
-    def drive(self):
         completion, remaining_distance = self.drivetrain.follow_path()
 
         self.intake.strong_hold()
+        self.intake.close_arm()
+        self.intake.wrist_down()
 
         if remaining_distance < 2.8:
             self.elevator.set_position(12)
 
         if completion.done:
-            self.next_state('align')
+            # self.next_state('align')
+            self.next_state('raise_elevator')
+
+    @timed_state(duration=3)
+    def just_forward(self):
+        self.drivetrain.forward_at(0.3)
 
     @state
     def align(self):
         self.elevator.set_position(12)
         self.intake.strong_hold()
 
-        print(self.drivetrain.get_orientation())
-
-        if self.starting_position() == 'right':
-            err = self.drivetrain.get_orientation() - 3 * math.pi / 4
+        if self.same_side:
+            if self.switch_side == "left":
+                err = self.drivetrain.get_orientation() - 3 * math.pi / 8
+            else:
+                err = self.drivetrain.get_orientation() - 5 * math.pi / 8
         else:
-            err = self.drivetrain.get_orientation() - math.pi / 4
+            err = self.drivetrain.get_orientation() - math.pi / 2
+
         if abs(err) > 0.02:
             sign = -1 if err < 0 else 1
             self.drivetrain.tank(0.18 * sign, -0.18 * sign)
@@ -134,10 +128,17 @@ class ScaleAutonomous(AutonomousStateMachine):
     @state
     def raise_elevator(self):
         if self.elevator.get_position() > 11:
+            # if self.same_side:
+            #     self.next_state('forward_to_scale')
+            # else:
             self.next_state('outtake')
         else:
             self.elevator.set_position(12.5)
         self.intake.strong_hold()
+
+    @timed_state(duration=0.3, next_state='outtake')
+    def forward_to_scale(self):
+        self.drivetrain.forward_at(0.2)
 
     @timed_state(duration=1.25, next_state='reverse')
     def outtake(self):
